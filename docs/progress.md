@@ -10,39 +10,40 @@ Arquitetura geral aprovada e execução incremental autorizada. O usuário tamb�
 
 Fase 0 concluída: documentação por assunto, arquivo original integral preservado, ADRs, contratos e invariantes definidos ([RF-000/RF-001](tasks/phase-0.md)).
 
-Base local e Docker validados: workspaces React/Vite, NestJS e domínio; página informativa; liveness HTTP; primitivas exatas de dinheiro, distribuição de centavos e datas ancoradas; containers da API, frontend e PostgreSQL ([RF-010/RF-011/RF-012](tasks/phase-1.md)).
+RF-010 a RF-013 concluídas: workspaces React/Vite, NestJS e domínio; primitivas exatas de dinheiro/datas; PostgreSQL e migrations; cadastro com confirmação de email, login/logout, recuperação, sessões persistidas e contas mínimas isoladas por usuário. [Tasks e evidências](tasks/phase-1.md), [identidade](identity.md) e [ADR-0004](decisions/0004-identity-persistence.md).
 
 ## Versionamento
 
-Em 08/10/2026, o usuário configurou `origin` para `https://github.com/Gabacles/rovere-finance.git` e autorizou commits semânticos em inglês, sem assinatura ou coautoria do agente. A base foi organizada em commits de documentação, aplicação e ambiente/CI; consultar `git log --oneline` para os identificadores. O envio ao remote não foi executado nesta etapa.
+Em 08/10/2026, o push inicial da `main` foi concluído em `https://github.com/Gabacles/rovere-finance.git` (base até `f73b755`). A RF-013 foi desenvolvida na branch `feat/rf-013-authentication`, destinada à revisão antes do merge. Commits semânticos em inglês, identidade Git do usuário e sem assinatura/coautoria do agente. Conferir `git status -sb`, `git log` e tracking remoto ao retomar; nunca presumir que a branch foi integrada à main.
 
-Autenticação, migrations, conexão da API ao banco, movimentações, orçamento e importadores ainda não existem. O suporte CSV/OFX continua obrigatório, mas não está implementado nesta fundação. Tipos de importação não são parsers.
+Movimentações, cartões, orçamento e importadores ainda não existem. O suporte CSV/OFX continua obrigatório na V1 e independe de Open Finance. Cadastro mínimo de contas não representa saldos ou integração bancária; tipos de importação não são parsers.
 
 ## Validação executada em 08/10/2026
 
-- `npm run docs:check`: links, 7 tasks e SHA-256 do arquivo histórico verificados.
+- `npm run docs:check`: 25 documentos, links, 7 tasks e SHA-256 do arquivo histórico verificados.
 - `npm run typecheck`: workspaces aprovados.
-- `npm test`: 42 testes em 3 arquivos aprovados, incluindo HTTP real da API.
+- `npm test`: 45 testes unitários aprovados.
+- `npm run test:integration`: 10 testes contra PostgreSQL real e SMTP local aprovados.
+- `npm run test:e2e`: jornada completa Chromium aprovada; screenshot móvel inspecionado.
 - `npm run build`: domínio, API e frontend compilados.
 - `npm run smoke:web`: HTML e 2 assets compilados servidos por HTTP; não é teste de renderização/E2E.
 - `docker compose config --quiet`: configuração válida.
-- `docker compose up --build -d --wait --wait-timeout 90`: imagens construídas e três serviços healthy.
-- HTTP do frontend, API direta e API via proxy: respostas corretas; consulta SQL no PostgreSQL retornou banco `rovere` e valor de controle `1`.
-- `docker compose down`: serviços do Rovere encerrados, mantendo o volume.
-- Auditoria na instalação: nenhuma vulnerabilidade conhecida reportada.
+- `docker compose up --build -d --wait --wait-timeout 120`: imagens construídas, quatro serviços saudáveis e migração concluída (exit 0); reexecução preservou dados.
+- HTTP via proxy: frontend, liveness e readiness retornaram 200; recurso privado sem sessão retornou 401.
+- `npm audit` e auditoria de produção: nenhuma vulnerabilidade conhecida reportada após correções transitivas.
 
-Falha inicial de configuração de tipos Node foi corrigida e revalidada. CI foi preparada, mas ainda não executou no GitHub. Detalhes e links de implementação ficam nas tasks.
+CI ampliada com PostgreSQL, Mailpit, integração e Chromium. Resultado remoto desta branch ainda não verificado. Falhas resolvidas, comandos e limites da entrega estão registrados na RF-013.
 
 ## Ambiente e ocorrências resolvidas
 
-Docker Desktop estava desligado e foi iniciado pela CLI. Portas padrão estavam ocupadas; Rovere usa portas externas 15432 (PostgreSQL), 3100 (API) e 18080 (web), configuráveis. Serviços existentes não foram interrompidos. Ao encerrar a validação, os containers do Rovere foram parados com `docker compose down`, preservando o volume. Docker Desktop permanece ativo.
+Docker Desktop ativo. Serviços Rovere deixados ativos: PostgreSQL 15432, API 3100, frontend `http://127.0.0.1:18080`, SMTP local 11025 e Mailpit `http://127.0.0.1:18025`. Portas padrão ocupadas por serviços alheios não foram alteradas. Para parar preservando volume: `docker compose down`. Testes usam schemas próprios em `rovere_test`, sem tocar no banco de desenvolvimento. Não há credenciais de usuários pré-criadas; cadastro e confirmação disponíveis na interface/Mailpit.
 
-Não há bloqueio de ambiente conhecido para a próxima task. Existem decisões financeiras pendentes, listadas separadamente, que não bloqueiam a autenticação.
+Não há bloqueio de ambiente conhecido. A implantação pública ainda exige configuração operacional documentada em identidade. Decisões financeiras pendentes permanecem abertas; nenhuma foi inferida nesta entrega.
 
 ## Próxima ação concreta
 
-1. Iniciar RF-013: detalhar identidade, persistência inicial e isolamento por usuário antes de aceitar arquivos financeiros; subir ambiente com `docker compose up -d --wait`.
-2. Verificar migrations e autorização com PostgreSQL real, sem apagar o volume para contornar falhas.
-3. Decompor RF-014 ao se aproximar: CSV e OFX no mesmo marco, com revisão e idempotência reais em banco.
+1. Revisar RF-013 e verificar o estado do merge antes de criar a próxima branch a partir da main atualizada.
+2. Decompor RF-014: destinos de contas/cartões, upload privado, staging, CSV e OFX no mesmo marco, revisão e idempotência em banco.
+3. Apresentar proposta para BIZ-03 (fatura ausente) antes de implementar comportamento dependente; avançar nos contratos/fixtures independentes. Reusar a autorização por proprietário e testar também arquivos/lotes entre usuários.
 
 Consultar [decisões pendentes](decisions/pending.md) antes de qualquer regra dependente. Não confundir o scaffolding com a entrega 1 completa. A próxima sessão deve inspecionar código e testes antes de confiar neste resumo.

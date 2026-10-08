@@ -9,4 +9,17 @@ section { margin-top: 56px; padding: 32px; background: #fff; border: 1px solid #
 .badge { display: inline-block; font-size: 12px; font-weight: 650; background: #e7eee6; padding: 6px 12px; border-radius: 24px; }
 h2 { font-size: 22px; font-weight: 600; margin-top: 24px; }
 footer { margin-top: 48px; color: #53665e; font-size: 13px; }
+form { display: grid; gap: 20px; max-width: 460px; }
+label { display: grid; gap: 8px; font-weight: 600; }
+input { width: 100%; border: 1px solid #98aaa1; border-radius: 8px; padding: 12px; font: inherit; background: #fff; color: #183e34; }
+button { border: 0; border-radius: 8px; background: #215743; color: white; padding: 12px 20px; font: inherit; font-weight: 600; cursor: pointer; }
+button:disabled { opacity: .65; cursor: wait; }
+button.secondary { color: #215743; background: #e7eee6; }
+nav { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 24px; }
+:focus-visible { outline: 3px solid #a77828; outline-offset: 3px; }
+small, .note { font-size: 13px; font-weight: 400; }
+[role=status] { padding: 12px; background: #edf2eb; border-radius: 8px; }
+ul { padding: 0; list-style: none; }
+li { padding: 12px 0; border-bottom: 1px solid #dde3d9; overflow-wrap: anywhere; }
+.currency { float: right; font-size: 12px; color: #53665e; }
 @media (max-width: 480px) { main { padding: 32px 20px; } h1 { margin-top: 56px; } section { padding: 24px; } }

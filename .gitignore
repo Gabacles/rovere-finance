@@ -12,3 +12,6 @@ coverage/
 .vscode/
 uploads/
 backups/
+apps/api/src/generated/
+playwright-report/
+test-results/

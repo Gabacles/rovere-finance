@@ -4,7 +4,7 @@
 
 A autorização será aplicada a todas as consultas e comandos, incluindo downloads, prévias e tarefas assíncronas. O usuário autenticado virá da sessão, sem confiar num `user_id` enviado pelo cliente.
 
-Propõem-se sessões persistidas e revogáveis, cookies `HttpOnly` e `Secure`, proteção CSRF, expiração e recuperação de acesso por tokens de uso único. Better Auth oferece gerenciamento de sessões que pode servir de base para esses fluxos. [Documentação de sessões](https://better-auth.com/docs/concepts/session-management)
+RF-013 implementa sessões persistidas e revogáveis, cookies `HttpOnly`/`SameSite=Lax` (`Secure` quando HTTPS), proteção CSRF, expiração e recuperação de acesso com tokens de uso único via Better Auth. HTTP é permitido exclusivamente para desenvolvimento. Contrato, isolamento e limitações em [identidade](identity.md). [Documentação de sessões](https://better-auth.com/docs/concepts/session-management)
 
 Os arquivos importados terão armazenamento privado, nomes internos aleatórios, prazo de retenção e limites de tamanho, linhas, tempo e memória. O parsing XML deverá desabilitar entidades externas e acesso à rede. Conteúdo importado será tratado como texto; exportações para planilhas deverão neutralizar fórmulas maliciosas.
 

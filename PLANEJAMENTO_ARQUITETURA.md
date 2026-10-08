@@ -16,6 +16,7 @@ Leia primeiro [AGENTS.md](AGENTS.md), depois o [estado atual](docs/progress.md) 
 | Experiência e dashboard | [UX](docs/ux.md) |
 | Open Finance futuro | [Integrações](docs/integrations.md) |
 | Segurança e operação | [Segurança](docs/security.md) |
+| Autenticação e isolamento atuais | [Identidade](docs/identity.md) |
 | Estratégia de testes e aceite da V1 | [Qualidade](docs/quality.md) |
 | Fases macro | [Roadmap](docs/roadmap.md) |
 | Situação e retomada | [Progresso](docs/progress.md) |

@@ -6,7 +6,7 @@ const root = process.cwd();
 const errors = [];
 function walk(dir) {
   return readdirSync(dir, { withFileTypes: true }).flatMap(entry => {
-    if (['node_modules', '.git', 'dist', 'coverage'].includes(entry.name)) return [];
+    if (['node_modules', '.git', 'dist', 'coverage', 'test-results', 'playwright-report'].includes(entry.name)) return [];
     const path = resolve(dir, entry.name);
     return entry.isDirectory() ? walk(path) : path.endsWith('.md') ? [path] : [];
   });

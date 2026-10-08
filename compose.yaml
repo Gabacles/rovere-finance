@@ -15,19 +15,42 @@ services:
       interval: 5s
       timeout: 3s
       retries: 10
+  mailpit:
+    image: axllent/mailpit:v1.27@sha256:e22dce5b36f93c77082e204a3942fb6b283b7896e057458400a4c88344c3df68
+    ports:
+      - "127.0.0.1:11025:1025"
+      - "127.0.0.1:18025:8025"
+  migrate:
+    build:
+      context: .
+      target: build
+    command: ["npm", "run", "db:migrate"]
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-rovere}:${POSTGRES_PASSWORD:-rovere_local_only}@db:5432/${POSTGRES_DB:-rovere}
+    depends_on:
+      db:
+        condition: service_healthy
   api:
     build:
       context: .
       target: api
     environment:
       PORT: 3000
+      NODE_ENV: development
+      DATABASE_URL: postgresql://${POSTGRES_USER:-rovere}:${POSTGRES_PASSWORD:-rovere_local_only}@db:5432/${POSTGRES_DB:-rovere}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-development-only-secret-change-before-deploy-0123456789}
+      APP_ORIGIN: http://127.0.0.1:${WEB_PORT:-18080}
+      SMTP_URL: smtp://mailpit:1025
+      MAIL_FROM: Rovere Finance <noreply@rovere.test>
     ports:
       - "127.0.0.1:${API_PORT:-3100}:3000"
     depends_on:
-      db:
-        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+      mailpit:
+        condition: service_started
     healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
       interval: 5s
       timeout: 3s
       retries: 10
