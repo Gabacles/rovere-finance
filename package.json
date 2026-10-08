@@ -3,9 +3,22 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "engines": { "node": ">=24.14.0 <25", "npm": ">=11" },
-  "workspaces": ["packages/*", "apps/*"],
+  "engines": {
+    "node": ">=24.14.0 <25",
+    "npm": ">=11"
+  },
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
   "scripts": {
+    "db:generate": "prisma generate --config apps/api/prisma.config.ts",
+    "db:migrate": "node --env-file-if-exists=.env node_modules/prisma/build/index.js migrate deploy --config apps/api/prisma.config.ts",
+    "prebuild": "npm run db:generate",
+    "pretypecheck": "npm run db:generate",
+    "pretest": "npm run db:generate",
+    "test:integration": "npm run db:generate && npm run build --workspace=@rovere/api && vitest run --config vitest.integration.config.ts",
+    "test:e2e": "npm run build && playwright test",
     "dev:api": "npm run dev --workspace=@rovere/api",
     "dev:web": "npm run dev --workspace=@rovere/web",
     "build": "npm run build --workspace=@rovere/domain && npm run build --workspace=@rovere/api && npm run build --workspace=@rovere/web",
@@ -15,8 +28,17 @@
     "smoke:web": "node scripts/smoke-web.mjs",
     "check": "npm run docs:check && npm run typecheck && npm run test && npm run build && npm run smoke:web"
   },
+  "overrides": {
+    "@prisma/config": { "deepmerge-ts": "8.0.2" },
+    "prisma": { "mysql2": "3.24.5" }
+  },
   "devDependencies": {
+    "@playwright/test": "1.64.0",
+    "@types/express": "5.0.6",
     "@types/node": "^24.0.0",
+    "@types/nodemailer": "8.0.2",
+    "@types/pg": "8.23.1",
+    "prisma": "7.10.0",
     "typescript": "7.0.2",
     "vitest": "5.0.3"
   }

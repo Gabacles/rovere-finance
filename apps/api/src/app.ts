@@ -1,6 +1,17 @@
 import 'reflect-metadata';
-import { Controller, Get, Module } from '@nestjs/common';
+import { Controller, Get, Module, Inject, Injectable, Req, UseGuards, ServiceUnavailableException } from '@nestjs/common';
+import type { OnApplicationShutdown } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import express from 'express';
+import { toNodeHandler } from 'better-auth/node';
+import { createDatabase } from './database.js';
+import type { Database } from './database.js';
+import type { AppConfig } from './config.js';
+import { createIdentity } from './identity/auth.js';
+import type { Identity } from './identity/auth.js';
+import { IDENTITY, SessionGuard } from './identity/guard.js';
+import type { AuthenticatedRequest } from './identity/guard.js';
+import { AccountsController, DATABASE } from './accounts/accounts.controller.js';
 
 @Controller('health')
 class HealthController {
@@ -10,12 +21,55 @@ class HealthController {
   }
 }
 
-@Module({ controllers: [HealthController] })
-class AppModule {}
+@Controller()
+class IdentityController {
+  constructor(@Inject(DATABASE) private readonly db: Database) {}
+  @Get('me')
+  @UseGuards(SessionGuard)
+  me(@Req() req: AuthenticatedRequest) {
+    return this.db.user.findUniqueOrThrow({ where: { id: req.ownerId }, select: { id: true, name: true, email: true, emailVerified: true } });
+  }
+  @Get('ready')
+  async ready() {
+    try { await this.db.$queryRaw`SELECT 1`; return { status: 'ok' }; }
+    catch { throw new ServiceUnavailableException('Serviço temporariamente indisponível.'); }
+  }
+}
 
-export async function createApp() {
-  const app = await NestFactory.create(AppModule, { logger: ['error', 'warn'] });
+@Injectable()
+class Resources implements OnApplicationShutdown {
+  constructor(@Inject(DATABASE) private readonly db: Database, @Inject(IDENTITY) private readonly identity: Identity) {}
+  async onApplicationShutdown() { await this.identity.close(); await this.db.$disconnect(); }
+}
+
+export async function createApp(config: AppConfig, db = createDatabase(config.databaseUrl)) {
+  await db.$connect();
+  const identity = createIdentity(db, config);
+  @Module({
+    controllers: [HealthController, IdentityController, AccountsController],
+    providers: [{ provide: DATABASE, useValue: db }, { provide: IDENTITY, useValue: identity }, SessionGuard, Resources],
+  })
+  class AppModule {}
+  const app = await NestFactory.create(AppModule, { logger: ['error', 'warn'], bodyParser: false });
   app.setGlobalPrefix('api');
   app.enableShutdownHooks();
+  const server: express.Express = app.getHttpAdapter().getInstance();
+  server.disable('x-powered-by');
+  server.use((req, res, next) => {
+    // Only the direct peer is trusted. Incoming forwarded headers cannot bypass throttling.
+    req.headers['x-rovere-client-ip'] = req.socket.remoteAddress ?? '127.0.0.1';
+    res.setHeader('Cache-Control', 'no-store');
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Referrer-Policy', 'no-referrer');
+    if (!['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
+      if (req.headers.origin !== config.publicOrigin || !req.is('application/json')) {
+        res.status(403).json({ code: 'UNTRUSTED_REQUEST', message: 'Origem ou formato de requisição inválidos.' });
+        return;
+      }
+    }
+    next();
+  });
+  server.all('/api/auth/{*path}', toNodeHandler(identity.auth));
+  server.use(express.json({ limit: '16kb' }));
   return app;
 }

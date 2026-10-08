@@ -9,3 +9,6 @@ coverage
 .tmp-*
 uploads
 backups
+**/src/generated
+test-results
+playwright-report

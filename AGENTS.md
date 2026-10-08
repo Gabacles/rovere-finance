@@ -30,7 +30,14 @@
 - Mudanças de arquitetura ou de regras devem atualizar o documento canônico e, quando importantes, um ADR. Não duplicar a regra completa no ADR; registrar decisão, contexto, consequências e link.
 - O arquivo `docs/archive/2026-10-08-planejamento-original.md` é histórico e imutável; a aprovação e as decisões posteriores prevalecem.
 
-## Execução e validação
+## Fluxo Git
+
+- Desde 08/10/2026, cada task deve ser executada em branch própria, por exemplo `feat/rf-013-authentication`, criada a partir da `main` atualizada.
+- A base inicial teve push autorizado diretamente para `main`; as próximas entregas devem ser commitadas e enviadas à branch da task para revisão antes de integrar à `main`.
+- Use commits semânticos em inglês e a identidade Git configurada, sem assinatura/coautoria do agente. Não fazer merge ou push direto para `main` sem autorização específica.
+- Antes de commit/push: revisar diff, executar os testes aplicáveis, atualizar evidências e conferir arquivos sensíveis. Nunca usar force push para contornar conflitos.
+
+## Comandos
 
 Consulte [README.md](README.md) para os comandos atuais. Execute validações proporcionais à mudança e registre resultados reais. Não alegar que Docker, banco, frontend ou integração funcionaram se não foram executados.
 

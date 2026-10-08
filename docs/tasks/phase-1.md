@@ -12,7 +12,7 @@
   - [x] Validar liveness HTTP real e página inicial com estado técnico honesto.
   - [x] Documentar execução e preparar pipeline de validação.
 - Testes necessários: tipos, build, teste HTTP da API e verificação documental.
-- Implementação: [frontend](../../apps/web/src/main.tsx), [API](../../apps/api/src/app.ts), [manifests](../../package.json), [CI](../../.github/workflows/ci.yml), [README](../../README.md), [teste HTTP](../../apps/api/test/health.test.ts) e [smoke web](../../scripts/smoke-web.mjs).
+- Implementação: [frontend](../../apps/web/src/main.tsx), [API](../../apps/api/src/app.ts), [manifests](../../package.json), [CI](../../.github/workflows/ci.yml), [README](../../README.md), [teste HTTP atual](../../apps/api/test/identity.integration.test.ts) e [smoke web](../../scripts/smoke-web.mjs). O teste HTTP inicial foi incorporado à integração na RF-013.
 - Evidências (08/10/2026): Node 24.14.0/npm 11.9.0; `npm install --no-fund` gerou lockfile e auditou sem vulnerabilidades conhecidas; `npm run check` passou (documentação, tipos, 42 testes e builds); `npm run smoke:web` passou, servindo HTML e 2 assets compilados por HTTP. Git local inicializado, sem commit ou remoto. CI preparada, ainda não executada no GitHub.
 - Falha resolvida: o primeiro typecheck apontou TS2591 por ausência de `types: ["node"]` na API; configuração corrigida e checks repetidos com sucesso.
 - Limitação: smoke HTTP e build não substituem validação visual/E2E em navegador. A página é informativa; não implementa funcionalidades financeiras.
@@ -53,20 +53,23 @@
 - Limitação: PostgreSQL executável foi validado, mas a API ainda não possui conexão de aplicação, schema financeiro ou migrations.
 - Próximo passo: RF-013, autenticação, migrações e isolamento de dados com testes em PostgreSQL real.
 
-## [ ] RF-013 — Autenticação e isolamento de dados
+## [x] RF-013 — Autenticação e isolamento de dados
 
-- Estado: pendente
+- Estado: concluída
 - Descrição: sessão persistida, recuperação de acesso e autorização por proprietário em API/banco.
 - Contexto/objetivo: requisito anterior a uploads financeiros e persistência multiusuário.
 - Dependências: RF-010, RF-012 e migrations iniciais detalhadas nesta task ao iniciá-la.
 - Atividades e aceite:
-  - [ ] Implementar autenticação/sessões e migrações com credenciais de desenvolvimento fictícias.
-  - [ ] Testar acesso cruzado negado, expiração, revogação e CSRF.
-  - [ ] Documentar setup e evidências com PostgreSQL real.
+  - [x] Implementar autenticação/sessões e migrações com credenciais de desenvolvimento fictícias.
+  - [x] Testar acesso cruzado negado, expiração, revogação e CSRF.
+  - [x] Documentar setup e evidências com PostgreSQL real.
 - Testes necessários: integração de banco e API; jornada de login/logout.
-- Implementação: ainda inexistente.
-- Evidências: nenhuma; não iniciada.
-- Próximo passo: detalhar os contratos de identidade e o schema inicial quando a base estiver validada.
+- Implementação: branch `feat/rf-013-authentication`; [auth](../../apps/api/src/identity/auth.ts), [guard](../../apps/api/src/identity/guard.ts), [contas](../../apps/api/src/accounts/accounts.controller.ts), [schema](../../apps/api/prisma/schema.prisma), [migração](../../apps/api/prisma/migrations/202610080001_identity/migration.sql), [frontend](../../apps/web/src/main.tsx), [integração](../../apps/api/test/identity.integration.test.ts), [E2E](../../tests/e2e/identity.spec.ts), [setup](../../README.md) e [ADR-0004](../decisions/0004-identity-persistence.md). Contrato em [identidade](../identity.md).
+- Evidências (08/10/2026): `npm run check` passou: 25 documentos Markdown/7 tasks, tipos dos workspaces, 45 testes unitários, builds e smoke HTTP com 2 assets. `npm run test:integration`: 10 testes em PostgreSQL 18 real e Mailpit aprovados; cobrem email confirmado, hash, autorização, sessão inválida/expirada/revogada, persistência após reiniciar a aplicação, CSRF, callbacks externos, reset genérico/expirado/reutilizado/concorrente e rate limit mesmo com IP forjado. `npm run test:e2e`: 1 jornada Chromium aprovada, com cadastro, email, login, conta persistida, reload, logout e recuperação; screenshot móvel 390×844 inspecionado, sem overflow horizontal. `npm audit` e `npm audit --omit=dev`: zero vulnerabilidades conhecidas.
+- Evidências Docker: `docker compose up --build -d --wait --wait-timeout 120` passou; db, Mailpit, API e web saudáveis; migração terminou com código 0. Reexecução não reaplicou a migração. Proxy web: `/` 200, `/api/health` 200, `/api/ready` 200, `/api/me` 401 sem sessão e `/api/auth/get-session` 200. Sem reset do banco de desenvolvimento. Serviços deixados ativos nas portas do README.
+- Falhas resolvidas: geração de SQL passou a usar `--config apps/api/prisma.config.ts`; proteções de origem/CSRF explicitamente habilitadas também em ambiente de teste; descrição acessível da senha separada do label; teardown de schema E2E adaptado ao encerramento de processos no Windows; OpenSSL instalado no estágio de build/migração. Schemas das tentativas iniciais foram removidos somente de `rovere_test`. Overrides transitivos registrados no ADR.
+- Limitações: contas mínimas sem saldos/cartões/movimentações. Isolamento demonstrado para os recursos atuais, sem RLS ou módulos financeiros futuros. SMTP externo, TLS público, retry durável de emails e tratamento de IP atrás de ingress ainda dependem da implantação; [detalhes](../identity.md). CI configurada para integração/E2E, resultado remoto ainda não verificado.
+- Próximo passo: revisar a branch para integração à main; depois decompor RF-014 e resolver BIZ-03 antes do comportamento dependente.
 
 ## [ ] RF-014 — Primeira fatia vertical de importação CSV e OFX
 
