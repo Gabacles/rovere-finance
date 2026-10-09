@@ -14,7 +14,7 @@ RF-018 implementa BankEntry/CardCharge separados, identidades externas com escop
 
 `npm run check`: 32 documentos/11 tasks, hash histórico, tipos, 88 unitários, builds e smoke aprovados. Integração: 41 aprovados, com 500 compras por formato, dois usuários, concorrência, rollback, reenvio/restart e conflitos. Chromium: 5 jornadas, incluindo confirmação/reimportação CSV e OFX de 500 compras cada, resposta perdida após commit e conciliação explícita; captura móvel inspecionada.
 
-Docker atualizado, quatro serviços saudáveis, quarta migration aplicada sem reset; schema e banco sem diferenças. Proxy público 200 e consulta financeira 401 sem sessão. Resultados/comandos e falhas corrigidas estão na task RF-018. CI remota desta entrega ainda não verificada; resultados da RF-017 permanecem atribuídos ao head anterior.
+Docker atualizado, quatro serviços saudáveis, quarta migration aplicada sem reset; schema e banco sem diferenças. Proxy público 200 e consulta financeira 401 sem sessão. Resultados/comandos e falhas corrigidas estão na task RF-018. [CI de push](https://github.com/Gabacles/rovere-finance/actions/runs/37941646330) aprovada na implementação `a895f80`; [PR #6](https://github.com/Gabacles/rovere-finance/pull/6) aberto. Conferir CI/head atualizado do PR antes do merge; resultados RF-017 permanecem atribuídos ao head anterior.
 
 ## Próxima ação concreta
 
