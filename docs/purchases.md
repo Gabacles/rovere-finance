@@ -4,7 +4,9 @@
 
 A associação explícita confirma que uma cobrança própria se relaciona à compra. Não classifica sua natureza financeira pelo sinal/descrição (RF-023), não altera origem, valor, parcela, competência ou correção manual. Cada cobrança tem no máximo uma compra; a compra pode ter várias cobranças, inclusive de créditos próprios distintos. FK tipada composta por proprietário impede cruzamento de usuários. Desassociação é explícita e auditada, sem excluir cobrança.
 
-Não multiplicar parcela pelo número de parcelas, somar cobranças para preencher total nem copiar data de processamento para data original. Criar compra manual não cria cobrança, fatura, plano ou movimento bancário. Nova importação mantém seus registros/identidades e não sobrescreve a compra. Indicadores futuros não somarão compra agregada e cobranças no mesmo indicador. Categoria, planos, alocações e totais calculados ficam nas próximas tasks.
+Não multiplicar parcela pelo número de parcelas, somar cobranças para preencher total nem copiar data de processamento para data original. Criar compra manual não cria cobrança, fatura, plano ou movimento bancário. Nova importação mantém seus registros/identidades e não sobrescreve a compra. Indicadores futuros não somarão compra agregada e cobranças no mesmo indicador. Categoria, alocações e totais calculados ficam nas próximas tasks.
+
+RF-022 acrescenta [planos confirmados](installment-plans.md) por comando separado: total da compra deve estar conhecido e coincidir; com plano existente, limpar/mudar total é recusado até revisão explícita do plano (evolução futura). Cobrança conciliada exige desconciliação antes de desassociar; descrição/notas/data original continuam editáveis. Leitura da compra inclui plano ou null; respostas idempotentes/histórico antigos permanecem preservados.
 
 ## HTTP executável
 

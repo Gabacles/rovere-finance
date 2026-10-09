@@ -18,6 +18,7 @@ Leia primeiro [AGENTS.md](AGENTS.md), depois o [estado atual](docs/progress.md) 
 | Confirmação e registros financeiros | [Confirmação de importação](docs/import-confirmation.md) |
 | Dados e ciclo informado de fatura | [Faturas](docs/card-statements.md) |
 | Compra manual e cobranças associadas | [Compras](docs/purchases.md) |
+| Planos e conciliação de parcelas | [Parcelas](docs/installment-plans.md) |
 | Políticas de negócio da v0 | [Políticas da v0](docs/v0-policies.md) |
 | Experiência e dashboard | [UX](docs/ux.md) |
 | Open Finance futuro | [Integrações](docs/integrations.md) |

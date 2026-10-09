@@ -33,6 +33,8 @@ RF-020 acrescenta [fatos explícitos de fatura](card-statements.md): datas, tota
 
 RF-021 implementa [compras manuais](purchases.md), com dados completos/parciais e vínculos tipados, sem preencher lacunas pela importação. As [políticas da v0](v0-policies.md) resolvem BIZ-02/BIZ-04/BIZ-05 dentro de limites explícitos.
 
+RF-022 implementa [planos mensais confirmados](installment-plans.md), previsões separadas das cobranças, divisão exata reutilizada e conciliação explícita com preservação de origem/diferenças. Plano não informa pagamento nem cria fatura ou cobrança ausente.
+
 **Uma cobrança importada pode existir sem a compra completa conhecida.** Por exemplo, um arquivo pode informar apenas a parcela 3/10 de R$ 120. O modelo deverá aceitar esse conhecimento parcial sem inventar data original, total exato ou parcelas anteriores.
 
 Campos e restrições essenciais:

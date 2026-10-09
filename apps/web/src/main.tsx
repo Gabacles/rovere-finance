@@ -42,6 +42,16 @@ function App() {
         CHARGE_NOT_FOUND: 'Cobrança não encontrada.',
         CHARGE_ALREADY_LINKED: 'A cobrança já está associada a uma compra. Recarregue os dados.',
         CHARGE_LINK_CONFLICT: 'O vínculo mudou. Recarregue os dados.',
+        INVALID_INSTALLMENT_PLAN: 'Confira total, quantidade, crédito, competências e valor efetivo em BRL.',
+        PLAN_TOTAL_REQUIRED: 'Confirme o total da compra e use o mesmo valor no plano.',
+        PLAN_TOTAL_LOCKED: 'O total tem um plano confirmado. A revisão do plano ainda não está disponível nesta versão.',
+        INSTALLMENT_PLAN_EXISTS: 'Esta compra já tem um plano confirmado. Recarregue os dados.',
+        INSTALLMENT_PLAN_REQUIRED: 'Confirme um plano antes de conciliar parcelas.',
+        INSTALLMENT_INCOMPATIBLE: 'Crédito, competência, parcela ou valor confirmado não correspondem à cobrança.',
+        INSTALLMENT_ALREADY_MATCHED: 'Esta parcela já tem cobrança conciliada. Recarregue os dados.',
+        CHARGE_ALREADY_MATCHED: 'A cobrança já está conciliada a uma parcela.',
+        INSTALLMENT_MATCH_EXISTS: 'Desconcilie a parcela antes de desassociar a cobrança.',
+        INSTALLMENT_NOT_MATCHED: 'Esta previsão não tem cobrança conciliada.',
       };
       throw new Error(response.status === 429 ? 'Muitas tentativas. Aguarde um minuto.' : errors[data.code as string] ?? 'Não foi possível concluir. Confira os dados e tente novamente.');
     }

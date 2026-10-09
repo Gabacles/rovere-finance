@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import type { ExpenseDTO, ExpenseFacts, KnownValue } from '@rovere/domain';
 import { amountInput, centsInput } from './money-input';
+import { InstallmentPlans } from './installment-plans';
 
 type Api = (path: string, body?: unknown, key?: string, method?: 'GET' | 'POST' | 'PATCH') => Promise<any>;
 type Summary = Pick<ExpenseDTO, 'id' | 'description' | 'knowledge' | 'version'>;
@@ -13,6 +14,7 @@ const totalText = (facts: ExpenseFacts) => facts.total.state === 'confirmed' ? `
 export function Expenses({ api, catalogVersion }: { api: Api; catalogVersion: number }) {
   const [list, setList] = useState<{ rows: Summary[]; total: number }>({ rows: [], total: 0 }); const [page, setPage] = useState(1);
   const [id, setId] = useState(''); const [value, setValue] = useState<ExpenseDTO | null>(null); const [busy, setBusy] = useState(false);
+  const [editorRefresh, setEditorRefresh] = useState(0);
   const [refresh, setRefresh] = useState(0); const [message, setMessage] = useState(''); const [history, setHistory] = useState<History[] | null>(null);
   const [credits, setCredits] = useState<{ id: string; name: string }[]>([]); const [creditId, setCreditId] = useState('');
   const [statements, setStatements] = useState<{ id: string; period: string }[]>([]); const [statementId, setStatementId] = useState('');
@@ -84,7 +86,7 @@ export function Expenses({ api, catalogVersion }: { api: Api; catalogVersion: nu
   }
   async function reload() {
     setBusy(true);
-    try { setValue(await api(`/expenses/${id}`)); setHistory(null); setRefresh(version => version + 1); setMessage('Compra recarregada.'); }
+    try { setValue(await api(`/expenses/${id}`)); setEditorRefresh(current => current + 1); setHistory(null); setRefresh(version => version + 1); setMessage('Compra recarregada.'); }
     catch (error) { showError(error); } finally { setBusy(false); }
   }
   async function showHistory() {
@@ -102,7 +104,7 @@ export function Expenses({ api, catalogVersion }: { api: Api; catalogVersion: nu
     {id && !value ? <><p>Carregando compra…</p><button className="secondary" disabled={busy} onClick={() => void reload()}>Recarregar compra e cobranças</button></> : <>
       <h3>{value ? 'Editar compra' : 'Cadastrar compra'}</h3>
       {value && <div data-testid="expense-summary"><p>{value.knowledge === 'complete' ? 'Dados completos' : 'Dados parciais'} · {value.description}</p><p>Data original: {known(value.facts.purchasedOn) ?? 'Não informada'} · Total da compra: {totalText(value.facts)}</p><p>{value.charges.length} cobranças associadas. Total informado não representa pagamento ou cobertura pelas cobranças.</p></div>}
-      <form key={value ? `${value.id}:${value.version}` : 'new-expense'} onSubmit={save}>
+      <form key={value ? `${value.id}:${value.version}:${editorRefresh}` : 'new-expense'} onSubmit={save}>
         <label>Descrição da compra<input name="description" required maxLength={500} defaultValue={value?.description ?? ''} disabled={disabled} /></label>
         <label>Data original da compra<input name="purchasedOn" type="date" min="0001-01-01" max="9999-12-31" defaultValue={value ? known(value.facts.purchasedOn) ?? '' : ''} disabled={disabled} /></label>
         <label>Total da compra em reais<input name="total" inputMode="decimal" placeholder="Não informado" defaultValue={value ? amountInput(known(value.facts.total)?.cents) : ''} disabled={disabled} /></label>
@@ -126,7 +128,8 @@ export function Expenses({ api, catalogVersion }: { api: Api; catalogVersion: nu
         </form>
         <nav aria-label="Páginas de cobranças para associação"><button className="secondary" disabled={busy || chargeLoading || chargePage === 1} onClick={() => setChargePage(chargePage - 1)}>Cobranças anteriores</button><span>Página {chargePage} · {charges.total} cobranças registradas</span><button className="secondary" disabled={busy || chargeLoading || chargePage * 25 >= charges.total} onClick={() => setChargePage(chargePage + 1)}>Próximas cobranças</button></nav>
       </>}
-      {history && <div className="statement-history"><h3>Histórico da compra — últimas 20 alterações</h3>{history.map(item => <p key={item.id}>Versão {item.version} · {item.createdAt} · {item.changes.current.description} · Data original: {known(item.changes.current.facts.purchasedOn) ?? 'Não informada'} · Total: {totalText(item.changes.current.facts)} · {item.changes.current.charges.length} cobranças</p>)}</div>}
+      <InstallmentPlans key={value.id} value={value} credits={credits} api={api} busy={busy} catalogVersion={catalogVersion} write={write} />
+      {history && <div className="statement-history"><h3>Histórico da compra — últimas 20 alterações</h3>{history.map(item => <p key={item.id}>Versão {item.version} · {item.createdAt} · {item.changes.current.description} · Data original: {known(item.changes.current.facts.purchasedOn) ?? 'Não informada'} · Total: {totalText(item.changes.current.facts)} · {item.changes.current.charges.length} cobranças · Plano: {item.changes.current.installmentPlan ? `${item.changes.current.installmentPlan.count} parcelas, ${item.changes.current.installmentPlan.forecasts.filter(row => row.actual).length} conciliadas` : 'Não informado nesta versão'}</p>)}</div>}
     </>}
   </section>;
 }

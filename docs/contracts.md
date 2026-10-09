@@ -1,6 +1,6 @@
 # Contratos e invariantes fundamentais
 
-Estado: primitivas, identidade, destinos, upload/revisão, [confirmação RF-018](import-confirmation.md), [fatos de fatura RF-020](card-statements.md) e [compras RF-021](purchases.md) implementados. Planos, totais calculados/pagamentos, liquidações, orçamento e demais invariantes futuras não concluídos. [Políticas da v0](v0-policies.md) adotadas por delegação; pendências operacionais em [pending.md](decisions/pending.md).
+Estado: primitivas, identidade, destinos, upload/revisão, [confirmação RF-018](import-confirmation.md), [fatos de fatura RF-020](card-statements.md), [compras RF-021](purchases.md) e [planos/previsões RF-022](installment-plans.md) implementados. Totais calculados/pagamentos, liquidações, orçamento e demais invariantes futuras não concluídos. [Políticas da v0](v0-policies.md) adotadas por delegação; pendências operacionais em [pending.md](decisions/pending.md).
 
 ## Convenções
 
