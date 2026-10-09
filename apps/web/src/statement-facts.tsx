@@ -2,13 +2,14 @@ import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import type { KnownValue, StatementDetailsDTO, StatementFacts } from '@rovere/domain';
 import { amountInput, centsInput } from './money-input';
+import { StatementCalculationPanel } from './statement-calculation';
 
 type Api = (path: string, body?: unknown, key?: string, method?: 'GET' | 'POST' | 'PATCH') => Promise<any>;
 interface History { id: string; version: number; changes: { current: StatementFacts }; createdAt: string }
 const known = <T,>(value: KnownValue<T>): T | undefined => value.state === 'confirmed' ? value.value : undefined;
 const cycleName = (value: StatementFacts['cycle']): string => value.state === 'unknown' ? 'Não informado' : value.value === 'open' ? 'Aberta' : 'Fechada';
 
-export function StatementFactsPanel({ creditId, statements, api }: { creditId: string; statements: { id: string; period: string }[]; api: Api }) {
+export function StatementFactsPanel({ creditId, statements, api, financialVersion }: { creditId: string; statements: { id: string; period: string }[]; api: Api; financialVersion: number }) {
   const [statementId, setStatementId] = useState(''); const [value, setValue] = useState<StatementDetailsDTO | null>(null);
   const [refresh, setRefresh] = useState(0); const [busy, setBusy] = useState(false); const [message, setMessage] = useState(''); const [history, setHistory] = useState<History[] | null>(null);
   useEffect(() => {
@@ -62,6 +63,7 @@ export function StatementFactsPanel({ creditId, statements, api }: { creditId: s
         <button type="submit" disabled={busy}>Salvar dados da fatura</button>
       </form>
       <nav aria-label="Revisão dos dados da fatura"><button className="secondary" disabled={busy} onClick={() => { setMessage(''); setRefresh(number => number + 1); }}>Recarregar dados da fatura</button><button className="secondary" disabled={busy} onClick={() => void showHistory()}>Consultar histórico da fatura</button></nav>
+      <StatementCalculationPanel key={value.id} creditId={creditId} statementId={statementId} api={api} statementVersion={value.version} parentBusy={busy} setParentBusy={setBusy} onStatementChanged={next => { setValue(next); setHistory(null); }} financialVersion={financialVersion} />
       {history && <div><h3>Últimas 20 alterações</h3>{history.length === 0 ? <p>Nenhuma alteração de dados registrada.</p> : history.map(item => <div className="statement-history" key={item.id}>
         <p>Versão {item.version} · {new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short', timeZone: 'America/Sao_Paulo' }).format(new Date(item.createdAt))}</p>
         <p>Ciclo: {cycleName(item.changes.current.cycle)} · Total declarado: {item.changes.current.declaredTotal.state === 'confirmed' ? `BRL ${amountInput(item.changes.current.declaredTotal.value.cents)}` : 'Não informado'}</p>

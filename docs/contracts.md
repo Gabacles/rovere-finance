@@ -1,6 +1,6 @@
 # Contratos e invariantes fundamentais
 
-Estado: primitivas, identidade, destinos, upload/revisão, [confirmação RF-018](import-confirmation.md), [fatos de fatura RF-020](card-statements.md), [compras RF-021](purchases.md) e [planos/previsões RF-022](installment-plans.md) implementados. Totais calculados/pagamentos, liquidações, orçamento e demais invariantes futuras não concluídos. [Políticas da v0](v0-policies.md) adotadas por delegação; pendências operacionais em [pending.md](decisions/pending.md).
+Estado: primitivas, identidade, destinos, upload/revisão, [confirmação RF-018](import-confirmation.md), [fatos de fatura RF-020](card-statements.md), [compras RF-021](purchases.md), [planos RF-022](installment-plans.md) e [natureza/cálculo RF-023](statement-calculation.md) implementados. Pagamentos/alocações, orçamento e demais invariantes futuras não concluídos. [Políticas da v0](v0-policies.md) adotadas por delegação; pendências operacionais em [pending.md](decisions/pending.md).
 
 ## Convenções
 
@@ -101,4 +101,4 @@ Campos de parcela, fatura e total usam estado de conhecimento e proveniência. U
 | `POST /api/receivables` | Despesa, terceiro e cronograma | Origem autorizada e limite de reembolso |
 | `POST /api/settlements` | Movimento, destinos tipados, alocações | INV-06; transação e concorrência |
 
-DTOs OpenAPI completos, erros e exemplos financeiros serão detalhados quando a task do endpoint se aproximar. Não gerar SDK de endpoints ainda inexistentes. As rotas já executáveis da RF-013 estão em [identidade](identity.md); liveness e readiness de banco são distintas.
+Contratos HTTP reais estão nos documentos de cada módulo; Swagger/OpenAPI executável ainda não existe. RF-026 foi solicitada para consolidar schema e UI interativa após RF-025 e antes da fase 3, com critérios em [tasks](tasks/phase-2.md). Não gerar SDK de endpoints ainda inexistentes. Rotas de identidade em [identidade](identity.md); liveness e readiness de banco são distintas.

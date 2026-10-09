@@ -63,6 +63,7 @@ export class InstallmentsService {
           if (forecast.actual) fail(409, 'INSTALLMENT_ALREADY_MATCHED', 'Esta parcela já tem cobrança conciliada.');
           const charge = await tx.cardCharge.findUnique({ where: { id_userId: { id: decision.chargeId, userId } }, include: { statement: { select: { period: true } } } });
           if (!charge) fail(404, 'CHARGE_NOT_FOUND', 'Cobrança não encontrada.');
+          if (charge.classificationKind !== null && charge.classificationKind !== 'purchase') fail(409, 'CLASSIFICATION_DEPENDENCY', 'A natureza confirmada não corresponde a uma parcela de compra. Revise explicitamente a classificação.');
           try { validateInstallmentMatch(plan, forecast, { creditAccountId: charge.creditAccountId, period: charge.statement.period, cents: charge.cents.toString(), installment: charge.installment as unknown as KnownValue<InstallmentReference> }, decision.confirmedAmount); }
           catch (error) { fail(409, 'INSTALLMENT_INCOMPATIBLE', 'Crédito, competência, parcela ou valor confirmado não correspondem à cobrança.', [{ field: error instanceof InstallmentError ? error.field : 'charge', code: 'INSTALLMENT_INCOMPATIBLE' }]); }
           const link = await tx.expenseCharge.findUnique({ where: { chargeId: charge.id } });

@@ -18,6 +18,7 @@ function App() {
   });
   const [accounts, setAccounts] = useState<{ id: string; name: string }[]>([]);
   const [catalogVersion, setCatalogVersion] = useState(0);
+  const [financialVersion, setFinancialVersion] = useState(0);
   async function api(path: string, body?: unknown, idempotencyKey?: string, method: 'GET' | 'POST' | 'PATCH' = body === undefined ? 'GET' : 'POST') {
     const response = await fetch(`/api${path}`, { method,
       headers: { 'Content-Type': 'application/json', ...(idempotencyKey ? { 'Idempotency-Key': idempotencyKey } : {}) }, credentials: 'same-origin',
@@ -52,6 +53,9 @@ function App() {
         CHARGE_ALREADY_MATCHED: 'A cobrança já está conciliada a uma parcela.',
         INSTALLMENT_MATCH_EXISTS: 'Desconcilie a parcela antes de desassociar a cobrança.',
         INSTALLMENT_NOT_MATCHED: 'Esta previsão não tem cobrança conciliada.',
+        INVALID_CLASSIFICATION: 'Confirme natureza e magnitude do valor original em BRL.',
+        CHARGE_VERSION_CONFLICT: 'A cobrança mudou. Recarregue os dados antes de salvar.',
+        CLASSIFICATION_DEPENDENCY: 'A natureza e a parcela conciliada não correspondem. Revise a classificação ou desconcilie a parcela explicitamente.',
       };
       throw new Error(response.status === 429 ? 'Muitas tentativas. Aguarde um minuto.' : errors[data.code as string] ?? 'Não foi possível concluir. Confira os dados e tente novamente.');
     }
@@ -131,8 +135,8 @@ function App() {
           {user && <p className="note">Cadastre destinos abaixo, revise seus arquivos e confirme apenas os registros selecionados.</p>}
         </>}
       </section>
-      {user && <Destinations key={`destinations:${user.email}`} accounts={accounts} api={api} onChanged={() => setCatalogVersion(value => value + 1)} />}
-      {user && <Imports key={`imports:${user.email}`} accounts={accounts} catalogVersion={catalogVersion} onExpired={() => { setUser(null); setAccounts([]); }} />}
+      {user && <Destinations key={`destinations:${user.email}`} accounts={accounts} api={api} onChanged={() => setCatalogVersion(value => value + 1)} financialVersion={financialVersion} />}
+      {user && <Imports key={`imports:${user.email}`} accounts={accounts} catalogVersion={catalogVersion} onFinancialChanged={() => setFinancialVersion(value => value + 1)} onExpired={() => { setUser(null); setAccounts([]); }} />}
       {user && <Expenses key={`expenses:${user.email}`} api={api} catalogVersion={catalogVersion} />}
       <footer>Organização hoje. Tranquilidade amanhã.</footer>
     </main>

@@ -24,6 +24,13 @@ export function addCents(left: Cents, right: Cents): Cents {
   return checked(left + right);
 }
 
+/** Aggregation is order independent; bounded inputs may cancel before the final range check. */
+export function sumCents(values: readonly Cents[]): Cents {
+  let total = 0n;
+  for (const value of values) total += checked(value);
+  return checked(total);
+}
+
 export function subtractCents(left: Cents, right: Cents): Cents {
   return checked(left - right);
 }
