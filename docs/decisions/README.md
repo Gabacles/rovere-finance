@@ -10,6 +10,7 @@
 | [ADR-0006](0006-private-import-review.md) | Aceita | Arquivo privado, parsing recuperável e revisão versionada |
 | [ADR-0007](0007-transactional-import-confirmation.md) | Aceita | Confirmação atômica, idempotência e identidades financeiras tipadas |
 | [ADR-0008](0008-explicit-statement-facts.md) | Aceita | Fatos de fatura sem inferência de pagamento, com histórico e versão |
+| [ADR-0009](0009-v0-business-policies.md) | Aceita | Limites recomendados de encargos, formatos e excedentes de reembolso para a v0 |
 | [Pendências](pending.md) | Por decisão | Questões que exigem definição antes do comportamento dependente |
 
 ADRs registram por que uma decisão foi tomada. Regras atuais ficam nos documentos de domínio, contratos e importação. Alterações futuras devem indicar o ADR substituído, preservando o histórico.

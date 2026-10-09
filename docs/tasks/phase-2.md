@@ -17,24 +17,27 @@ Entrega incremental após RF-014/RF-018. Não confundir dados de fatura com paga
 - Implementação: branch `feat/rf-020-statement-facts`, base main `d3831c8`. [Contrato](../card-statements.md), [ADR-0008](../decisions/0008-explicit-statement-facts.md), [domínio puro](../../packages/domain/src/statement-facts.ts), [serviço](../../apps/api/src/credit/statements.service.ts), [controller](../../apps/api/src/credit/statements.controller.ts), [migration](../../apps/api/prisma/migrations/202610090002_statement_facts/migration.sql), [UI](../../apps/web/src/statement-facts.tsx), [integração](../../apps/api/test/statement-facts.integration.test.ts), [Chromium](../../tests/e2e/statement-facts.spec.ts). Listas/cadastro de competência RF-016 preservam contrato mínimo anterior.
 - Evidências (09/10/2026): `npm run check`: 35 documentos/17 tasks, links/hash histórico, tipos de quatro workspaces, 93 unitários (5 novos), builds e smoke HTTP aprovados. `npm run test:integration`: 49 aprovados (8 RF-020) com PostgreSQL/Mailpit, desconhecimento versus zero, datas independentes da competência, histórico imutável, concorrência/versionamento, isolamento por usuário/crédito, entradas inválidas, rollback de fatos se histórico falha, restart, limpeza explícita de afirmação e importação histórica sem reabrir ciclo/presumir pagamento. `npm run test:e2e`: 6 jornadas aprovadas; formulário, zero informado, ciclo fechado, reload, edição concorrente, recarregar sem perder dados já salvos, limpeza para unknown e histórico; jornadas CSV/OFX de 500 registros mantidas. Captura móvel inspecionada, sem overflow do documento. `docker compose config --quiet` e `docker compose up --build -d --wait --wait-timeout 120`: quatro serviços saudáveis, quinta migration exit 0, volume preservado; camadas npm ci anteriores reutilizadas. `node node_modules/prisma/build/index.js migrate diff --from-config-datasource --to-schema apps/api/prisma/schema.prisma --config apps/api/prisma.config.ts --exit-code`: sem diferenças, exit 0. Proxy `/`, health/ready 200; fatura sem sessão 401. `git diff --check` aprovado.
 - Falhas/ajustes resolvidos: união de tipos do campo data/ciclo no frontend corrigida após TS2345. E2E compartilha peer loopback e acionou 429 na sexta jornada; contador de auth agora isolado por teste somente no schema verificado `rovere_test`, sem alterar proteção da aplicação, que permanece coberta pela integração. Execução seguinte revelou 409 real da importação entre salvar e recarregar versão: mutações agora aguardam o snapshot atualizado; reexecução final das seis jornadas aprovada. Parser de entrada monetária compartilhado com importação sem mudar sua lógica.
-- Limitações: somente fatos manuais; sem total calculado, natureza financeira de linhas, plano, saldo/limite, pagamento/atraso, rotativo ou estimativa de datas. Fatura fechada não trava importação histórica. Histórico privado retorna vinte alterações recentes; snapshots completos permanecem no banco. CI remota da branch ainda não verificada.
-- Versionamento: implementação `fa4a323` enviada à branch da task; [PR #7](https://github.com/Gabacles/rovere-finance/pull/7) aberto. CI em execução ao preparar a revisão; conferir resultado/head antes de integrar. Atualização final de documentação não altera a implementação validada.
-- Próximo passo: revisar/integrar RF-020 e iniciar RF-021 a partir da main atualizada. BIZ-02/BIZ-04/BIZ-05 continuam abertas conforme pending; nenhuma regra dependente implementada.
+- Limitações: somente fatos manuais; sem total calculado, natureza financeira de linhas, plano, saldo/limite, pagamento/atraso, rotativo ou estimativa de datas. Fatura fechada não trava importação histórica. Histórico privado retorna vinte alterações recentes; snapshots completos permanecem no banco.
+- Versionamento: implementação `fa4a323`, documentação final `01a19a3`; [PR #7](https://github.com/Gabacles/rovere-finance/pull/7) integrado pelo usuário. Resultados abaixo conferidos no head final.
+- Integração conferida em 09/10/2026: usuário mergeou PR #7 na main `d3ac1bf`; CI push/PR aprovada no head `01a19a3` ([execução](https://github.com/Gabacles/rovere-finance/actions/runs/37952224819)). Próximo passo: RF-021. BIZ-02/BIZ-04/BIZ-05 resolvidas por delegação conforme [políticas da v0](../v0-policies.md).
 
-## [ ] RF-021 — Compra manual e associação de cobranças conhecidas
+## [x] RF-021 — Compra manual e associação de cobranças conhecidas
 
-- Estado: pendente
+- Estado: concluída
 - Descrição: registrar Expense com dados conhecidos e ligar cobranças próprias, mantendo compra parcial quando necessário.
 - Contexto/objetivo: diferenciar fato econômico, data original e cobranças; evitar dupla contagem e multiplicação de parcela para inventar total.
-- Dependências: RF-018/RF-020; detalhar contrato da compra ao iniciar.
+- Dependências: RF-018/RF-020 integradas na base; contrato de compra definido nesta entrega.
 - Atividades e aceite:
-  - [ ] Definir compra completa/parcial e referências tipadas de cobranças, sem duplicar registros importados.
-  - [ ] Implementar cadastro/associação explícitos, autorização, idempotência e controle de versão.
-  - [ ] Demonstrar compra manual depois vinculada à importação, preservando correções e incerteza.
+  - [x] Definir compra completa/parcial e referências tipadas de cobranças, sem duplicar registros importados.
+  - [x] Implementar cadastro/associação explícitos, autorização, idempotência e controle de versão.
+  - [x] Demonstrar compra manual depois vinculada à importação, preservando correções e incerteza.
 - Testes necessários: domínio, banco/API e jornada manual/importada; unicidade e rollback de associações.
-- Implementação: ainda inexistente.
-- Evidências: nenhuma; não iniciada.
-- Próximo passo: após RF-020 integrada, detalhar contratos e natureza financeira explicitamente confirmada.
+- Implementação: branch `feat/rf-021-manual-purchases`, base main `d3ac1bf`; [contrato](../purchases.md), [domínio puro](../../packages/domain/src/expenses.ts), [serviço](../../apps/api/src/expenses/expenses.service.ts), [controller](../../apps/api/src/expenses/expenses.controller.ts), [migration](../../apps/api/prisma/migrations/202610090003_expenses/migration.sql), [UI](../../apps/web/src/expenses.tsx), [integração](../../apps/api/test/expenses.integration.test.ts), [Chromium](../../tests/e2e/expenses.spec.ts). Fatos manuais e vínculo exclusivo por cobrança, com FK por proprietário, histórico imutável, compare-and-swap e resposta idempotente persistida. Decisões BIZ delegadas registradas nas [políticas](../v0-policies.md) e ADR-0009.
+- Evidências (09/10/2026): `npm run check`: 38 documentos/17 tasks, links/hash histórico, tipos de quatro workspaces, 97 unitários (4 RF-021), builds e smoke HTML/2 assets aprovados. `npm run test:integration -- --run apps/api/test/expenses.integration.test.ts`: 10 aprovados; `npm run test:integration`: 59 aprovados. Cobertura: compra manual sem caixa/cobrança artificial, zero versus unknown, criação concorrente/reenvio após edição, vínculo depois da importação/reimportação 3/10 sem total inventado, correções preservadas, disputa pela mesma cobrança com rollback da edição perdedora, versão concorrente, limpeza explícita, histórico imutável, usuários/FKs, rollback de compra/vínculo se histórico falha, desassociação/restart/replay, validação e redação de JSON inválido, paginação. `npm run test:e2e -- tests/e2e/expenses.spec.ts`: jornada aprovada; `npm run test:e2e`: 7 jornadas aprovadas, incluindo resposta perdida da criação, vínculo posterior, reload, conflito/recarregamento, confirmação de data/total, desassociação sem exclusão, histórico e regressões CSV/OFX de 500 registros. Duas capturas móveis inspecionadas, sem overflow. `docker compose config --quiet` e `docker compose up --build -d --wait --wait-timeout 120`: quatro serviços saudáveis, sexta migration `202610090003_expenses` exit 0, volume preservado; `node node_modules/prisma/build/index.js migrate diff --from-config-datasource --to-schema apps/api/prisma/schema.prisma --config apps/api/prisma.config.ts --exit-code`: sem diferenças. Proxy público 200, health/ready ok, compras sem sessão 401. `git diff --check` aprovado.
+- Falhas/ajustes resolvidos: Prisma P1012 exigiu unicidade composta no lado do vínculo 1:1, acrescentada antes da geração/migration válida. Reabrir a compra já selecionada agora recarrega dados, e leitura falha dispõe de botão de retry. Docker estava parado e foi iniciado antes dos testes reais. Nenhuma falha nas execuções finais.
+- Limitações: dados completos significam somente data/total conhecidos; não implicam cobertura, pagamento ou plano. Sem categoria, previsão, total calculado, classificação automática ou criação manual de cobrança. Vínculo confirma relação com a compra; natureza financeira permanece RF-023. Histórico HTTP limitado a 20 comandos, com snapshots completos privados persistidos. Retenção/capacidade de produção não homologadas.
+- Versionamento: entrega local validada; publicar na branch e abrir PR para revisão. CI remota ainda pendente, sem merge automático na main.
+- Próximo passo: conferir PR/head/CI e integrar com autorização específica; depois RF-022 a partir da main atualizada, usando primitivas existentes e calendário/total explicitamente confirmados.
 
 ## [ ] RF-022 — Plano confirmado de parcelas e conciliação de previsões
 
@@ -62,7 +65,7 @@ Entrega incremental após RF-014/RF-018. Não confundir dados de fatura com paga
   - [ ] Implementar consultas e revisão de diferenças sem gerar lançamentos para fazer bater.
   - [ ] Demonstrar competências independentes do caixa e ausência de dupla contagem.
 - Testes necessários: domínio, banco/API, consultas e INV-04/INV-12 nos conceitos já implementados.
-- Implementação: ainda inexistente; fatos informados da fatura serão entregues na RF-020.
+- Implementação: ainda inexistente; fatos informados da fatura disponíveis na RF-020.
 - Evidências: nenhuma; não iniciada.
 - Próximo passo: apresentar recomendações para qualquer regra financeira ainda não definida antes de implementá-la.
 
@@ -71,7 +74,7 @@ Entrega incremental após RF-014/RF-018. Não confundir dados de fatura com paga
 - Estado: pendente
 - Descrição: vincular saídas bancárias próprias a faturas, com pagamentos parciais e limites de alocação revalidados na transação.
 - Contexto/objetivo: reduzir obrigação sem criar outra despesa de consumo; impedir utilização duplicada do mesmo dinheiro.
-- Dependências: RF-023; fluxo básico não inclui rotativo/renegociação (BIZ-02 ainda aberta).
+- Dependências: RF-023; fluxo básico não inclui rotativo/renegociação automática, conforme BIZ-02 resolvida nas políticas da v0.
 - Atividades e aceite:
   - [ ] Detalhar alocações tipadas, valor disponível e saldo conhecido da obrigação.
   - [ ] Implementar pagamento parcial/integral, idempotência e controle concorrente em PostgreSQL.
@@ -79,14 +82,14 @@ Entrega incremental após RF-014/RF-018. Não confundir dados de fatura com paga
 - Testes necessários: INV-04/INV-06/INV-08/INV-12 e jornada de pagamento/reenvio.
 - Implementação: ainda inexistente.
 - Evidências: nenhuma; não iniciada.
-- Próximo passo: confirmar regras de alocação; financiamento/encargos dependem da resolução de BIZ-02.
+- Próximo passo: detalhar regras de alocação; encargos somente informados, sem juros presumidos conforme BIZ-02.
 
 ## [ ] RF-025 — Ajustes, estornos e aceite vertical do ciclo de cartão
 
 - Estado: pendente
 - Descrição: tratar ajustes/reversões informados com dependências rastreáveis e validar a entrega 2 integrada.
 - Contexto/objetivo: conservar origem e correções, sem apagar fatos confirmados ou ajustar terceiros silenciosamente.
-- Dependências: RF-021 a RF-024; BIZ-02 para financiamento, BIZ-05 para excedente de reembolso quando esse módulo existir.
+- Dependências: RF-021 a RF-024; aplicar BIZ-02/BIZ-05 resolvidas nas políticas da v0 quando os módulos dependentes existirem.
 - Atividades e aceite:
   - [ ] Detalhar ajustes/estornos/reversões e revalidação de pagamentos/associações existentes.
   - [ ] Implementar comandos explícitos, auditoria, idempotência e recuperação de conflitos.
@@ -94,4 +97,4 @@ Entrega incremental após RF-014/RF-018. Não confundir dados de fatura com paga
 - Testes necessários: domínio, transações concorrentes, API e Chromium dos dois formatos.
 - Implementação: ainda inexistente.
 - Evidências: nenhuma; não iniciada.
-- Próximo passo: detalhar apenas quando as dependências se aproximarem; manter limites de decisões abertas.
+- Próximo passo: detalhar apenas quando as dependências se aproximarem; manter limites das políticas da v0.
