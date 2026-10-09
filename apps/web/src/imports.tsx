@@ -4,8 +4,10 @@ import type { ImportCandidate, KnownValue } from '@rovere/domain';
 
 interface Destination { id: string; name: string }
 interface Block { id: string; kind: 'bank' | 'card'; metadata: { account: Record<string, string> }; financialAccountId: string | null; creditAccountId: string | null; cardId: string | null; statementId: string | null; periodOverride: boolean }
-interface Batch { id: string; filename: string; format: string; status: string; version: number; rowCount: number; errorCode: string | null; configuration: unknown; blocks?: Block[] }
-interface Row { id: string; selected: boolean; candidate: ImportCandidate; source: { ordinal: number; blockId: string; raw: string }; originalCandidate: ImportCandidate }
+interface Result { created: number; linked: number; skipped: number; totals: { kind: string; accountId: string; statementId: string | null; selectedCents: string; newCents: string }[] }
+interface Preview extends Result { version: number; blockerCount: number; blockers: { ordinal: number; code: string }[] }
+interface Batch { id: string; filename: string; format: string; status: string; version: number; size: number; rowCount: number; errorCode: string | null; configuration: unknown; blocks?: Block[]; confirmation?: { result: Result } | null }
+interface Row { id: string; selected: boolean; action: string; linkId: string | null; distinctFrom: string | null; matches: { id: string; description: string; postedOn: string; cents: string; reason: string; compatible: boolean }[]; candidate: ImportCandidate; source: { ordinal: number; blockId: string; raw: string }; originalCandidate: ImportCandidate }
 interface Page { version: number; page: number; pageSize: number; total: number; rows: Row[] }
 const messages: Record<string, string> = {
   REVIEW_CONFLICT: 'A revisão mudou em outra aba. Dados recarregados; confira antes de salvar novamente.',
@@ -15,8 +17,18 @@ const messages: Record<string, string> = {
   DESTINATION_REQUIRED: 'Falta selecionar o destino.', INVALID_FIELD: 'Campo inválido no arquivo.', MISSING_FIELD: 'Campo ausente no arquivo.',
   UNSUPPORTED_CURRENCY: 'Moeda não suportada; informe explicitamente o valor em BRL.', COLUMN_COUNT_MISMATCH: 'Quantidade de colunas diferente do cabeçalho.',
   INVALID_INSTALLMENT: 'Confira as parcelas.', INVALID_CSV_COLUMNS: 'O mapeamento não corresponde aos cabeçalhos do CSV.',
+  CONFIRMATION_CONFLICT: 'A revisão mudou ou já foi confirmada. Dados recarregados.',
+  CONFIRMATION_BLOCKED: 'Resolva as pendências da prévia antes de confirmar.',
+  MATCH_REVIEW_REQUIRED: 'Possível duplicidade: escolha vincular, manter ambas ou ignorar.',
+  EXTERNAL_IDENTITY_CONFLICT: 'O identificador de origem tem dados conflitantes. Revise antes de confirmar.',
+  LINK_INCOMPATIBLE: 'O vínculo não corresponde aos dados financeiros confirmados.',
+  ROW_INCOMPLETE: 'Há dados ou destino pendentes nesta linha.', INVALID_DESCRIPTION: 'Corrija a descrição para até 500 caracteres.',
+  DISTINCT_MATCH_CHANGED: 'A correspondência mudou. Confira a decisão de manter ambas.',
+  SUMMARY_TOTAL_OVERFLOW: 'A soma selecionada excede o intervalo monetário suportado. Ajuste a seleção.',
+  SOURCE_CORRECTION_REQUIRES_REVIEW: 'A origem marcou uma correção de outro registro. Revise o ajuste financeiro antes de confirmar.',
+  CURRENCY_METADATA_REQUIRES_REVIEW: 'Confirme explicitamente o valor liquidado em BRL.',
 };
-const statuses: Record<string, string> = { uploaded: 'Aguardando interpretação', parsing: 'Interpretando arquivo', review: 'Em revisão', failed: 'Falha na interpretação', cancelled: 'Removida' };
+const statuses: Record<string, string> = { uploaded: 'Aguardando interpretação', parsing: 'Interpretando arquivo', review: 'Em revisão', confirmed: 'Confirmada', failed: 'Falha na interpretação', cancelled: 'Removida' };
 function known<T>(value: KnownValue<T>): T | undefined { return value.state === 'confirmed' ? value.value : undefined; }
 function amountInput(cents: string | undefined): string {
   if (cents === undefined) return '';
@@ -34,6 +46,9 @@ export function Imports({ accounts, onExpired, catalogVersion }: { accounts: Des
   const [rows, setRows] = useState<Page | null>(null); const [page, setPage] = useState(1); const [refresh, setRefresh] = useState(0);
   const [format, setFormat] = useState('csv'); const [credits, setCredits] = useState<Destination[]>([]);
   const [busy, setBusy] = useState(false); const [message, setMessage] = useState(''); const [editor, setEditor] = useState<string | null>(null);
+  const [preview, setPreview] = useState<Preview | null>(null);
+  const [entries, setEntries] = useState<{ total: number; rows: { id: string; postedOn: string; description: string; amount: { cents: string }; notes: string | null }[] } | null>(null);
+  const confirmAttempt = useRef(new Map<string, { version: number; key: string }>());
   const uploadAttempt = useRef<{ fingerprint: string; key: string } | null>(null);
   async function api(path: string, options: RequestInit = {}) {
     const response = await fetch(`/api${path}`, { credentials: 'same-origin', ...options });
@@ -50,21 +65,25 @@ export function Imports({ accounts, onExpired, catalogVersion }: { accounts: Des
   }, [refresh, catalogVersion]);
   useEffect(() => {
     if (!batchId) return;
+    setPreview(null);
     let active = true; let timer: ReturnType<typeof setTimeout>; const controller = new AbortController();
     async function load() {
       try {
         const value: Batch = await api(`/imports/${batchId}`, { signal: controller.signal });
         if (!active) return;
-        if (value.status === 'review') {
+        if (['review', 'confirmed'].includes(value.status)) {
           const result = await api(`/imports/${batchId}/rows?page=${page}&pageSize=25`, { signal: controller.signal });
-          if (active && result.version === value.version) { setBatch(value); setRows(result); }
+          if (active && result.version === value.version) {
+            setBatch(value); setRows(result);
+            if (value.status === 'review') { const summary = await api(`/imports/${batchId}/confirmation-preview`, { signal: controller.signal }); if (active && summary.version === result.version) setPreview(summary); }
+          }
           else if (active) timer = setTimeout(() => void load(), 500);
         } else { setBatch(value); setRows(null); if (['uploaded', 'parsing'].includes(value.status)) timer = setTimeout(() => void load(), 1000); }
       } catch (error) { if (active) setMessage(error instanceof Error ? error.message : 'Falha de conexão.'); }
     }
     void load(); return () => { active = false; clearTimeout(timer); controller.abort(); };
   }, [batchId, page, refresh]);
-  function open(id: string) { setBatchId(id); setBatch(null); setRows(null); setPage(1); setEditor(null); setMessage(''); setRefresh(value => value + 1); }
+  function open(id: string) { setBatchId(id); setBatch(null); setRows(null); setPreview(null); setEntries(null); setPage(1); setEditor(null); setMessage(''); setRefresh(value => value + 1); }
   async function mutate(path: string, body: unknown, method = 'PATCH') {
     setBusy(true); setMessage('');
     try { await api(path, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }); setMessage('Revisão salva.'); setRefresh(value => value + 1); return true; }
@@ -111,9 +130,26 @@ export function Imports({ accounts, onExpired, catalogVersion }: { accounts: Des
       if (await mutate(`/imports/${batchId}/review`, { expectedVersion: rows!.version, rows: [{ id: row.id, corrections }] })) setEditor(null);
     } catch (error) { setMessage(error instanceof Error ? error.message : 'Confira a correção.'); }
   }
+  async function confirm() {
+    if (!preview || preview.blockerCount || !rows || preview.version !== rows.version) return;
+    let attempt = confirmAttempt.current.get(batchId);
+    if (!attempt || attempt.version !== rows.version) { attempt = { version: rows.version, key: crypto.randomUUID() }; confirmAttempt.current.set(batchId, attempt); }
+    setBusy(true); setMessage('');
+    try {
+      await api(`/imports/${batchId}/confirm`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Idempotency-Key': attempt.key }, body: JSON.stringify({ expectedVersion: attempt.version }) });
+      setMessage('Importação confirmada. Resultado salvo.');
+    } catch (error) { setMessage(error instanceof Error ? error.message : 'Falha de conexão. Confira o resultado ao recarregar.'); }
+    finally { setBusy(false); setRefresh(value => value + 1); }
+  }
+  async function loadEntries(block: Block) {
+    const accountId = block.kind === 'bank' ? block.financialAccountId : block.creditAccountId;
+    setBusy(true);
+    try { setEntries(await api(`/entries?kind=${block.kind}&accountId=${encodeURIComponent(accountId!)}${block.statementId ? `&statementId=${encodeURIComponent(block.statementId)}` : ''}`)); }
+    catch (error) { setMessage(error instanceof Error ? error.message : 'Falha de conexão.'); } finally { setBusy(false); }
+  }
   return <section aria-labelledby="imports-title" aria-busy={busy}>
     <h2 id="imports-title">Importar e revisar</h2>
-    <p>Envie CSV ou OFX e confira os registros. Esta etapa salva a revisão; nenhuma movimentação financeira é criada.</p>
+    <p>Envie CSV ou OFX, confira os registros e confirme a seleção. Valores com o sinal informado na origem; saldo, limite e total de compra não são deduzidos.</p>
     {message && <p role="status">{message}</p>}
     <form onSubmit={event => void upload(event)}>
       <label>Formato do arquivo<select value={format} onChange={event => setFormat(event.target.value)} disabled={busy}><option value="csv">CSV</option><option value="ofx">OFX</option></select></label>
@@ -141,12 +177,14 @@ export function Imports({ accounts, onExpired, catalogVersion }: { accounts: Des
     {batch && <div className="import-review">
       <h3>Revisão de {batch.filename}</h3>
       <p data-testid="import-status">{statuses[batch.status] ?? batch.status}{batch.status === 'review' ? ` · ${batch.rowCount} registros` : ''}</p>
-      {batch.status !== 'cancelled' && <a href={`/api/imports/${batch.id}/file`}>Baixar arquivo original</a>}
+      {batch.size > 0 && batch.status !== 'cancelled' && <a href={`/api/imports/${batch.id}/file`}>Baixar arquivo original</a>}
       {batch.status === 'failed' && <><p>{messages[batch.errorCode ?? ''] ?? 'Não foi possível interpretar o arquivo. Confira o formato e a configuração.'}</p><button disabled={busy} onClick={() => void mutate(`/imports/${batchId}/retry`, { expectedVersion: batch.version }, 'POST')}>Tentar novamente</button><p className="note">Para alterar o mapeamento, envie uma nova revisão com a configuração corrigida.</p></>}
       {batch.status === 'review' && rows && <>
         {batch.blocks?.map(block => <BlockDestination key={`${batch.id}:${block.id}:${rows.version}`} block={block} accounts={accounts} credits={credits} busy={busy} catalogVersion={catalogVersion}
           api={api} save={target => mutate(`/imports/${batchId}/review`, { expectedVersion: rows.version, blocks: [{ id: block.id, ...target }] })} />)}
         <div className="import-actions"><button className="secondary" disabled={busy} onClick={() => void mutate(`/imports/${batchId}/review`, { expectedVersion: rows.version, all: { selected: true } })}>Selecionar todas as linhas</button><button className="secondary" disabled={busy} onClick={() => void mutate(`/imports/${batchId}/review`, { expectedVersion: rows.version, all: { selected: false } })}>Excluir todas da seleção</button><button className="secondary" disabled={busy} onClick={() => setRefresh(value => value + 1)}>Recarregar revisão</button></div>
+        <div className="import-actions"><button className="secondary" disabled={busy} onClick={() => void mutate(`/imports/${batchId}/review`, { expectedVersion: rows.version, all: { reconcile: 'link' } })}>Vincular sugestões únicas da seleção</button><button className="secondary" disabled={busy} onClick={() => void mutate(`/imports/${batchId}/review`, { expectedVersion: rows.version, all: { reconcile: 'distinct' } })}>Manter ambas nas sugestões da seleção</button></div>
+        <p className="note">Essas decisões em lote preservam linhas excluídas e decisões já salvas. Correspondências ambíguas continuam pendentes.</p>
         <div className="import-table" tabIndex={0} aria-label="Registros da revisão"><table><thead><tr><th>Seleção</th><th>Data</th><th>Descrição</th><th>Valor BRL</th><th>Revisão</th></tr></thead><tbody>{rows.rows.map(row => <tr key={row.id}>
           <td><input aria-label={`Selecionar linha ${row.source.ordinal}`} type="checkbox" checked={row.selected} disabled={busy} onChange={event => {
             const selected = event.target.checked;
@@ -154,7 +192,20 @@ export function Imports({ accounts, onExpired, catalogVersion }: { accounts: Des
             void mutate(`/imports/${batchId}/review`, { expectedVersion: rows.version, rows: [{ id: row.id, selected }] });
           }} /></td>
           <td>{known(row.candidate.postedOn) ?? 'Desconhecida'}</td><td>{known(row.candidate.description) ?? 'Ausente'}<details><summary>Origem da linha {row.source.ordinal}</summary><pre>{row.source.raw}</pre></details></td>
-          <td>{amountInput(known(row.candidate.amount)?.cents) || 'Desconhecido'}</td><td>{row.selected ? row.candidate.issues.length ? row.candidate.issues.map(issue => messages[issue.code] ?? 'Confira este campo.').join(' ') : 'Pronta para revisão final' : 'Excluída da seleção'}<button className="secondary" disabled={busy} onClick={() => setEditor(row.id)}>Corrigir linha {row.source.ordinal}</button></td>
+          <td>{amountInput(known(row.candidate.amount)?.cents) || 'Desconhecido'}</td><td>{row.selected ? row.candidate.issues.length ? row.candidate.issues.map(issue => messages[issue.code] ?? 'Confira este campo.').join(' ') : row.matches.some(match => match.reason === 'similar') && row.action === 'create' && !row.distinctFrom ? 'Confira a possível duplicidade.' : 'Dados conhecidos; confira a prévia.' : 'Excluída da seleção'}<button className="secondary" disabled={busy} onClick={() => setEditor(row.id)}>Corrigir linha {row.source.ordinal}</button>
+            {(row.matches.length > 0 || row.action === 'link' || row.distinctFrom) && <label>Decisão da linha {row.source.ordinal}<select disabled={busy} value={!row.selected ? 'skip' : row.action === 'link' ? `link:${row.linkId}` : row.distinctFrom ? `distinct:${row.distinctFrom}` : 'create'} onChange={event => {
+              const choice = event.target.value; const [action, recordId] = choice.split(':');
+              void mutate(`/imports/${batchId}/review`, { expectedVersion: rows.version, rows: [{ id: row.id,
+                ...(action === 'link' ? { action: 'link', existingId: recordId } : action === 'distinct' ? { action: 'create', distinctFrom: recordId } : { action }) }] });
+            }}>
+              <option value="create">{row.matches.some(match => match.reason === 'external') ? 'Reconhecer pela identidade de origem' : 'Escolha uma decisão'}</option>
+              {row.linkId && !row.matches.some(match => match.id === row.linkId) && <option value={`link:${row.linkId}`}>Vínculo salvo; confira os dados</option>}
+              {row.distinctFrom && !row.matches.some(match => match.id === row.distinctFrom) && <option value={`distinct:${row.distinctFrom}`}>Decisão de manter ambas salva</option>}
+              {row.matches.map(match => <option key={`link:${match.id}`} value={`link:${match.id}`} disabled={!match.compatible}>Vincular: {match.description} · {amountInput(match.cents)}</option>)}
+              {!row.matches.some(match => match.reason === 'external') && row.matches.map(match => <option key={`distinct:${match.id}`} value={`distinct:${match.id}`}>Manter ambas: {match.description}</option>)}
+              <option value="skip">Ignorar esta linha</option>
+            </select></label>}
+          </td>
         </tr>)}</tbody></table></div>
         <nav aria-label="Páginas da revisão"><button className="secondary" disabled={busy || page === 1} onClick={() => { setRows(null); setPage(value => value - 1); setEditor(null); }}>Anterior</button><span>Página {page} de {Math.max(1, Math.ceil(rows.total / rows.pageSize))}</span><button className="secondary" disabled={busy || page * rows.pageSize >= rows.total} onClick={() => { setRows(null); setPage(value => value + 1); setEditor(null); }}>Próxima</button></nav>
         {rows.rows.filter(row => row.id === editor).map(row => <form className="row-editor" key={row.id} onSubmit={event => void edit(event, row)}>
@@ -168,8 +219,22 @@ export function Imports({ accounts, onExpired, catalogVersion }: { accounts: Des
           <button disabled={busy}>Salvar correção</button><button className="secondary" type="button" onClick={() => setEditor(null)}>Fechar correção</button>
           <button className="secondary" type="button" disabled={busy} onClick={() => void mutate(`/imports/${batchId}/review`, { expectedVersion: rows.version, rows: [{ id: row.id, corrections: { postedOn: null, description: null, amount: null, installment: null } }] }).then(saved => { if (saved) setEditor(null); })}>Restaurar dados da origem</button>
         </form>)}
-        <p className="note">A revisão pode ser retomada após sair ou recarregar. A gravação financeira será disponibilizada na próxima entrega.</p>
+        <div className="confirmation-summary"><h3>Prévia da confirmação</h3>
+          {!preview ? <p>Validando seleção e correspondências…</p> : <>
+            <p data-testid="confirmation-preview">{preview.created} novos · {preview.linked} vinculados · {preview.skipped} ignorados</p>
+            {preview.blockerCount > 0 && <><p>{preview.blockerCount} pendências impedem a confirmação. Os totais abaixo consideram somente linhas aptas.</p><ul>{preview.blockers.map((blocker, index) => <li key={index}>Linha {blocker.ordinal}: {messages[blocker.code] ?? 'Confira os dados e a decisão desta linha.'}</li>)}</ul></>}
+            {preview.totals.map(total => <p key={`${total.kind}:${total.accountId}:${total.statementId}`}>{(total.kind === 'bank' ? accounts : credits).find(value => value.id === total.accountId)?.name ?? 'Destino confirmado'}: selecionado BRL {amountInput(total.selectedCents)} · novos registros BRL {amountInput(total.newCents)}</p>)}
+          </>}
+          <button disabled={busy || !preview || preview.blockerCount > 0 || preview.version !== rows.version} onClick={() => void confirm()}>Confirmar registros selecionados</button>
+        </div>
+        <p className="note">A revisão pode ser retomada após sair ou recarregar. A confirmação salva o conjunto selecionado de uma só vez.</p>
       </>}
+      {batch.status === 'confirmed' && batch.confirmation && <div className="confirmation-summary">
+        <h3>Resultado da importação</h3><p data-testid="confirmation-result">{batch.confirmation.result.created} novos · {batch.confirmation.result.linked} vinculados · {batch.confirmation.result.skipped} ignorados</p>
+        {batch.blocks?.map(block => <button key={block.id} className="secondary" disabled={busy || !(block.financialAccountId || block.creditAccountId)} onClick={() => void loadEntries(block)}>Consultar registros do bloco {block.id.split(':').at(-1)}</button>)}
+        {entries && <><p data-testid="entry-total">{entries.total} registros nesta conta{batch.blocks?.[0]?.kind === 'card' ? '/competência' : ''}. Mostrando os primeiros 25.</p><div className="import-table"><table aria-label="Registros financeiros"><thead><tr><th>Data</th><th>Descrição</th><th>Valor BRL</th></tr></thead><tbody>{entries.rows.map(entry => <tr key={entry.id}><td>{entry.postedOn}</td><td>{entry.description}{entry.notes && <p>{entry.notes}</p>}</td><td>{amountInput(entry.amount.cents)}</td></tr>)}</tbody></table></div></>}
+        {batch.size > 0 && <button className="secondary" disabled={busy} onClick={() => void mutate(`/imports/${batchId}/file`, { expectedVersion: batch.version }, 'DELETE')}>Remover somente arquivo original</button>}
+      </div>}
       {['uploaded', 'review', 'failed'].includes(batch.status) && <button className="secondary" disabled={busy} onClick={() => void mutate(`/imports/${batchId}`, { expectedVersion: batch.version }, 'DELETE')}>Remover importação e arquivo</button>}
     </div>}
   </section>;

@@ -1,6 +1,6 @@
 # Upload privado e revisão persistida — RF-017
 
-Esta entrega prepara e conserva uma revisão de CSV/OFX. Não cria movimentos bancários, despesas, cobranças ou parcelas. Criação/vínculo financeiro, conciliação e confirmação transacional pertencem à RF-018. [Contratos gerais](contracts.md), [parsers homologados](import-formats.md) e [destinos](destinations.md).
+Esta entrega prepara e conserva uma revisão de CSV/OFX. Parsing/revisão não criam movimentos, despesas ou parcelas. Criação/vínculo financeiro e confirmação executável da RF-018 estão em [confirmação](import-confirmation.md). [Contratos gerais](contracts.md), [parsers homologados](import-formats.md) e [destinos](destinations.md).
 
 ## Persistência e processamento
 
@@ -41,13 +41,13 @@ Exemplo de alteração:
 }
 ```
 
-Linhas aceitam `selected` (true → create; false → skip), motivo opcional e correções de `postedOn`, `description`, `amount`, `installment`. `null` remove uma correção; origem não é editável. `all: { selected, blockId? }` seleciona/exclui em lote. `link` e `distinctFrom` terão validação financeira na RF-018, pois ainda não existem registros financeiros de destino.
+Linhas aceitam seleção, motivo e correções de `postedOn`, `description`, `amount`, `installment`. `null` remove correção; origem não é editável. `all: { selected, blockId? }` seleciona/exclui em lote. RF-018 acrescenta link/distinctFrom e decisões em lote, com validação de referências financeiras próprias; [contrato](import-confirmation.md).
 
 Blocos bancários aceitam `financialAccountId`; blocos de cartão aceitam `creditAccountId`, cartão opcional, fatura opcional e `periodOverride`. Toda substituição de destino é explícita. FKs compostas garantem dono e que cartão/fatura pertencem ao crédito escolhido. Destino e competência podem ficar pendentes na revisão. Competência divergente da origem gera bloqueio até confirmação explícita `periodOverride=true`; intervalo do extrato não supre competência. Correções manuais sobrevivem a reabertura e recuperação da tarefa.
 
 ## Limites e interface
 
-Guardas iniciais: 10 MiB/arquivo, 10 mil linhas, uma parte de arquivo, dois campos multipart de até 16 mil bytes, JSON da revisão até 64 KiB. Quota serializada por usuário: vinte lotes não cancelados e 50 MiB de bytes. São limites técnicos, sem promessa de throughput; testes funcionais usam 500 registros por formato.
+Guardas iniciais: 10 MiB/arquivo, 10 mil linhas, uma parte de arquivo, dois campos multipart de até 16 mil bytes, JSON da revisão até 64 KiB. Quota serializada por usuário: vinte arquivos ainda retidos e 50 MiB de bytes. São limites técnicos, sem promessa de throughput; testes funcionais usam 500 registros por formato. RF-018 permite remover somente bytes após confirmação, sem apagar registros financeiros ou proveniência normalizada.
 
 UI permite mapeamento CSV explícito, envio OFX, prévia de 25 linhas, origem como texto, correções de data/descrição/valor/parcela, seleção em lote/linha, destino por bloco, download, retry e remoção. Cadastros novos de destino atualizam as opções. Revisão salva pode ser reaberta após reload/login; seleção da tela de cadastros RF-016 não substitui salvar destino do lote. Alterar mapeamento de uma revisão já interpretada exige novo upload; retry de falha pode corrigir configuração via API. Perfis reutilizáveis independentes e confirmação financeira não fazem parte desta fatia.
 

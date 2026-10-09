@@ -3,8 +3,8 @@ import { HttpException } from '@nestjs/common';
 import type { CsvProfile, Encoding } from '@rovere/importers';
 import type { Prisma } from '../generated/prisma/client.js';
 
-export function fail(status: number, code: string, message: string): never {
-  throw new HttpException({ code, message, requestId: randomUUID() }, status);
+export function fail(status: number, code: string, message: string, violations?: readonly unknown[]): never {
+  throw new HttpException({ code, message, requestId: randomUUID(), ...(violations ? { violations } : {}) }, status);
 }
 export function object(value: unknown, keys: readonly string[]): Record<string, unknown> {
   if (!value || typeof value !== 'object' || Array.isArray(value) || Object.keys(value).some(key => !keys.includes(key))) fail(400, 'INVALID_INPUT', 'Confira os campos informados.');

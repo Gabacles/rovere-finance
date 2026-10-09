@@ -36,6 +36,8 @@ details { margin-top: 12px; }
 summary { cursor: pointer; }
 details label { margin-top: 12px; }
 nav span { align-self: center; }
+.confirmation-summary { margin-top: 24px; padding: 20px; border: 1px solid #dde3d9; border-radius: 8px; }
+.confirmation-summary button { margin: 8px 8px 8px 0; }
 button { border: 0; border-radius: 8px; background: #215743; color: white; padding: 12px 20px; font: inherit; font-weight: 600; cursor: pointer; }
 button:disabled { opacity: .65; cursor: wait; }
 button.secondary { color: #215743; background: #e7eee6; }

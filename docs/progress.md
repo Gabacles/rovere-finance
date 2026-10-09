@@ -1,27 +1,29 @@
 # Progresso e ponto de retomada
 
-Atualizado em 08/10/2026. Estados e evidências nas [tasks](tasks/README.md).
+Atualizado em 09/10/2026. Estados, critérios e comandos nas [tasks](tasks/README.md).
 
 ## Entrega atual
 
-RF-000/RF-001, RF-010 a RF-013 e RF-015 a RF-017 concluídas. RF-014 permanece em andamento: revisão persistida não equivale a confirmação financeira. [Roadmap](roadmap.md).
+RF-000/RF-001 e RF-010 a RF-018 concluídas. RF-014 passou no aceite vertical CSV e OFX: upload privado, revisão persistida, confirmação atômica/idempotente, decisões de correspondência e reimportação sem duplicar efeitos. Isso conclui a entrega 1, sem declarar a V1 completa. [Roadmap](roadmap.md).
 
-RF-015 integrada pelo usuário via PR #2. Após autorização explícita, [PR #4](https://github.com/Gabacles/rovere-finance/pull/4) da RF-016 aberto e integrado com CI aprovada, main `d94332b`. A autorização anteriormente bloqueada foi resolvida.
+PR #5 da RF-017 integrado com autorização explícita em main `f986fac`, após CI de push/PR aprovada no head `07ae108`. A interrupção anterior foi revogada pelo usuário ao retomar RF-018. Branch `feat/rf-018-import-confirmation` criada dessa main atualizada e preparada para revisão; não integrada automaticamente à main.
 
-RF-017 implementada na branch `feat/rf-017-import-review`, criada dessa main: upload CSV/OFX privado no PostgreSQL, parsing em thread com lease recuperável, origem/candidato imutáveis, revisão versionada, correções/seleção, destinos autorizados por bloco, paginação, download/retry/remoção. [Contrato e limites](import-review.md), [ADR-0006](decisions/0006-private-import-review.md). [PR #5](https://github.com/Gabacles/rovere-finance/pull/5) com integração explicitamente autorizada; CI de push e PR aprovadas no código `dca5d1d`.
+RF-018 implementa BankEntry/CardCharge separados, identidades externas com escopo e FKs de usuário/conta/crédito, vínculos de origem tipados, prévia e decisões explícitas por linha/em lote, confirmação transacional e consulta própria. Registros existentes e conhecimento parcial são preservados. [Contrato e limites](import-confirmation.md), [ADR-0007](decisions/0007-transactional-import-confirmation.md).
 
-## Validação
+## Validação executada
 
-`npm run check`: documentação/hash, tipos, 85 unitários, builds e smoke aprovados. Integração: 28 aprovados, incluindo 500 registros por formato, dois usuários, concorrência, rollback, restart e recuperação sem sobrescrever revisão. Chromium: 3 jornadas e teardown aprovados, capturas móveis inspecionadas. Docker reconstruído com instalação limpa, 4 serviços saudáveis, terceira migration aplicada sem reset; schema versus banco sem diferença; proxy público 200 e imports privado 401 sem sessão. Comandos, falhas corrigidas e limitações nas tasks; resultados remotos da RF-017 ainda não verificados.
+`npm run check`: 32 documentos/11 tasks, hash histórico, tipos, 88 unitários, builds e smoke aprovados. Integração: 41 aprovados, com 500 compras por formato, dois usuários, concorrência, rollback, reenvio/restart e conflitos. Chromium: 5 jornadas, incluindo confirmação/reimportação CSV e OFX de 500 compras cada, resposta perdida após commit e conciliação explícita; captura móvel inspecionada.
+
+Docker atualizado, quatro serviços saudáveis, quarta migration aplicada sem reset; schema e banco sem diferenças. Proxy público 200 e consulta financeira 401 sem sessão. Resultados/comandos e falhas corrigidas estão na task RF-018. CI remota desta entrega ainda não verificada; resultados da RF-017 permanecem atribuídos ao head anterior.
 
 ## Próxima ação concreta
 
-1. Encerrar após a integração autorizada do PR #5. O usuário pediu para não iniciar a próxima task neste momento; RF-018 não iniciada. Na próxima retomada, conferir merge/CI e main atualizada antes de criar a branch.
-2. RF-018: detalhar movimentos/cobranças mínimos, identidades externas, confirmação atômica/idempotente, conciliação e aceite de 500 compras em CSV e OFX.
-3. Manter RF-014 aberta até confirmar/reimportar em banco e navegador. Não implementar faturas, saldo, limite ou parcelas ausentes como atalho.
+1. Revisar/integrar a branch RF-018 e verificar CI/main atualizada antes de iniciar nova branch. Cada entrega segue o fluxo de revisão, sem merge automático na main.
+2. Detalhar fase 2: compras manuais, planos/calendário explícitos, ciclo de faturas e pagamentos. Não inferir compra completa, parcelas, vencimento, saldo ou limite ausentes.
+3. Antes de financiamento/renegociação, resolver BIZ-02; layouts bancários específicos e excesso de reembolso continuam nas pendências correspondentes. CSV/OFX já executáveis permanecem obrigatórios e independem de Open Finance.
 
-## Ambiente e pendências
+## Ambiente e limites
 
-Serviços ativos: PostgreSQL 15432, API 3100, frontend `http://127.0.0.1:18080`, SMTP 11025 e Mailpit 18025. Volume preservado; testes em schemas próprios de `rovere_test`. Sem usuário predefinido ou envio externo. [README](../README.md).
+Serviços ativos: PostgreSQL 15432, API 3100, frontend `http://127.0.0.1:18080`, SMTP 11025 e Mailpit 18025. Docker estava desligado na retomada e foi iniciado pela CLI. Volume preservado; testes apenas em schemas próprios de `rovere_test`. Sem usuários predefinidos ou envio externo. [README](../README.md).
 
-BIZ-03 resolvida: competência explícita antes de gravação financeira. BIZ-02, BIZ-04 e BIZ-05 abertas, sem bloquear revisão genérica. [Pendências](decisions/pending.md). Sem movimentos, pagamentos, saldos ou limites; sem retenção automática presumida. Próxima entrega continuará em branch própria e dados fictícios.
+Sem saldos calculados, limites, indicadores de consumo, pagamentos, orçamento ou retenção automática presumidos. Dados originais privados; bytes de lotes confirmados podem ser removidos explicitamente sem apagar finanças/proveniência normalizada. BIZ-03 resolvida; BIZ-02/BIZ-04/BIZ-05 abertas. [Pendências](decisions/pending.md).
