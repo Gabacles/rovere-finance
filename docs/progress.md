@@ -4,26 +4,24 @@ Atualizado em 09/10/2026. Estados, critérios e comandos nas [tasks](tasks/READM
 
 ## Entrega atual
 
-RF-000/RF-001 e RF-010 a RF-018 concluídas. RF-014 passou no aceite vertical CSV e OFX: upload privado, revisão persistida, confirmação atômica/idempotente, decisões de correspondência e reimportação sem duplicar efeitos. Isso conclui a entrega 1, sem declarar a V1 completa. [Roadmap](roadmap.md).
+Entrega 1 concluída na RF-014/RF-018 e integrada pelo usuário via [PR #6](https://github.com/Gabacles/rovere-finance/pull/6), main `d3831c8`. CI de push/PR aprovada no head `1441db7`; código/merge conferidos, sem refazer trabalho validado. CSV e OFX seguem executáveis e obrigatórios na V1.
 
-PR #5 da RF-017 integrado com autorização explícita em main `f986fac`, após CI de push/PR aprovada no head `07ae108`. A interrupção anterior foi revogada pelo usuário ao retomar RF-018. Branch `feat/rf-018-import-confirmation` criada dessa main atualizada e preparada para revisão; não integrada automaticamente à main.
-
-RF-018 implementa BankEntry/CardCharge separados, identidades externas com escopo e FKs de usuário/conta/crédito, vínculos de origem tipados, prévia e decisões explícitas por linha/em lote, confirmação transacional e consulta própria. Registros existentes e conhecimento parcial são preservados. [Contrato e limites](import-confirmation.md), [ADR-0007](decisions/0007-transactional-import-confirmation.md).
+Fase 2 detalhada em RF-020 a RF-025. RF-020 concluída na branch `feat/rf-020-statement-facts`, criada dessa main: datas de fechamento/vencimento, total declarado e ciclo informado, com estado de conhecimento, histórico imutável e edição por versão/proprietário. Faturas existentes não receberam datas, total zero ou ciclo aberto presumidos; competência, cobranças e pagamento não são alterados. [Contrato](card-statements.md), [fase 2](tasks/phase-2.md) e [ADR-0008](decisions/0008-explicit-statement-facts.md).
 
 ## Validação executada
 
-`npm run check`: 32 documentos/11 tasks, hash histórico, tipos, 88 unitários, builds e smoke aprovados. Integração: 41 aprovados, com 500 compras por formato, dois usuários, concorrência, rollback, reenvio/restart e conflitos. Chromium: 5 jornadas, incluindo confirmação/reimportação CSV e OFX de 500 compras cada, resposta perdida após commit e conciliação explícita; captura móvel inspecionada.
+`npm run check`: 35 documentos/17 tasks e hash histórico, tipos, 93 unitários, builds e smoke aprovados. Integração: 49 aprovados, incluindo isolamento, versão concorrente, rollback, histórico, zero versus unknown e importação histórica em ciclo fechado. Chromium: 6 jornadas, com dados de fatura/reload/conflito e os fluxos CSV/OFX de 500 registros; captura móvel inspecionada.
 
-Docker atualizado, quatro serviços saudáveis, quarta migration aplicada sem reset; schema e banco sem diferenças. Proxy público 200 e consulta financeira 401 sem sessão. Resultados/comandos e falhas corrigidas estão na task RF-018. [CI de push](https://github.com/Gabacles/rovere-finance/actions/runs/37941646330) aprovada na implementação `a895f80`; [PR #6](https://github.com/Gabacles/rovere-finance/pull/6) aberto. Conferir CI/head atualizado do PR antes do merge; resultados RF-017 permanecem atribuídos ao head anterior.
+Docker atualizado, quatro serviços saudáveis, quinta migration aplicada sem reset; schema/banco sem diferenças; proxy público 200 e fatura privada 401 sem sessão. Falhas/ajustes e comandos na task RF-020. Implementação `fa4a323` publicada no [PR #7](https://github.com/Gabacles/rovere-finance/pull/7); CI em execução, resultado final/head ainda a conferir antes do merge. Resultados anteriores mantidos nas tasks de suas versões.
 
 ## Próxima ação concreta
 
-1. Revisar/integrar a branch RF-018 e verificar CI/main atualizada antes de iniciar nova branch. Cada entrega segue o fluxo de revisão, sem merge automático na main.
-2. Detalhar fase 2: compras manuais, planos/calendário explícitos, ciclo de faturas e pagamentos. Não inferir compra completa, parcelas, vencimento, saldo ou limite ausentes.
-3. Antes de financiamento/renegociação, resolver BIZ-02; layouts bancários específicos e excesso de reembolso continuam nas pendências correspondentes. CSV/OFX já executáveis permanecem obrigatórios e independem de Open Finance.
+1. Revisar/integrar RF-020, conferir CI e main atualizada antes de criar nova branch; sem merge automático na main.
+2. RF-021: compra manual completa/parcial e associação explícita de cobranças conhecidas, sem deduzir total ou data original de parcela importada.
+3. RF-022 a RF-025: planos/previsões, natureza/totais calculados, pagamentos/alocações e ajustes/estornos, detalhados ao iniciar cada task. A V1 ainda não está concluída.
 
-## Ambiente e limites
+## Decisões abertas e ambiente
 
-Serviços ativos: PostgreSQL 15432, API 3100, frontend `http://127.0.0.1:18080`, SMTP 11025 e Mailpit 18025. Docker estava desligado na retomada e foi iniciado pela CLI. Volume preservado; testes apenas em schemas próprios de `rovere_test`. Sem usuários predefinidos ou envio externo. [README](../README.md).
+BIZ-02: rotativo/renegociação/encargos (recomendação: valores informados, sem juros presumidos); BIZ-04: layouts bancários prioritários (recomendação: arquivos realmente usados, mantendo CSV/OFX genéricos); BIZ-05: excedente de reembolso após estorno (recomendação: revisão explícita do recebível/eventual devolução, sem ajuste silencioso). [Questões e bloqueios](decisions/pending.md). BIZ-01/BIZ-03 já resolvidas; não repetir aprovação.
 
-Sem saldos calculados, limites, indicadores de consumo, pagamentos, orçamento ou retenção automática presumidos. Dados originais privados; bytes de lotes confirmados podem ser removidos explicitamente sem apagar finanças/proveniência normalizada. BIZ-03 resolvida; BIZ-02/BIZ-04/BIZ-05 abertas. [Pendências](decisions/pending.md).
+Serviços ativos: PostgreSQL 15432, API 3100, frontend `http://127.0.0.1:18080`, SMTP 11025 e Mailpit 18025. Volume preservado; testes só em schemas próprios de `rovere_test`. Sem usuários predefinidos ou envio externo. [README](../README.md).

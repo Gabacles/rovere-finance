@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures';
 import { randomUUID } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { mailLink } from '../../scripts/test-mail.mjs';

@@ -31,7 +31,8 @@ const required = ['scope', 'architecture', 'domain', 'imports', 'ux', 'integrati
 for (const name of required) if (!existsSync(`docs/${name}.md`)) errors.push(`Missing canonical document: ${name}`);
 const ids = new Set();
 let count = 0;
-for (const file of ['docs/tasks/phase-0.md', 'docs/tasks/phase-1.md']) {
+for (const name of readdirSync('docs/tasks').filter(name => /^phase-\d+\.md$/.test(name)).sort()) {
+  const file = `docs/tasks/${name}`;
   const text = readFileSync(file, 'utf8');
   for (const match of text.matchAll(/^## \[([ x])\] (RF-\d+) ([\s\S]*?)(?=^## |$(?![\s\S]))/gm)) {
     const [, checked, id, body] = match;

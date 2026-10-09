@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
+import { StatementFactsPanel } from './statement-facts';
 
 interface Credit { id: string; name: string }
 interface Card { id: string; name: string }
 interface Statement { id: string; period: string }
-type Api = (path: string, body?: unknown, idempotencyKey?: string) => Promise<any>;
+type Api = (path: string, body?: unknown, idempotencyKey?: string, method?: 'GET' | 'POST' | 'PATCH') => Promise<any>;
 
 export function Destinations({ accounts, api, onChanged }: { accounts: Credit[]; api: Api; onChanged: () => void }) {
   const [credits, setCredits] = useState<Credit[]>([]);
@@ -87,6 +88,7 @@ export function Destinations({ accounts, api, onChanged }: { accounts: Credit[];
         </form>
       </div>}
     </section>
+    {creditId && statements.length > 0 && <StatementFactsPanel key={creditId} creditId={creditId} statements={statements} api={api} />}
     <section aria-labelledby="destination-title" aria-busy={loading}>
       <h2 id="destination-title">Destino para importar</h2>
       <label>Tipo de destino<select value={kind} disabled={busy} onChange={event => setKind(event.target.value)}><option value="bank">Conta bancária ou carteira</option><option value="card">Conta de crédito</option></select></label>

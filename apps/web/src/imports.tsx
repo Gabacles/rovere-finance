@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import type { ImportCandidate, KnownValue } from '@rovere/domain';
+import { amountInput, centsInput } from './money-input';
 
 interface Destination { id: string; name: string }
 interface Block { id: string; kind: 'bank' | 'card'; metadata: { account: Record<string, string> }; financialAccountId: string | null; creditAccountId: string | null; cardId: string | null; statementId: string | null; periodOverride: boolean }
@@ -30,22 +31,14 @@ const messages: Record<string, string> = {
 };
 const statuses: Record<string, string> = { uploaded: 'Aguardando interpretação', parsing: 'Interpretando arquivo', review: 'Em revisão', confirmed: 'Confirmada', failed: 'Falha na interpretação', cancelled: 'Removida' };
 function known<T>(value: KnownValue<T>): T | undefined { return value.state === 'confirmed' ? value.value : undefined; }
-function amountInput(cents: string | undefined): string {
-  if (cents === undefined) return '';
-  const negative = cents.startsWith('-'); const digits = (negative ? cents.slice(1) : cents).padStart(3, '0');
-  return `${negative ? '-' : ''}${digits.slice(0, -2)},${digits.slice(-2)}`;
-}
-function centsInput(value: string): string {
-  const match = /^(-?)(\d+)(?:[,.](\d{1,2}))?$/.exec(value.trim());
-  if (!match) throw new Error('Informe o valor em reais, sem separador de milhares.');
-  return BigInt(`${match[1]}${match[2]}${(match[3] ?? '').padEnd(2, '0')}`).toString();
-}
 class ApiError extends Error { constructor(public code: string) { super(messages[code] ?? 'Não foi possível concluir. Confira os dados e tente novamente.'); } }
 export function Imports({ accounts, onExpired, catalogVersion }: { accounts: Destination[]; onExpired: () => void; catalogVersion: number }) {
   const [batches, setBatches] = useState<Batch[]>([]); const [batchId, setBatchId] = useState(''); const [batch, setBatch] = useState<Batch | null>(null);
   const [rows, setRows] = useState<Page | null>(null); const [page, setPage] = useState(1); const [refresh, setRefresh] = useState(0);
   const [format, setFormat] = useState('csv'); const [credits, setCredits] = useState<Destination[]>([]);
   const [busy, setBusy] = useState(false); const [message, setMessage] = useState(''); const [editor, setEditor] = useState<string | null>(null);
+  const [reviewLoading, setReviewLoading] = useState(false);
+  const editingBusy = busy || reviewLoading;
   const [preview, setPreview] = useState<Preview | null>(null);
   const [entries, setEntries] = useState<{ total: number; rows: { id: string; postedOn: string; description: string; amount: { cents: string }; notes: string | null }[] } | null>(null);
   const confirmAttempt = useRef(new Map<string, { version: number; key: string }>());
@@ -65,7 +58,7 @@ export function Imports({ accounts, onExpired, catalogVersion }: { accounts: Des
   }, [refresh, catalogVersion]);
   useEffect(() => {
     if (!batchId) return;
-    setPreview(null);
+    setPreview(null); setReviewLoading(true);
     let active = true; let timer: ReturnType<typeof setTimeout>; const controller = new AbortController();
     async function load() {
       try {
@@ -75,20 +68,24 @@ export function Imports({ accounts, onExpired, catalogVersion }: { accounts: Des
           const result = await api(`/imports/${batchId}/rows?page=${page}&pageSize=25`, { signal: controller.signal });
           if (active && result.version === value.version) {
             setBatch(value); setRows(result);
-            if (value.status === 'review') { const summary = await api(`/imports/${batchId}/confirmation-preview`, { signal: controller.signal }); if (active && summary.version === result.version) setPreview(summary); }
+            if (value.status === 'review') {
+              const summary = await api(`/imports/${batchId}/confirmation-preview`, { signal: controller.signal });
+              if (active && summary.version === result.version) { setPreview(summary); setReviewLoading(false); }
+              else if (active) timer = setTimeout(() => void load(), 500);
+            } else if (active) setReviewLoading(false);
           }
           else if (active) timer = setTimeout(() => void load(), 500);
-        } else { setBatch(value); setRows(null); if (['uploaded', 'parsing'].includes(value.status)) timer = setTimeout(() => void load(), 1000); }
-      } catch (error) { if (active) setMessage(error instanceof Error ? error.message : 'Falha de conexão.'); }
+        } else { setBatch(value); setRows(null); setReviewLoading(false); if (['uploaded', 'parsing'].includes(value.status)) timer = setTimeout(() => void load(), 1000); }
+      } catch (error) { if (active) { setReviewLoading(false); setMessage(error instanceof Error ? error.message : 'Falha de conexão.'); } }
     }
     void load(); return () => { active = false; clearTimeout(timer); controller.abort(); };
   }, [batchId, page, refresh]);
-  function open(id: string) { setBatchId(id); setBatch(null); setRows(null); setPreview(null); setEntries(null); setPage(1); setEditor(null); setMessage(''); setRefresh(value => value + 1); }
+  function open(id: string) { setBatchId(id); setBatch(null); setRows(null); setPreview(null); setReviewLoading(true); setEntries(null); setPage(1); setEditor(null); setMessage(''); setRefresh(value => value + 1); }
   async function mutate(path: string, body: unknown, method = 'PATCH') {
     setBusy(true); setMessage('');
     try { await api(path, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }); setMessage('Revisão salva.'); setRefresh(value => value + 1); return true; }
     catch (error) { setMessage(error instanceof Error ? error.message : 'Falha de conexão.'); setRefresh(value => value + 1); return false; }
-    finally { setBusy(false); }
+    finally { setReviewLoading(true); setBusy(false); }
   }
   async function upload(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); const data = new FormData(event.currentTarget); const file = data.get('file') as File;
@@ -178,22 +175,22 @@ export function Imports({ accounts, onExpired, catalogVersion }: { accounts: Des
       <h3>Revisão de {batch.filename}</h3>
       <p data-testid="import-status">{statuses[batch.status] ?? batch.status}{batch.status === 'review' ? ` · ${batch.rowCount} registros` : ''}</p>
       {batch.size > 0 && batch.status !== 'cancelled' && <a href={`/api/imports/${batch.id}/file`}>Baixar arquivo original</a>}
-      {batch.status === 'failed' && <><p>{messages[batch.errorCode ?? ''] ?? 'Não foi possível interpretar o arquivo. Confira o formato e a configuração.'}</p><button disabled={busy} onClick={() => void mutate(`/imports/${batchId}/retry`, { expectedVersion: batch.version }, 'POST')}>Tentar novamente</button><p className="note">Para alterar o mapeamento, envie uma nova revisão com a configuração corrigida.</p></>}
+      {batch.status === 'failed' && <><p>{messages[batch.errorCode ?? ''] ?? 'Não foi possível interpretar o arquivo. Confira o formato e a configuração.'}</p><button disabled={editingBusy} onClick={() => void mutate(`/imports/${batchId}/retry`, { expectedVersion: batch.version }, 'POST')}>Tentar novamente</button><p className="note">Para alterar o mapeamento, envie uma nova revisão com a configuração corrigida.</p></>}
       {batch.status === 'review' && rows && <>
-        {batch.blocks?.map(block => <BlockDestination key={`${batch.id}:${block.id}:${rows.version}`} block={block} accounts={accounts} credits={credits} busy={busy} catalogVersion={catalogVersion}
+        {batch.blocks?.map(block => <BlockDestination key={`${batch.id}:${block.id}:${rows.version}`} block={block} accounts={accounts} credits={credits} busy={editingBusy} catalogVersion={catalogVersion}
           api={api} save={target => mutate(`/imports/${batchId}/review`, { expectedVersion: rows.version, blocks: [{ id: block.id, ...target }] })} />)}
-        <div className="import-actions"><button className="secondary" disabled={busy} onClick={() => void mutate(`/imports/${batchId}/review`, { expectedVersion: rows.version, all: { selected: true } })}>Selecionar todas as linhas</button><button className="secondary" disabled={busy} onClick={() => void mutate(`/imports/${batchId}/review`, { expectedVersion: rows.version, all: { selected: false } })}>Excluir todas da seleção</button><button className="secondary" disabled={busy} onClick={() => setRefresh(value => value + 1)}>Recarregar revisão</button></div>
-        <div className="import-actions"><button className="secondary" disabled={busy} onClick={() => void mutate(`/imports/${batchId}/review`, { expectedVersion: rows.version, all: { reconcile: 'link' } })}>Vincular sugestões únicas da seleção</button><button className="secondary" disabled={busy} onClick={() => void mutate(`/imports/${batchId}/review`, { expectedVersion: rows.version, all: { reconcile: 'distinct' } })}>Manter ambas nas sugestões da seleção</button></div>
+        <div className="import-actions"><button className="secondary" disabled={editingBusy} onClick={() => void mutate(`/imports/${batchId}/review`, { expectedVersion: rows.version, all: { selected: true } })}>Selecionar todas as linhas</button><button className="secondary" disabled={editingBusy} onClick={() => void mutate(`/imports/${batchId}/review`, { expectedVersion: rows.version, all: { selected: false } })}>Excluir todas da seleção</button><button className="secondary" disabled={busy} onClick={() => setRefresh(value => value + 1)}>Recarregar revisão</button></div>
+        <div className="import-actions"><button className="secondary" disabled={editingBusy} onClick={() => void mutate(`/imports/${batchId}/review`, { expectedVersion: rows.version, all: { reconcile: 'link' } })}>Vincular sugestões únicas da seleção</button><button className="secondary" disabled={editingBusy} onClick={() => void mutate(`/imports/${batchId}/review`, { expectedVersion: rows.version, all: { reconcile: 'distinct' } })}>Manter ambas nas sugestões da seleção</button></div>
         <p className="note">Essas decisões em lote preservam linhas excluídas e decisões já salvas. Correspondências ambíguas continuam pendentes.</p>
         <div className="import-table" tabIndex={0} aria-label="Registros da revisão"><table><thead><tr><th>Seleção</th><th>Data</th><th>Descrição</th><th>Valor BRL</th><th>Revisão</th></tr></thead><tbody>{rows.rows.map(row => <tr key={row.id}>
-          <td><input aria-label={`Selecionar linha ${row.source.ordinal}`} type="checkbox" checked={row.selected} disabled={busy} onChange={event => {
+          <td><input aria-label={`Selecionar linha ${row.source.ordinal}`} type="checkbox" checked={row.selected} disabled={editingBusy} onChange={event => {
             const selected = event.target.checked;
             setRows(previous => previous ? { ...previous, rows: previous.rows.map(value => value.id === row.id ? { ...value, selected } : value) } : previous);
             void mutate(`/imports/${batchId}/review`, { expectedVersion: rows.version, rows: [{ id: row.id, selected }] });
           }} /></td>
           <td>{known(row.candidate.postedOn) ?? 'Desconhecida'}</td><td>{known(row.candidate.description) ?? 'Ausente'}<details><summary>Origem da linha {row.source.ordinal}</summary><pre>{row.source.raw}</pre></details></td>
-          <td>{amountInput(known(row.candidate.amount)?.cents) || 'Desconhecido'}</td><td>{row.selected ? row.candidate.issues.length ? row.candidate.issues.map(issue => messages[issue.code] ?? 'Confira este campo.').join(' ') : row.matches.some(match => match.reason === 'similar') && row.action === 'create' && !row.distinctFrom ? 'Confira a possível duplicidade.' : 'Dados conhecidos; confira a prévia.' : 'Excluída da seleção'}<button className="secondary" disabled={busy} onClick={() => setEditor(row.id)}>Corrigir linha {row.source.ordinal}</button>
-            {(row.matches.length > 0 || row.action === 'link' || row.distinctFrom) && <label>Decisão da linha {row.source.ordinal}<select disabled={busy} value={!row.selected ? 'skip' : row.action === 'link' ? `link:${row.linkId}` : row.distinctFrom ? `distinct:${row.distinctFrom}` : 'create'} onChange={event => {
+          <td>{amountInput(known(row.candidate.amount)?.cents) || 'Desconhecido'}</td><td>{row.selected ? row.candidate.issues.length ? row.candidate.issues.map(issue => messages[issue.code] ?? 'Confira este campo.').join(' ') : row.matches.some(match => match.reason === 'similar') && row.action === 'create' && !row.distinctFrom ? 'Confira a possível duplicidade.' : 'Dados conhecidos; confira a prévia.' : 'Excluída da seleção'}<button className="secondary" disabled={editingBusy} onClick={() => setEditor(row.id)}>Corrigir linha {row.source.ordinal}</button>
+            {(row.matches.length > 0 || row.action === 'link' || row.distinctFrom) && <label>Decisão da linha {row.source.ordinal}<select disabled={editingBusy} value={!row.selected ? 'skip' : row.action === 'link' ? `link:${row.linkId}` : row.distinctFrom ? `distinct:${row.distinctFrom}` : 'create'} onChange={event => {
               const choice = event.target.value; const [action, recordId] = choice.split(':');
               void mutate(`/imports/${batchId}/review`, { expectedVersion: rows.version, rows: [{ id: row.id,
                 ...(action === 'link' ? { action: 'link', existingId: recordId } : action === 'distinct' ? { action: 'create', distinctFrom: recordId } : { action }) }] });
@@ -216,8 +213,8 @@ export function Imports({ accounts, onExpired, catalogVersion }: { accounts: Des
           <label>Número da parcela confirmado<input type="number" name="number" min={1} max={10000} defaultValue={known(row.candidate.installment)?.number ?? ''} /></label>
           <label>Quantidade de parcelas confirmada (opcional)<input type="number" name="total" min={1} max={10000} defaultValue={known(row.candidate.installment) ? known(known(row.candidate.installment)!.total) ?? '' : ''} /></label>
           <small>Preencha parcelas somente quando confirmadas. Sugestões da descrição não são aplicadas automaticamente.</small>
-          <button disabled={busy}>Salvar correção</button><button className="secondary" type="button" onClick={() => setEditor(null)}>Fechar correção</button>
-          <button className="secondary" type="button" disabled={busy} onClick={() => void mutate(`/imports/${batchId}/review`, { expectedVersion: rows.version, rows: [{ id: row.id, corrections: { postedOn: null, description: null, amount: null, installment: null } }] }).then(saved => { if (saved) setEditor(null); })}>Restaurar dados da origem</button>
+          <button disabled={editingBusy}>Salvar correção</button><button className="secondary" type="button" onClick={() => setEditor(null)}>Fechar correção</button>
+          <button className="secondary" type="button" disabled={editingBusy} onClick={() => void mutate(`/imports/${batchId}/review`, { expectedVersion: rows.version, rows: [{ id: row.id, corrections: { postedOn: null, description: null, amount: null, installment: null } }] }).then(saved => { if (saved) setEditor(null); })}>Restaurar dados da origem</button>
         </form>)}
         <div className="confirmation-summary"><h3>Prévia da confirmação</h3>
           {!preview ? <p>Validando seleção e correspondências…</p> : <>
@@ -225,7 +222,7 @@ export function Imports({ accounts, onExpired, catalogVersion }: { accounts: Des
             {preview.blockerCount > 0 && <><p>{preview.blockerCount} pendências impedem a confirmação. Os totais abaixo consideram somente linhas aptas.</p><ul>{preview.blockers.map((blocker, index) => <li key={index}>Linha {blocker.ordinal}: {messages[blocker.code] ?? 'Confira os dados e a decisão desta linha.'}</li>)}</ul></>}
             {preview.totals.map(total => <p key={`${total.kind}:${total.accountId}:${total.statementId}`}>{(total.kind === 'bank' ? accounts : credits).find(value => value.id === total.accountId)?.name ?? 'Destino confirmado'}: selecionado BRL {amountInput(total.selectedCents)} · novos registros BRL {amountInput(total.newCents)}</p>)}
           </>}
-          <button disabled={busy || !preview || preview.blockerCount > 0 || preview.version !== rows.version} onClick={() => void confirm()}>Confirmar registros selecionados</button>
+          <button disabled={editingBusy || !preview || preview.blockerCount > 0 || preview.version !== rows.version} onClick={() => void confirm()}>Confirmar registros selecionados</button>
         </div>
         <p className="note">A revisão pode ser retomada após sair ou recarregar. A confirmação salva o conjunto selecionado de uma só vez.</p>
       </>}
@@ -233,9 +230,9 @@ export function Imports({ accounts, onExpired, catalogVersion }: { accounts: Des
         <h3>Resultado da importação</h3><p data-testid="confirmation-result">{batch.confirmation.result.created} novos · {batch.confirmation.result.linked} vinculados · {batch.confirmation.result.skipped} ignorados</p>
         {batch.blocks?.map(block => <button key={block.id} className="secondary" disabled={busy || !(block.financialAccountId || block.creditAccountId)} onClick={() => void loadEntries(block)}>Consultar registros do bloco {block.id.split(':').at(-1)}</button>)}
         {entries && <><p data-testid="entry-total">{entries.total} registros nesta conta{batch.blocks?.[0]?.kind === 'card' ? '/competência' : ''}. Mostrando os primeiros 25.</p><div className="import-table"><table aria-label="Registros financeiros"><thead><tr><th>Data</th><th>Descrição</th><th>Valor BRL</th></tr></thead><tbody>{entries.rows.map(entry => <tr key={entry.id}><td>{entry.postedOn}</td><td>{entry.description}{entry.notes && <p>{entry.notes}</p>}</td><td>{amountInput(entry.amount.cents)}</td></tr>)}</tbody></table></div></>}
-        {batch.size > 0 && <button className="secondary" disabled={busy} onClick={() => void mutate(`/imports/${batchId}/file`, { expectedVersion: batch.version }, 'DELETE')}>Remover somente arquivo original</button>}
+        {batch.size > 0 && <button className="secondary" disabled={editingBusy} onClick={() => void mutate(`/imports/${batchId}/file`, { expectedVersion: batch.version }, 'DELETE')}>Remover somente arquivo original</button>}
       </div>}
-      {['uploaded', 'review', 'failed'].includes(batch.status) && <button className="secondary" disabled={busy} onClick={() => void mutate(`/imports/${batchId}`, { expectedVersion: batch.version }, 'DELETE')}>Remover importação e arquivo</button>}
+      {['uploaded', 'review', 'failed'].includes(batch.status) && <button className="secondary" disabled={editingBusy} onClick={() => void mutate(`/imports/${batchId}`, { expectedVersion: batch.version }, 'DELETE')}>Remover importação e arquivo</button>}
     </div>}
   </section>;
 }

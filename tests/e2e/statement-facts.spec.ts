@@ -1,0 +1,33 @@
+import { test, expect } from './fixtures';
+import { randomUUID } from 'node:crypto';
+import { mailLink } from '../../scripts/test-mail.mjs';
+
+test('inform statement facts, preserve unknowns, handle concurrent edits and inspect history', async ({ page }) => {
+  const email = `statement-${randomUUID()}@rovere.test`; const password = 'Fictitious-browser-123!';
+  expect((await page.request.post('/api/auth/sign-up/email', { headers: { Origin: 'http://127.0.0.1:15173' }, data: { name: 'Pessoa fictícia', email, password } })).status()).toBe(200);
+  await page.goto(await mailLink(email, 'Confirme')); await page.getByLabel('Email', { exact: true }).fill(email); await page.getByLabel('Senha', { exact: true }).fill(password); await page.getByRole('button', { name: 'Entrar', exact: true }).click();
+  await page.getByLabel('Nome da conta de crédito').fill('Crédito fictício'); await page.getByRole('button', { name: 'Adicionar conta de crédito', exact: true }).click();
+  await page.getByLabel('Competência da fatura').fill('2026-10'); await page.getByRole('button', { name: 'Confirmar competência', exact: true }).click();
+  await page.getByRole('combobox', { name: 'Fatura para editar', exact: true }).selectOption({ label: '2026-10' });
+  await expect(page.getByTestId('statement-facts-summary')).toContainText('Total declarado: Não informado');
+  await expect(page.getByTestId('statement-facts-summary')).toContainText('Ciclo: Não informado');
+  await page.getByLabel('Fechamento informado', { exact: true }).fill('2026-09-30'); await page.getByLabel('Vencimento informado', { exact: true }).fill('2026-11-05');
+  await page.getByLabel('Total declarado em reais', { exact: true }).fill('0,00'); await page.getByRole('combobox', { name: 'Ciclo informado', exact: true }).selectOption('closed');
+  await page.getByRole('button', { name: 'Salvar dados da fatura', exact: true }).click(); await expect(page.getByTestId('statement-facts-summary')).toContainText('Total declarado: BRL 0,00');
+  await expect(page.getByTestId('statement-facts-summary')).toContainText('Ciclo: Fechada');
+  await page.reload(); await page.getByRole('combobox', { name: 'Conta de crédito', exact: true }).selectOption({ label: 'Crédito fictício' });
+  await page.getByRole('combobox', { name: 'Fatura para editar', exact: true }).selectOption({ label: '2026-10' }); await expect(page.getByLabel('Total declarado em reais', { exact: true })).toHaveValue('0,00');
+  const creditId = await page.getByRole('combobox', { name: 'Conta de crédito', exact: true }).inputValue(); const statementId = await page.getByRole('combobox', { name: 'Fatura para editar', exact: true }).inputValue();
+  const path = `/api/credit-accounts/${creditId}/statements/${statementId}`; const current = await (await page.request.get(path)).json();
+  expect((await page.request.patch(path, { headers: { Origin: 'http://127.0.0.1:15173' }, data: { expectedVersion: current.version, facts: { dueOn: '2026-11-06' } } })).status()).toBe(200);
+  await page.getByLabel('Total declarado em reais', { exact: true }).fill('100,01'); await page.getByRole('button', { name: 'Salvar dados da fatura', exact: true }).click();
+  await expect(page.getByRole('status').filter({ hasText: 'A fatura mudou' })).toBeVisible();
+  await page.getByRole('button', { name: 'Recarregar dados da fatura', exact: true }).click(); await expect(page.getByLabel('Vencimento informado', { exact: true })).toHaveValue('2026-11-06');
+  await expect(page.getByLabel('Total declarado em reais', { exact: true })).toHaveValue('0,00');
+  await page.getByLabel('Total declarado em reais', { exact: true }).fill(''); await page.getByRole('button', { name: 'Salvar dados da fatura', exact: true }).click();
+  await expect(page.getByTestId('statement-facts-summary')).toContainText('Total declarado: Não informado'); await expect(page.getByTestId('statement-facts-summary')).toContainText('Ciclo: Fechada');
+  await page.getByRole('button', { name: 'Consultar histórico da fatura', exact: true }).click(); await expect(page.getByRole('heading', { name: 'Últimas 20 alterações', exact: true })).toBeVisible();
+  await expect(page.getByText('Versão 3', { exact: false })).toBeVisible();
+  await page.setViewportSize({ width: 390, height: 844 }); expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.getByRole('heading', { name: 'Dados da fatura', exact: true }).scrollIntoViewIfNeeded(); await page.screenshot({ path: 'test-results/statement-facts-mobile.png' });
+});

@@ -4,6 +4,7 @@ Estado individual, critérios, implementação e evidências são mantidos nos a
 
 - [Fase 0 — contexto e contratos](phase-0.md)
 - [Fase 1 — base técnica e importação](phase-1.md)
+- [Fase 2 — compras e ciclo de cartão](phase-2.md)
 
 Não decompor agora todas as fases futuras. [Roadmap macro](../roadmap.md) e [ponto de retomada](../progress.md).
 

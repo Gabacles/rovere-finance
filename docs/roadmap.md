@@ -22,5 +22,6 @@ O roadmap é macro. Detalhar apenas a fase atual e a próxima entrega próxima. 
 
 - [Fase 0 — decisões, contratos e contexto](tasks/phase-0.md)
 - [Fase 1 — fundação e primeira importação](tasks/phase-1.md)
+- [Fase 2 — compras e ciclo de cartão](tasks/phase-2.md)
 
 As fases seguintes serão decompostas ao se aproximarem. Não marcar fases inteiras como prontas por existir scaffolding.

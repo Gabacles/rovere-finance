@@ -20,6 +20,8 @@ import { ImportsService } from './imports/imports.service.js';
 import { IMPORT_WORKER_ENABLED, ImportWorker } from './imports/worker.js';
 import { ConfirmationService } from './imports/confirmation.service.js';
 import { EntriesController } from './imports/entries.controller.js';
+import { StatementsController } from './credit/statements.controller.js';
+import { StatementsService } from './credit/statements.service.js';
 
 @Controller('health')
 class HealthController {
@@ -55,9 +57,9 @@ export async function createApp(config: AppConfig, db = createDatabase(config.da
   await db.$connect();
   const identity = createIdentity(db, config);
   @Module({
-    controllers: [HealthController, IdentityController, AccountsController, CreditController, ImportsController, EntriesController],
+    controllers: [HealthController, IdentityController, AccountsController, CreditController, ImportsController, EntriesController, StatementsController],
     providers: [{ provide: DATABASE, useValue: db }, { provide: IDENTITY, useValue: identity },
-      { provide: IMPORT_WORKER_ENABLED, useValue: config.importsWorkerEnabled !== false }, SessionGuard, Resources, DestinationsService, ImportsService, ImportWorker, ConfirmationService],
+      { provide: IMPORT_WORKER_ENABLED, useValue: config.importsWorkerEnabled !== false }, SessionGuard, Resources, DestinationsService, ImportsService, ImportWorker, ConfirmationService, StatementsService],
   })
   class AppModule {}
   const app = await NestFactory.create(AppModule, { logger: ['error', 'warn'], bodyParser: false });
@@ -84,7 +86,7 @@ export async function createApp(config: AppConfig, db = createDatabase(config.da
   server.use('/api/imports', express.json({ limit: '64kb' }));
   server.use(express.json({ limit: '16kb' }));
   server.use((error: unknown, req: express.Request, res: express.Response, next: express.NextFunction) => {
-    if (req.path.startsWith('/api/imports') && error && typeof error === 'object' && 'status' in error && [400, 413].includes(error.status as number)) {
+    if ((req.path.startsWith('/api/imports') || req.path.startsWith('/api/credit-accounts')) && error && typeof error === 'object' && 'status' in error && [400, 413].includes(error.status as number)) {
       res.status(error.status as number).json({ code: 'INVALID_REQUEST', message: 'Os dados enviados são inválidos ou excedem o limite.', requestId: randomUUID() });
       return;
     }
