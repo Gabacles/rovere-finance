@@ -3,6 +3,7 @@ import type { FormEvent } from 'react';
 import { createRoot } from 'react-dom/client';
 import './styles.css';
 import { Destinations } from './destinations';
+import { Imports } from './imports';
 
 function App() {
   const [user, setUser] = useState<{ name: string; email: string } | null>(null);
@@ -15,6 +16,7 @@ function App() {
     return params.has('error') ? 'O link é inválido ou expirou. Solicite outro.' : params.has('verified') ? 'Email confirmado. Entre para continuar.' : '';
   });
   const [accounts, setAccounts] = useState<{ id: string; name: string }[]>([]);
+  const [catalogVersion, setCatalogVersion] = useState(0);
   async function api(path: string, body?: unknown, idempotencyKey?: string) {
     const response = await fetch(`/api${path}`, { method: body === undefined ? 'GET' : 'POST',
       headers: { 'Content-Type': 'application/json', ...(idempotencyKey ? { 'Idempotency-Key': idempotencyKey } : {}) }, credentials: 'same-origin',
@@ -106,10 +108,11 @@ function App() {
               {mode === 'login' && <><button className="secondary" disabled={busy} onClick={() => changeMode('signup')}>Criar conta</button><button className="secondary" disabled={busy} onClick={() => changeMode('forgot')}>Esqueci minha senha</button></>}
             </>}
           </nav>
-          {user && <p className="note">Movimentações e importação de arquivos estarão disponíveis nas próximas entregas.</p>}
+          {user && <p className="note">Cadastre destinos abaixo para revisar seus arquivos. A confirmação financeira será disponibilizada na próxima entrega.</p>}
         </>}
       </section>
-      {user && <Destinations key={user.email} accounts={accounts} api={api} />}
+      {user && <Destinations key={`destinations:${user.email}`} accounts={accounts} api={api} onChanged={() => setCatalogVersion(value => value + 1)} />}
+      {user && <Imports key={`imports:${user.email}`} accounts={accounts} catalogVersion={catalogVersion} onExpired={() => { setUser(null); setAccounts([]); }} />}
       <footer>Organização hoje. Tranquilidade amanhã.</footer>
     </main>
   );

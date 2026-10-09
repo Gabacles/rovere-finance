@@ -8,6 +8,8 @@ RF-013 implementa sessões persistidas e revogáveis, cookies `HttpOnly`/`SameSi
 
 Os arquivos importados terão armazenamento privado, nomes internos aleatórios, prazo de retenção e limites de tamanho, linhas, tempo e memória. O parsing XML deverá desabilitar entidades externas e acesso à rede. Conteúdo importado será tratado como texto; exportações para planilhas deverão neutralizar fórmulas maliciosas.
 
+RF-017 implementa bytes privados no PostgreSQL, download autorizado, limites de upload/parsing, quota, remoção explícita e logs de erro redigidos. A retenção automática permanece pendente de política; não foi presumido prazo de trinta dias. [Contrato e limitações](import-review.md). Sem alegar criptografia/backup ou preparação pública ainda não executados.
+
 A aplicação terá validação no servidor, rate limiting, TLS, segredos fora do repositório e criptografia em repouso. Tokens futuros de provedores receberão proteção adicional, com chaves mantidas fora do banco.
 
 Logs operacionais registrarão IDs técnicos, duração, quantidade de linhas e códigos de erro, evitando descrições financeiras, arquivos, senhas e tokens. Auditoria financeira terá acesso e retenção próprios.

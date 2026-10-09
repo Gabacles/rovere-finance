@@ -86,7 +86,7 @@
 - Testes necessários: parsers, PostgreSQL real, API e E2E de revisão/confirmar/reimportar.
 - Implementação: RF-015 possui adaptadores puros em `packages/importers` integrados pelo PR #2; RF-016 destinos; RF-017 upload/revisão; RF-018 confirmação/aceite vertical. [Catálogo RF-015](../import-formats.md).
 - Evidências: ver subtarefas; não há upload ou confirmação financeira executável ainda. Parsing de 500 registros não comprova importação persistida/idempotente.
-- Próximo passo: revisar/integrar RF-015 e RF-016; então RF-017 para revisão persistida, mantendo ambos os formatos no aceite vertical RF-018.
+- Próximo passo: revisar/integrar RF-017 e executar RF-018, mantendo ambos os formatos no aceite vertical. RF-015/RF-016 já integradas.
 
 ## [x] RF-015 — Adaptadores genéricos CSV e OFX com proveniência
 
@@ -105,7 +105,7 @@
 - Evidências (08/10/2026): `npm run check` passou (27 documentos/11 tasks e hash histórico; tipos dos quatro workspaces; 79 testes, sendo 34 específicos de parsers; builds e smoke HTTP). Casos incluem CSV/OFX com 500 registros, variantes banco/cartão SGML/XML, Windows-1252/UTF-8, descrições multilinha, limites BIGINT, parcelas explícitas/sugeridas, fatura ausente, múltiplas contas, dados inválidos, DTD/entidades, profundidade e limites de tamanho/linhas. `npm audit`: zero vulnerabilidades conhecidas. `docker compose config --quiet` e `docker compose up --build -d --wait --wait-timeout 120` passaram, incluindo `npm ci` no build limpo; quatro serviços saudáveis e migração existente finalizada sem nova aplicação. Docker Desktop estava desligado e foi iniciado pela CLI. Nenhuma migration financeira nesta subtask; banco preservado.
 - Limitação: biblioteca ainda não conectada à API/UI. Compatibilidade restrita ao catálogo homologado; sem conciliação, persistência ou confirmação financeira nesta subtask.
 - Revisão desta retomada (08/10/2026): código e testes inspecionados no commit `103cc00`; `npm run check` passou novamente com 79 testes, tipos, builds, smoke HTTP e 27 documentos/11 tasks. Sem defeitos relevantes encontrados. `git fetch origin` confirmou que esse commit ainda não é ancestral de `origin/main` (`c167e95`). RF-015 posteriormente integrada pelo usuário no PR #2 (`49ec1c9`); RF-016 atualizada com essa main na continuidade autorizada.
-- Próximo passo: usuário revisar/integrar RF-015; RF-016 pode avançar independentemente a partir da main. RF-017 exige as duas entregas integradas.
+- Próximo passo: reutilizar os parsers; RF-015 integrada via PR #2 e RF-016 via PR #4.
 
 ## [x] RF-016 — Destinos mínimos de contas, crédito e faturas
 
@@ -123,23 +123,26 @@
 - Falhas resolvidas: build do domínio adicionado antes de typecheck/test/integração; imagem API inclui pacote de domínio compilado. Primeiro E2E falhou por seletores de nome de conta e combobox; ajustados para correspondência exata e papel acessível, com reexecução aprovada.
 - Limitações: cadastros sem ciclo/pagamento/total de fatura ou movimentos. Seleção é local na UI; persistência de revisão depende da RF-017. RF-015 integrada pelo usuário via PR #2; esta entrega incorpora os parsers na atualização da branch.
 - Atualização nesta continuidade: `origin/main` (`49ec1c9`) incorporada à branch RF-016 e validada por `npm run check` (28 documentos/11 tasks, 81 testes, tipos/builds/smoke), `npm run test:integration` (18) e `npm run test:e2e` (2). Nenhuma funcionalidade validada foi reimplementada; conflitos resolvidos preservando ambas as entregas. Revisão automática rejeitou merge/push na main por falta de autorização explícita específica; ação não executada, autorização solicitada.
-- Próximo passo: revisar/integrar as branches RF-015 e RF-016 antes de criar RF-017 a partir da main atualizada. Commit semântico/push somente na branch da task, conforme AGENTS; nenhuma integração automática à main. CI remota ainda não verificada.
+- Integração concluída após autorização explícita: [PR #4](https://github.com/Gabacles/rovere-finance/pull/4) aberto e integrado em `d94332b`. CI de push e do PR aprovadas no head `5cae38c`; RF-017 criada dessa main atualizada.
+- Próximo passo: pipeline RF-017/RF-018; próximas entregas em branches próprias para revisão antes de integrar.
 
-## [ ] RF-017 — Upload privado e revisão persistida dos dois formatos
+## [x] RF-017 — Upload privado e revisão persistida dos dois formatos
 
-- Estado: pendente
+- Estado: concluída
 - Descrição: receber arquivos CSV/OFX, processar lote em tarefa recuperável e salvar origem/revisão versionadas.
 - Contexto/objetivo: permitir corrigir e retomar centenas de linhas sem cadastro individual.
 - Dependências: RF-015, RF-016; contratos de importação e limites medidos.
 - Atividades e aceite:
-  - [ ] Implementar armazenamento privado, limites e worker com estado/tentativas persistidos.
-  - [ ] Persistir origem e configuração do parser, candidatos, correções e decisões por linha/em lote.
-  - [ ] Disponibilizar prévia paginada, mapeamento CSV, destino/período confirmados e erros claros.
-  - [ ] Testar isolamento de arquivos/lotes, conflitos de versão e recuperação sem sobrescrever revisão.
+  - [x] Implementar armazenamento privado, limites e worker com estado/tentativas persistidos.
+  - [x] Persistir origem e configuração do parser, candidatos, correções e decisões por linha/em lote.
+  - [x] Disponibilizar prévia paginada, mapeamento CSV, destino/período confirmados e erros claros.
+  - [x] Testar isolamento de arquivos/lotes, conflitos de versão e recuperação sem sobrescrever revisão.
 - Testes necessários: banco/API, autorização, retry concorrente e E2E da prévia nos dois formatos.
-- Implementação: ainda inexistente.
-- Evidências: nenhuma; não iniciada.
-- Próximo passo: detalhar DTOs e entidades da área de revisão conforme ADR-0003.
+- Implementação: branch `feat/rf-017-import-review` criada de main `d94332b`. [Contrato](../import-review.md), [ADR-0006](../decisions/0006-private-import-review.md), [schema](../../apps/api/prisma/schema.prisma), [migration](../../apps/api/prisma/migrations/202610080003_import_review/migration.sql), [serviço](../../apps/api/src/imports/imports.service.ts), [worker](../../apps/api/src/imports/worker.ts), [correções puras](../../packages/domain/src/import-review.ts), [UI](../../apps/web/src/imports.tsx), [integração](../../apps/api/test/imports.integration.test.ts), [Chromium](../../tests/e2e/imports.spec.ts).
+- Evidências (08/10/2026): `npm run check` aprovado: 30 documentos/11 tasks, links/hash histórico, tipos de 4 workspaces, 85 unitários (4 novos de correção), builds e smoke HTTP com 2 assets. `npm run test:integration`: 28 aprovados (10 RF-017), PostgreSQL/Mailpit reais; 500 registros CSV e OFX em threads, paginação, bytes/origem, dois usuários, downloads e comandos privados, limites/quota, upload idempotente, rollback, correções sem mutação, restart da API, conflito/retry concorrente, destinos/competência divergentes, recuperação de lease sem execução antiga sobrescrever correções, timeout/claims esgotados e remoção explícita. `npm run test:e2e`: 3 jornadas aprovadas, CSV de 500 linhas com paginação/correção/seleção/reload e OFX com competência; capturas móveis inspecionadas, documento sem overflow (tabela tem rolagem interna); encerramento e limpeza de schema aprovados na execução final. `docker compose config --quiet` e `docker compose up --build -d --wait --wait-timeout 120` aprovados: instalação limpa/builds, 4 serviços saudáveis, terceira migration exit 0, volume preservado. `node node_modules/prisma/build/index.js migrate diff --from-config-datasource --to-schema apps/api/prisma/schema.prisma --config apps/api/prisma.config.ts --exit-code`: sem diferenças, exit 0. Proxy `/`, health e ready 200; `/api/imports` 401 sem sessão. Instalações npm reportaram zero vulnerabilidades conhecidas. `git diff --check` aprovado.
+- Falhas resolvidas: unicidade composta de arquivo/lote e nested create do Prisma; geração SQL com `--config` (arquivo vazio inicial detectado antes de migrar); SQL cru e ORM agora usam mesmo search_path nos testes. UI corrigiu keys e seleção assíncrona. Teardown passou a parar worker antes de remover schema; rota test-only registrada antes do fallback Vite. Tentativa de teardown falha limpa somente em `rovere_test` após conferir servidor encerrado; reexecução final exit 0. Erros de JSON/persistência redigidos sem payload financeiro.
+- Limitações: sem efeitos financeiros ou links a registros inexistentes; create/skip persistidos, link/distinctFrom ficam na RF-018. Mapeamento de revisão interpretada exige novo upload; retry de falha aceita nova configuração via API e preserva histórico. Sem perfis reutilizáveis independentes, retenção automática ou capacidade de produção comprovada; limites/remoção explícita documentados. CI remota desta nova branch ainda não verificada.
+- Próximo passo: revisar/integrar RF-017 e criar RF-018 da main atualizada para confirmação atômica, conciliação e aceite vertical. RF-014 continua em andamento.
 
 ## [ ] RF-018 — Confirmação, conciliação e aceite vertical de importação
 

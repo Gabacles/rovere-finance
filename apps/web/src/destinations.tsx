@@ -6,7 +6,7 @@ interface Card { id: string; name: string }
 interface Statement { id: string; period: string }
 type Api = (path: string, body?: unknown, idempotencyKey?: string) => Promise<any>;
 
-export function Destinations({ accounts, api }: { accounts: Credit[]; api: Api }) {
+export function Destinations({ accounts, api, onChanged }: { accounts: Credit[]; api: Api; onChanged: () => void }) {
   const [credits, setCredits] = useState<Credit[]>([]);
   const [cards, setCards] = useState<Card[]>([]);
   const [statements, setStatements] = useState<Statement[]>([]);
@@ -53,6 +53,7 @@ export function Destinations({ accounts, api }: { accounts: Credit[]; api: Api }
       else if (resource === 'card') { setCards(previous => previous.some(item => item.id === value.id) ? previous : [...previous, value]); setCardId(value.id); }
       else { setStatements(previous => previous.some(item => item.id === value.id) ? previous : [...previous, value].sort((a, b) => a.period.localeCompare(b.period))); setStatementId(value.id); }
       form.reset(); setMessage(resource === 'statement' ? 'Competência cadastrada e confirmada.' : resource === 'card' ? 'Cartão cadastrado.' : 'Conta de crédito cadastrada.');
+      onChanged();
     } catch (error) { setMessage(error instanceof Error ? error.message : 'Falha de conexão. Tente novamente.'); }
     finally { setBusy(false); }
   }
@@ -97,7 +98,7 @@ export function Destinations({ accounts, api }: { accounts: Credit[]; api: Api }
         <label className="destination-select">Período de destino<select value={statementId} disabled={!creditId || loading || busy} onChange={event => setStatementId(event.target.value)}><option value="">Selecione uma competência confirmada</option>{statements.map(value => <option key={value.id} value={value.id}>{value.period}</option>)}</select></label>
       </>}
       <p data-testid="destination-summary">{kind === 'bank' ? selectedBank ? `Destino selecionado: ${selectedBank.name}.` : 'Selecione uma conta de destino.' : selectedCredit && selectedStatement ? `Destino selecionado: ${selectedCredit.name}, competência ${selectedStatement.period}${cardId ? `, cartão ${cards.find(value => value.id === cardId)?.name}` : ', sem cartão identificado'}.` : 'Informe uma conta de crédito e a competência da fatura.'}</p>
-      <p className="note">O upload e a revisão de CSV/OFX serão disponibilizados na próxima entrega.</p>
+      <p className="note">Ao revisar um arquivo abaixo, salve o destino de cada bloco. Esta seleção é apenas uma consulta aos cadastros disponíveis.</p>
     </section>
   </>;
 }

@@ -78,6 +78,8 @@ Cada módulo terá suas regras de escrita. Relatórios poderão consultar dados 
 
 Open Finance entrará posteriormente como outra origem de dados, utilizando os mecanismos existentes de normalização, identidade externa e conciliação.
 
+RF-017 implementa fila PostgreSQL coordenada na API, parsing em thread isolada e bytes privados em `BYTEA`, com limites, lease e revisão versionada. Um job por instância, sem fila/provedor externo; processos separados poderão ser adotados mediante medição. [Contrato executável](import-review.md) e [ADR-0006](decisions/0006-private-import-review.md).
+
 ## Decisões e contratos
 
 Consulte os [ADRs](decisions/README.md), os [contratos](contracts.md), a [importação](imports.md) e a [segurança](security.md). As versões efetivamente instaladas são definidas pelos manifests e pelo package-lock.json; as versões mencionadas no planejamento são referências datadas.
