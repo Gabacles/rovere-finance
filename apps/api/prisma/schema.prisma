@@ -132,6 +132,13 @@ model Statement {
   period          String @db.VarChar(7)
   periodOrigin    String @default("manual") @db.VarChar(10)
   creationKey     String @db.VarChar(100)
+  version         Int @default(0)
+  closingOn       DateTime? @db.Date
+  dueOn           DateTime? @db.Date
+  declaredTotal   BigInt?
+  cycle           String? @db.VarChar(6)
+  factEvidence    Json @default("{}")
+  factChanges     StatementFactChange[]
   createdAt       DateTime @default(now())
   importBlocks    ImportBlock[]
   charges         CardCharge[]
@@ -140,6 +147,19 @@ model Statement {
   @@unique([userId, creationKey])
   @@unique([creditAccountId, period])
   @@index([creditAccountId, userId])
+}
+
+model StatementFactChange {
+  id              String @id @default(uuid())
+  userId          String
+  creditAccountId String
+  statementId     String
+  statement       Statement @relation(fields: [statementId, creditAccountId, userId], references: [id, creditAccountId, userId], onDelete: Restrict)
+  version         Int
+  changes         Json
+  createdAt       DateTime @default(now())
+  @@unique([statementId, version])
+  @@index([statementId, userId])
 }
 
 model ImportBatch {

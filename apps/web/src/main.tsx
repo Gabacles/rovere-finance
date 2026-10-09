@@ -17,8 +17,8 @@ function App() {
   });
   const [accounts, setAccounts] = useState<{ id: string; name: string }[]>([]);
   const [catalogVersion, setCatalogVersion] = useState(0);
-  async function api(path: string, body?: unknown, idempotencyKey?: string) {
-    const response = await fetch(`/api${path}`, { method: body === undefined ? 'GET' : 'POST',
+  async function api(path: string, body?: unknown, idempotencyKey?: string, method: 'GET' | 'POST' | 'PATCH' = body === undefined ? 'GET' : 'POST') {
+    const response = await fetch(`/api${path}`, { method,
       headers: { 'Content-Type': 'application/json', ...(idempotencyKey ? { 'Idempotency-Key': idempotencyKey } : {}) }, credentials: 'same-origin',
       ...(body === undefined ? {} : { body: JSON.stringify(body) }) });
     const data = await response.json();
@@ -32,6 +32,9 @@ function App() {
         INVALID_STATEMENT_PERIOD: 'Informe uma competência válida no formato AAAA-MM.',
         STATEMENT_PERIOD_EXISTS: 'Esta competência já está cadastrada. Selecione o período existente.',
         IDEMPOTENCY_CONFLICT: 'Os dados deste envio mudaram. Confira e tente novamente.',
+        INVALID_STATEMENT_FACTS: 'Confira as datas, o ciclo e o total declarado em BRL.',
+        STATEMENT_VERSION_CONFLICT: 'A fatura mudou em outra edição. Recarregue os dados antes de salvar.',
+        STATEMENT_NOT_FOUND: 'Fatura não encontrada.',
       };
       throw new Error(response.status === 429 ? 'Muitas tentativas. Aguarde um minuto.' : errors[data.code as string] ?? 'Não foi possível concluir. Confira os dados e tente novamente.');
     }
