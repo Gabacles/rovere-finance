@@ -13,6 +13,7 @@ Leia primeiro [AGENTS.md](AGENTS.md), depois o [estado atual](docs/progress.md) 
 | Entidades e regras financeiras | [Domínio](docs/domain.md) |
 | Contratos e invariantes | [Contratos](docs/contracts.md) |
 | Importações e conciliação | [Importação](docs/imports.md) |
+| Formatos implementados e limites | [Catálogo de formatos](docs/import-formats.md) |
 | Experiência e dashboard | [UX](docs/ux.md) |
 | Open Finance futuro | [Integrações](docs/integrations.md) |
 | Segurança e operação | [Segurança](docs/security.md) |

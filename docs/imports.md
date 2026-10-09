@@ -26,7 +26,7 @@ O adaptador extrairá datas, descrições, valores, moeda, conta e identificador
 | Compra já cadastrada manualmente | Sugerir vínculo à parcela existente |
 | Período explícito de faturamento | Associar à fatura correspondente |
 | Apenas intervalo do extrato | Não assumir que seja o período da fatura |
-| Fatura ausente | Permitir seleção em lote ou manter cobrança com vínculo pendente, sinalizando a limitação |
+| Fatura ausente | Manter linhas na revisão; exigir período informado/confirmado antes de gravar cobranças financeiras; permitir seleção do período em lote |
 
 **Não será permitido multiplicar silenciosamente o valor de uma parcela para inventar o total da compra.** Também não serão geradas parcelas futuras ou anteriores apenas pela semelhança da descrição.
 
@@ -67,3 +67,5 @@ Reverter uma importação respeitará as dependências criadas depois dela. Regi
 ## Contratos
 
 O estado persistido da revisão, o comando de confirmação e as invariantes estão em [contracts.md](contracts.md). O adaptador não deve efetuar gravações financeiras; ele produz candidatos para revisão.
+
+BIZ-03 aprovada: competência é obrigatória na confirmação de cartão. A pendência pertence à revisão, sem cobranças financeiras fora de fatura. [ADR-0005](decisions/0005-missing-statement-period.md). Compatibilidade implementada, configurações e limites estão no [catálogo de formatos](import-formats.md).
