@@ -12,11 +12,11 @@ RF-022 concluída localmente na branch `feat/rf-022-installment-plans`, criada d
 
 `npm run check`: 40 documentos/17 tasks e hash histórico, tipos, 101 unitários, builds e smoke aprovados. Integração: 71 aprovados (12 RF-022). Chromium: 8 jornadas, incluindo resposta perdida do plano, previsão versus cobrança importada CSV/OFX, diferença de centavos, proteção/recarregamento do total, desconciliação/histórico e regressões de 500 registros por formato. Captura móvel inspecionada. Comandos, ajustes e limitações na task RF-022; resultados anteriores preservados nas tasks de suas versões.
 
-Docker atualizado, quatro serviços saudáveis, sétima migration aplicada sem reset; schema/banco sem diferenças; proxy público 200 e compras privadas 401 sem sessão. Entrega pronta para publicação/revisão na branch; CI remota ainda a conferir antes de integrar.
+Docker atualizado, quatro serviços saudáveis, sétima migration aplicada sem reset; schema/banco sem diferenças; proxy público 200 e compras privadas 401 sem sessão. Implementação `b2599e2` publicada no [PR #9](https://github.com/Gabacles/rovere-finance/pull/9); CI remota ainda a conferir antes de integrar. Atualização final somente de documentação preserva o código validado.
 
 ## Próxima ação concreta
 
-1. Publicar RF-022 e abrir PR para main; conferir head/CI e autorização específica antes de integrar.
+1. Revisar [PR #9](https://github.com/Gabacles/rovere-finance/pull/9) da RF-022 para main; conferir head/CI e autorização específica antes de integrar.
 2. Após integração, RF-023: natureza explícita das linhas e consultas do ciclo, separando total calculado/declarado e diferenças para revisão.
 3. RF-024/RF-025: pagamentos/alocações e ajustes/estornos. A V1 ainda não está concluída.
 
