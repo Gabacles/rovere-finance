@@ -72,21 +72,21 @@
 - Integração: usuário realizou merge pelo PR #1; conferido em `origin/main` (`c167e95`) antes de iniciar RF-015. Árvore local limpa na retomada; não foi necessário refazer testes idênticos da RF-013.
 - Próximo passo: RF-014 e suas subtarefas. BIZ-03 resolvida pelo [ADR-0005](../decisions/0005-missing-statement-period.md).
 
-## [ ] RF-014 — Primeira fatia vertical de importação CSV e OFX
+## [x] RF-014 — Primeira fatia vertical de importação CSV e OFX
 
-- Estado: em andamento
+- Estado: concluída
 - Descrição: upload privado, parsing, revisão persistida e confirmação com destino para arquivos fictícios dos dois formatos.
 - Contexto/objetivo: reduzir cadastro manual em lote e provar a arquitetura de importação.
 - Dependências: RF-013 concluída; RF-015 a RF-018 abaixo. BIZ-03 resolvida: exigir período antes de confirmar cobranças.
 - Atividades e aceite:
   - [x] Detalhar esta entrega em tasks menores ao iniciá-la, preservando CSV e OFX no mesmo marco.
   - [x] Homologar CSV genérico e OFX 1.x/2.x com fixtures fictícias.
-  - [ ] Confirmar lote de 500 compras com idempotência, erros e conciliação verificáveis.
-  - [ ] Demonstrar isolamento, preservação de metadados e ausência de inferências silenciosas.
+  - [x] Confirmar lote de 500 compras com idempotência, erros e conciliação verificáveis.
+  - [x] Demonstrar isolamento, preservação de metadados e ausência de inferências silenciosas.
 - Testes necessários: parsers, PostgreSQL real, API e E2E de revisão/confirmar/reimportar.
 - Implementação: RF-015 possui adaptadores puros em `packages/importers` integrados pelo PR #2; RF-016 destinos; RF-017 upload/revisão; RF-018 confirmação/aceite vertical. [Catálogo RF-015](../import-formats.md).
-- Evidências: ver subtarefas; não há upload ou confirmação financeira executável ainda. Parsing de 500 registros não comprova importação persistida/idempotente.
-- Próximo passo: revisar/integrar RF-017 e executar RF-018, mantendo ambos os formatos no aceite vertical. RF-015/RF-016 já integradas.
+- Evidências (09/10/2026): RF-015 a RF-017 integradas; RF-018 validou upload/revisão/confirmação/reimportação de 500 cobranças CSV e 500 OFX em PostgreSQL e Chromium. Reimportação vinculou 500 por formato, mantendo 1000 cobranças ao final; sem total/plano inferido. Rollback, conflitos, concorrência, perda de resposta, proveniência e isolamento verificados nos testes RF-018 abaixo. Não declara ciclo de cartão ou V1 completos.
+- Próximo passo: revisar/integrar RF-018 antes da fase 2; consultar limites no contrato de confirmação.
 
 ## [x] RF-015 — Adaptadores genéricos CSV e OFX com proveniência
 
@@ -143,20 +143,24 @@
 - Falhas resolvidas: unicidade composta de arquivo/lote e nested create do Prisma; geração SQL com `--config` (arquivo vazio inicial detectado antes de migrar); SQL cru e ORM agora usam mesmo search_path nos testes. UI corrigiu keys e seleção assíncrona. Teardown passou a parar worker antes de remover schema; rota test-only registrada antes do fallback Vite. Tentativa de teardown falha limpa somente em `rovere_test` após conferir servidor encerrado; reexecução final exit 0. Erros de JSON/persistência redigidos sem payload financeiro.
 - Limitações: sem efeitos financeiros ou links a registros inexistentes; create/skip persistidos, link/distinctFrom ficam na RF-018. Mapeamento de revisão interpretada exige novo upload; retry de falha aceita nova configuração via API e preserva histórico. Sem perfis reutilizáveis independentes, retenção automática ou capacidade de produção comprovada; limites/remoção explícita documentados.
 - Versionamento: implementação em `dca5d1d`; [PR #5](https://github.com/Gabacles/rovere-finance/pull/5) aberto. CI de push e do PR aprovadas nesse código. Usuário autorizou integrar o PR após CI e pediu explicitamente não iniciar RF-018 neste momento; atualização final de documentação não altera a implementação validada.
-- Próximo passo: revisar/integrar RF-017 e criar RF-018 da main atualizada para confirmação atômica, conciliação e aceite vertical. RF-014 continua em andamento.
+- Integração (09/10/2026): CI de push e PR aprovada no head documental `07ae108`; PR #5 integrado com autorização em `f986fac`. Usuário retomou explicitamente RF-018 nesta data, revogando a interrupção anterior.
+- Próximo passo: RF-018 e fase 2; esta entrega foi integrada sem reimplementar a base validada.
 
-## [ ] RF-018 — Confirmação, conciliação e aceite vertical de importação
+## [x] RF-018 — Confirmação, conciliação e aceite vertical de importação
 
-- Estado: pendente
+- Estado: concluída
 - Descrição: confirmar registros selecionados com vínculos, rastreabilidade, atomicidade e idempotência.
 - Contexto/objetivo: concluir o aceite de RF-014 para CSV e OFX em banco e navegador.
 - Dependências: RF-015, RF-016, RF-017; modelo mínimo de movimentos/cobranças detalhado ao iniciar.
 - Atividades e aceite:
-  - [ ] Implementar criação/vínculo/ignorar, preservando decisões manuais e recusando identidades externas conflitantes.
-  - [ ] Confirmar lote de 500 compras em cada formato, com destinos e competência válidos.
-  - [ ] Testar rollback, duplicidade, reenvio simultâneo, perda de resposta e conflito de versão/idempotência.
-  - [ ] Validar jornada upload → revisar → confirmar → reimportar e atualizar o aceite de RF-014.
+  - [x] Implementar criação/vínculo/ignorar, preservando decisões manuais e recusando identidades externas conflitantes.
+  - [x] Confirmar lote de 500 compras em cada formato, com destinos e competência válidos.
+  - [x] Testar rollback, duplicidade, reenvio simultâneo, perda de resposta e conflito de versão/idempotência.
+  - [x] Validar jornada upload → revisar → confirmar → reimportar e atualizar o aceite de RF-014.
 - Testes necessários: transações concorrentes no PostgreSQL, API e Playwright; INV-07/08/09.
-- Implementação: ainda inexistente.
-- Evidências: nenhuma; não iniciada.
-- Próximo passo: depois da revisão persistida, detalhar chaves externas e comandos sem antecipar regras financeiras ainda pendentes.
+- Implementação: branch `feat/rf-018-import-confirmation`, base main `f986fac`. [Contrato](../import-confirmation.md), [ADR-0007](../decisions/0007-transactional-import-confirmation.md), [confirmação](../../apps/api/src/imports/confirmation.service.ts), [identidades/matching](../../apps/api/src/imports/financial-records.ts), [domínio puro](../../packages/domain/src/import-confirmation.ts), [schema](../../apps/api/prisma/schema.prisma), [migration](../../apps/api/prisma/migrations/202610090001_import_confirmation/migration.sql), [consulta](../../apps/api/src/imports/entries.controller.ts), [integração](../../apps/api/test/confirmation.integration.test.ts), [Chromium](../../tests/e2e/confirmation.spec.ts).
+- Evidências (09/10/2026): `npm run check` aprovado: 32 documentos/11 tasks e hash histórico, tipos de 4 workspaces, 88 unitários (3 novos), builds e smoke HTTP com 2 assets. `npm run test:integration`: 41 aprovados (13 RF-018), PostgreSQL real/Mailpit; 500 CSV + 500 OFX confirmados/reimportados, valores/datas exatos, vínculos de origem, reenvio simultâneo, lotes concorrentes com identidade comum, resposta perdida/restart, conflito de chave/versão, rollback por falha SQL na segunda cobrança, IDs conflitantes/repetidos, sugestões/manter ambas/ignorar, decisões em lote com ambiguidade/exclusão, descrições/observações preservadas, FKs entre usuários/crédito/fatura, BIGINT máximo/ano 0001, linha inválida excluída e parcela parcial sem plano inferido. `npm run test:e2e`: 5 jornadas aprovadas; 500 compras em cada formato confirmadas e reimportadas no Chromium, sem cadastro individual, recuperação de resposta abortada depois do commit, decisões explícitas por linha/em lote, consulta financeira e remoção só dos bytes; demais jornadas de identidade/destinos/revisão preservadas. Captura móvel de resultado inspecionada, sem overflow do documento. `docker compose config --quiet` e `docker compose up --build -d --wait --wait-timeout 120` aprovados, quatro serviços saudáveis e quarta migration exit 0, volume preservado; camadas npm ci anteriores reutilizadas do cache (manifests inalterados). `node node_modules/prisma/build/index.js migrate diff --from-config-datasource --to-schema apps/api/prisma/schema.prisma --config apps/api/prisma.config.ts --exit-code`: sem diferença, exit 0. Proxy `/`, health/ready 200; consulta financeira sem sessão 401. `git diff --check` aprovado.
+- Falhas/ajustes resolvidos: tipos públicos de prévia exportados após TS4053. Quota ajustada para arquivos ainda retidos; remoção dos bytes de lote confirmado conserva fatos/proveniência e libera espaço, sem cancelar finanças. Decisões antigas não são apagadas por selecionar todas ou por conciliação em lote; sugestões limitadas/ambíguas não são tratadas como vínculo único. Financeiro não usa fingerprint como constraint nem sobrescreve registros vinculados.
+- Limitações: lançamentos com sinal conforme origem, sem classificação econômica automática, saldos/limites, plano completo, pagamentos/alocações, ajuste/reversão financeira ou orçamento. ID externo conflitante/correção OFX não ajusta finanças silenciosamente. Sem desempenho/retenção públicos aprovados; serialização por proprietário e limites documentados.
+- Versionamento: implementação `a895f80` enviada à branch da task; [PR #6](https://github.com/Gabacles/rovere-finance/pull/6) aberto para main. [CI de push](https://github.com/Gabacles/rovere-finance/actions/runs/37941646330) aprovada nesse código. Atualização final de documentação não altera a implementação validada; conferir CI/head do PR antes de integrar.
+- Próximo passo: revisar/integrar RF-018; depois detalhar fase 2 (ciclo de cartão), respeitando BIZ-02 e outras decisões abertas. Não marcar V1 concluída pelo aceite da entrega 1.

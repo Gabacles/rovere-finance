@@ -1,6 +1,6 @@
 # Contratos e invariantes fundamentais
 
-Estado: primitivas em `packages/domain`, identidade RF-013, [destinos RF-016](destinations.md) e [upload/revisão RF-017](import-review.md) implementados. Movimentos, cobranças e confirmação financeira ainda não implementados. Decisões pendentes em [pending.md](decisions/pending.md).
+Estado: primitivas, identidade, destinos, upload/revisão e [confirmação financeira RF-018](import-confirmation.md) implementados. Movimentos e cobranças mínimos persistidos; ciclo/pagamentos, liquidações, orçamento e demais invariantes futuras ainda não concluídos. Decisões pendentes em [pending.md](decisions/pending.md).
 
 ## Convenções
 

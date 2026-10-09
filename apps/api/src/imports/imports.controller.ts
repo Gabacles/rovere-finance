@@ -7,12 +7,13 @@ import type { AuthenticatedRequest } from '../identity/guard.js';
 import { ImportsService } from './imports.service.js';
 import type { Upload } from './imports.service.js';
 import { ImportErrors } from './errors.js';
+import { ConfirmationService } from './confirmation.service.js';
 
 @Controller('imports')
 @UseGuards(SessionGuard)
 @UseFilters(new ImportErrors())
 export class ImportsController {
-  constructor(@Inject(ImportsService) private readonly imports: ImportsService) {}
+  constructor(@Inject(ImportsService) private readonly imports: ImportsService, @Inject(ConfirmationService) private readonly confirmation: ConfirmationService) {}
   @Get()
   list(@Req() req: AuthenticatedRequest) { return this.imports.list(req.ownerId); }
   @Post()
@@ -34,6 +35,14 @@ export class ImportsController {
   review(@Req() req: AuthenticatedRequest, @Param('id') id: string, @Body() body: unknown) { return this.imports.review(req.ownerId, id, body); }
   @Post(':id/retry')
   retry(@Req() req: AuthenticatedRequest, @Param('id') id: string, @Body() body: unknown) { return this.imports.retry(req.ownerId, id, body); }
+  @Get(':id/confirmation-preview')
+  preview(@Req() req: AuthenticatedRequest, @Param('id') id: string) { return this.confirmation.preview(req.ownerId, id); }
+  @Post(':id/confirm')
+  confirm(@Req() req: AuthenticatedRequest, @Param('id') id: string, @Body() body: unknown, @Headers('idempotency-key') token: unknown) {
+    return this.confirmation.confirm(req.ownerId, id, body, token);
+  }
   @Delete(':id')
   cancel(@Req() req: AuthenticatedRequest, @Param('id') id: string, @Body() body: unknown) { return this.imports.cancel(req.ownerId, id, body); }
+  @Delete(':id/file')
+  purgeFile(@Req() req: AuthenticatedRequest, @Param('id') id: string, @Body() body: unknown) { return this.imports.purgeFile(req.ownerId, id, body); }
 }

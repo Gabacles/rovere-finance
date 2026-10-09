@@ -84,6 +84,7 @@ model FinancialAccount {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   importBlocks ImportBlock[]
+  entries BankEntry[]
   @@unique([id, userId])
   @@index([userId])
 }
@@ -99,6 +100,7 @@ model CreditAccount {
   cards       Card[]
   statements  Statement[]
   importBlocks ImportBlock[]
+  charges CardCharge[]
   @@unique([id, userId])
   @@unique([userId, creationKey])
 }
@@ -114,6 +116,7 @@ model Card {
   creationKey     String @db.VarChar(100)
   createdAt       DateTime @default(now())
   importBlocks    ImportBlock[]
+  charges         CardCharge[]
   @@unique([id, userId])
   @@unique([id, creditAccountId, userId])
   @@unique([userId, creationKey])
@@ -131,6 +134,7 @@ model Statement {
   creationKey     String @db.VarChar(100)
   createdAt       DateTime @default(now())
   importBlocks    ImportBlock[]
+  charges         CardCharge[]
   @@unique([id, userId])
   @@unique([id, creditAccountId, userId])
   @@unique([userId, creationKey])
@@ -161,6 +165,8 @@ model ImportBatch {
   file           ImportFile?
   blocks         ImportBlock[]
   revisions      ImportReviewRevision[]
+  confirmation   ImportConfirmation?
+  outcomes       ImportOutcome[]
   @@unique([id, userId])
   @@unique([userId, creationKey])
   @@index([status, leaseUntil, createdAt])
@@ -208,6 +214,7 @@ model ImportSourceRecord {
   fields     Json
   period     Json
   row        ImportRow?
+  outcome    ImportOutcome?
   @@unique([id, batchId, userId])
   @@unique([batchId, ordinal])
 }
@@ -223,6 +230,14 @@ model ImportRow {
   selected       Boolean @default(true)
   action         String @default("create") @db.VarChar(6)
   reason         String? @db.VarChar(500)
+  linkBankEntryId String?
+  linkBankEntry BankEntry? @relation("BankLink", fields: [linkBankEntryId, userId], references: [id, userId], onDelete: Restrict)
+  linkCardChargeId String?
+  linkCardCharge CardCharge? @relation("CardLink", fields: [linkCardChargeId, userId], references: [id, userId], onDelete: Restrict)
+  distinctBankEntryId String?
+  distinctBankEntry BankEntry? @relation("BankDistinct", fields: [distinctBankEntryId, userId], references: [id, userId], onDelete: Restrict)
+  distinctCardChargeId String?
+  distinctCardCharge CardCharge? @relation("CardDistinct", fields: [distinctCardChargeId, userId], references: [id, userId], onDelete: Restrict)
   @@unique([sourceRecordId, batchId, userId])
   @@index([batchId, userId])
 }
@@ -236,4 +251,104 @@ model ImportReviewRevision {
   changes   Json
   createdAt DateTime @default(now())
   @@unique([batchId, version])
+}
+
+model BankEntry {
+  id String @id @default(uuid())
+  userId String
+  accountId String
+  account FinancialAccount @relation(fields: [accountId, userId], references: [id, userId], onDelete: Restrict)
+  postedOn DateTime @db.Date
+  description String @db.VarChar(500)
+  cents BigInt
+  currency String @default("BRL") @db.VarChar(3)
+  fingerprint String @db.VarChar(64)
+  notes String? @db.VarChar(1000)
+  createdAt DateTime @default(now())
+  identities BankExternalIdentity[]
+  outcomes ImportOutcome[]
+  linkRows ImportRow[] @relation("BankLink")
+  distinctRows ImportRow[] @relation("BankDistinct")
+  @@unique([id, userId])
+  @@unique([id, accountId, userId])
+  @@index([userId, fingerprint])
+  @@index([accountId, userId, postedOn])
+}
+
+model CardCharge {
+  id String @id @default(uuid())
+  userId String
+  creditAccountId String
+  creditAccount CreditAccount @relation(fields: [creditAccountId, userId], references: [id, userId], onDelete: Restrict)
+  statementId String
+  statement Statement @relation(fields: [statementId, creditAccountId, userId], references: [id, creditAccountId, userId], onDelete: Restrict)
+  cardId String?
+  card Card? @relation(fields: [cardId, creditAccountId, userId], references: [id, creditAccountId, userId], onDelete: Restrict)
+  postedOn DateTime @db.Date
+  description String @db.VarChar(500)
+  cents BigInt
+  currency String @default("BRL") @db.VarChar(3)
+  installment Json
+  fingerprint String @db.VarChar(64)
+  notes String? @db.VarChar(1000)
+  createdAt DateTime @default(now())
+  identities CardExternalIdentity[]
+  outcomes ImportOutcome[]
+  linkRows ImportRow[] @relation("CardLink")
+  distinctRows ImportRow[] @relation("CardDistinct")
+  @@unique([id, userId])
+  @@unique([id, creditAccountId, userId])
+  @@index([userId, fingerprint])
+  @@index([creditAccountId, userId, postedOn])
+}
+
+model BankExternalIdentity {
+  id String @id @default(uuid())
+  userId String
+  accountId String
+  namespace String @db.VarChar(100)
+  externalId String @db.VarChar(256)
+  entryId String
+  entry BankEntry @relation(fields: [entryId, accountId, userId], references: [id, accountId, userId], onDelete: Restrict)
+  @@unique([userId, accountId, namespace, externalId])
+}
+
+model CardExternalIdentity {
+  id String @id @default(uuid())
+  userId String
+  creditAccountId String
+  namespace String @db.VarChar(100)
+  externalId String @db.VarChar(256)
+  chargeId String
+  charge CardCharge @relation(fields: [chargeId, creditAccountId, userId], references: [id, creditAccountId, userId], onDelete: Restrict)
+  @@unique([userId, creditAccountId, namespace, externalId])
+}
+
+model ImportConfirmation {
+  id String @id @default(uuid())
+  userId String
+  batchId String @unique
+  batch ImportBatch @relation(fields: [batchId, userId], references: [id, userId], onDelete: Restrict)
+  key String @db.VarChar(100)
+  reviewVersion Int
+  result Json
+  createdAt DateTime @default(now())
+  @@unique([batchId, userId])
+  @@unique([userId, key])
+}
+
+model ImportOutcome {
+  sourceRecordId String @id
+  batchId String
+  userId String
+  source ImportSourceRecord @relation(fields: [sourceRecordId, batchId, userId], references: [id, batchId, userId], onDelete: Restrict)
+  batch ImportBatch @relation(fields: [batchId, userId], references: [id, userId], onDelete: Restrict)
+  action String @db.VarChar(7)
+  entryId String?
+  entry BankEntry? @relation(fields: [entryId, userId], references: [id, userId], onDelete: Restrict)
+  chargeId String?
+  charge CardCharge? @relation(fields: [chargeId, userId], references: [id, userId], onDelete: Restrict)
+  decision Json
+  @@unique([sourceRecordId, batchId, userId])
+  @@index([batchId, userId])
 }

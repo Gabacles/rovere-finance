@@ -72,4 +72,4 @@ O estado persistido da revisão, o comando de confirmação e as invariantes est
 
 Parsers homologados, fixtures e guardas computacionais: [catálogo RF-015](import-formats.md). Não equivalem à capacidade validada do pipeline de upload/worker.
 
-Upload privado, processamento recuperável, correções e destinos persistidos da RF-017: [contrato executável](import-review.md). Confirmação e conciliação financeira ainda pertencem à RF-018.
+Upload privado e revisão RF-017: [contrato executável](import-review.md). Confirmação atômica, identidades, decisões de correspondência e consulta RF-018: [confirmação](import-confirmation.md).

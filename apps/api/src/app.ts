@@ -18,6 +18,8 @@ import { DestinationsService } from './credit/destinations.service.js';
 import { ImportsController } from './imports/imports.controller.js';
 import { ImportsService } from './imports/imports.service.js';
 import { IMPORT_WORKER_ENABLED, ImportWorker } from './imports/worker.js';
+import { ConfirmationService } from './imports/confirmation.service.js';
+import { EntriesController } from './imports/entries.controller.js';
 
 @Controller('health')
 class HealthController {
@@ -53,9 +55,9 @@ export async function createApp(config: AppConfig, db = createDatabase(config.da
   await db.$connect();
   const identity = createIdentity(db, config);
   @Module({
-    controllers: [HealthController, IdentityController, AccountsController, CreditController, ImportsController],
+    controllers: [HealthController, IdentityController, AccountsController, CreditController, ImportsController, EntriesController],
     providers: [{ provide: DATABASE, useValue: db }, { provide: IDENTITY, useValue: identity },
-      { provide: IMPORT_WORKER_ENABLED, useValue: config.importsWorkerEnabled !== false }, SessionGuard, Resources, DestinationsService, ImportsService, ImportWorker],
+      { provide: IMPORT_WORKER_ENABLED, useValue: config.importsWorkerEnabled !== false }, SessionGuard, Resources, DestinationsService, ImportsService, ImportWorker, ConfirmationService],
   })
   class AppModule {}
   const app = await NestFactory.create(AppModule, { logger: ['error', 'warn'], bodyParser: false });

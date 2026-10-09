@@ -108,7 +108,7 @@ function App() {
               {mode === 'login' && <><button className="secondary" disabled={busy} onClick={() => changeMode('signup')}>Criar conta</button><button className="secondary" disabled={busy} onClick={() => changeMode('forgot')}>Esqueci minha senha</button></>}
             </>}
           </nav>
-          {user && <p className="note">Cadastre destinos abaixo para revisar seus arquivos. A confirmação financeira será disponibilizada na próxima entrega.</p>}
+          {user && <p className="note">Cadastre destinos abaixo, revise seus arquivos e confirme apenas os registros selecionados.</p>}
         </>}
       </section>
       {user && <Destinations key={`destinations:${user.email}`} accounts={accounts} api={api} onChanged={() => setCatalogVersion(value => value + 1)} />}

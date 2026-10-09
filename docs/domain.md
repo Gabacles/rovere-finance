@@ -27,6 +27,8 @@ A separação principal será entre **o fato econômico, sua programação, seu 
 
 RF-016 implementa somente cadastros mínimos de crédito, cartões compartilhados e competências explícitas, com autorização e relações SQL por usuário. Sem saldos, limites, totais ou calendário inferidos. [Contratos executáveis e limites](destinations.md).
 
+RF-018 acrescenta movimentos bancários e cobranças efetivas em BRL com valores/datas confirmados na revisão, mantendo sinal da origem, parcelamento parcial e fatura explícita. Ainda sem compra agregada, plano/calendário, orçamento ou classificação automática de consumo/pagamento. [Confirmação, vínculos e limites](import-confirmation.md).
+
 **Uma cobrança importada pode existir sem a compra completa conhecida.** Por exemplo, um arquivo pode informar apenas a parcela 3/10 de R$ 120. O modelo deverá aceitar esse conhecimento parcial sem inventar data original, total exato ou parcelas anteriores.
 
 Campos e restrições essenciais:
