@@ -31,6 +31,8 @@ RF-018 acrescenta movimentos bancários e cobranças efetivas em BRL com valores
 
 RF-020 acrescenta [fatos explícitos de fatura](card-statements.md): datas, total declarado e ciclo podem continuar desconhecidos, são versionados e não atribuem pagamento, atraso ou alterações nas cobranças. Histórico conserva afirmações anteriores.
 
+RF-021 implementa [compras manuais](purchases.md), com dados completos/parciais e vínculos tipados, sem preencher lacunas pela importação. As [políticas da v0](v0-policies.md) resolvem BIZ-02/BIZ-04/BIZ-05 dentro de limites explícitos.
+
 **Uma cobrança importada pode existir sem a compra completa conhecida.** Por exemplo, um arquivo pode informar apenas a parcela 3/10 de R$ 120. O modelo deverá aceitar esse conhecimento parcial sem inventar data original, total exato ou parcelas anteriores.
 
 Campos e restrições essenciais:

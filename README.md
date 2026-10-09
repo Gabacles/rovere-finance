@@ -2,13 +2,13 @@
 
 Plataforma de gestão financeira pessoal para o mercado brasileiro. Projeto greenfield com importação CSV **e OFX obrigatória na V1**, independente de Open Finance.
 
-**Estado: importação vertical RF-014/RF-018 e dados de fatura RF-020 implementados.** CSV/OFX privados, revisão, confirmação atômica/idempotente e fatos de fatura explicitamente informados, versionados e com histórico. Reimportações reconhecem identidades compatíveis; semelhanças exigem decisão. Sem saldos, limites, plano completo, pagamentos ou orçamento. [Faturas](docs/card-statements.md), [confirmação](docs/import-confirmation.md) e [progresso](docs/progress.md).
+**Estado: importação RF-014/RF-018, faturas RF-020 e compras RF-021 implementadas.** CSV/OFX privados, confirmação atômica/idempotente, fatos de fatura e compras manuais completas/parciais com histórico e versão. Cobranças são associadas explicitamente, sem inferir total/data original nem duplicar registros. Sem saldos, limites, plano completo, pagamentos ou orçamento. [Compras](docs/purchases.md), [faturas](docs/card-statements.md) e [progresso](docs/progress.md).
 
 RF-015 integrada pelo PR #2 e RF-016 pelo PR #4. Parsers CSV/OFX em `packages/importers`: [catálogo](docs/import-formats.md). A revisão nunca cria movimentações automaticamente.
 
 ## Retomar o trabalho
 
-Leia [AGENTS.md](AGENTS.md), [progresso](docs/progress.md), [tasks](docs/tasks/README.md) e [índice do planejamento](PLANEJAMENTO_ARQUITETURA.md). A arquitetura geral foi aprovada; decisões financeiras específicas ainda abertas estão [registradas](docs/decisions/pending.md).
+Leia [AGENTS.md](AGENTS.md), [progresso](docs/progress.md), [tasks](docs/tasks/README.md) e [índice do planejamento](PLANEJAMENTO_ARQUITETURA.md). A arquitetura geral foi aprovada; as recomendações de negócio foram adotadas nas [políticas da v0](docs/v0-policies.md).
 
 ## Execução local
 

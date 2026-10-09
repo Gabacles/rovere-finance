@@ -4,6 +4,7 @@ import { createRoot } from 'react-dom/client';
 import './styles.css';
 import { Destinations } from './destinations';
 import { Imports } from './imports';
+import { Expenses } from './expenses';
 
 function App() {
   const [user, setUser] = useState<{ name: string; email: string } | null>(null);
@@ -35,6 +36,12 @@ function App() {
         INVALID_STATEMENT_FACTS: 'Confira as datas, o ciclo e o total declarado em BRL.',
         STATEMENT_VERSION_CONFLICT: 'A fatura mudou em outra edição. Recarregue os dados antes de salvar.',
         STATEMENT_NOT_FOUND: 'Fatura não encontrada.',
+        INVALID_EXPENSE: 'Confira descrição, data original e total não negativo em BRL.',
+        EXPENSE_VERSION_CONFLICT: 'A compra mudou em outra edição. Recarregue os dados antes de salvar.',
+        EXPENSE_NOT_FOUND: 'Compra não encontrada.',
+        CHARGE_NOT_FOUND: 'Cobrança não encontrada.',
+        CHARGE_ALREADY_LINKED: 'A cobrança já está associada a uma compra. Recarregue os dados.',
+        CHARGE_LINK_CONFLICT: 'O vínculo mudou. Recarregue os dados.',
       };
       throw new Error(response.status === 429 ? 'Muitas tentativas. Aguarde um minuto.' : errors[data.code as string] ?? 'Não foi possível concluir. Confira os dados e tente novamente.');
     }
@@ -116,6 +123,7 @@ function App() {
       </section>
       {user && <Destinations key={`destinations:${user.email}`} accounts={accounts} api={api} onChanged={() => setCatalogVersion(value => value + 1)} />}
       {user && <Imports key={`imports:${user.email}`} accounts={accounts} catalogVersion={catalogVersion} onExpired={() => { setUser(null); setAccounts([]); }} />}
+      {user && <Expenses key={`expenses:${user.email}`} api={api} catalogVersion={catalogVersion} />}
       <footer>Organização hoje. Tranquilidade amanhã.</footer>
     </main>
   );

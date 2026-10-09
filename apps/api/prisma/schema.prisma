@@ -23,6 +23,7 @@ model User {
   cards         Card[]
   statements    Statement[]
   importBatches ImportBatch[]
+  expenses      Expense[]
 }
 
 model Session {
@@ -273,6 +274,51 @@ model ImportReviewRevision {
   @@unique([batchId, version])
 }
 
+model Expense {
+  id String @id @default(uuid())
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Restrict)
+  description String @db.VarChar(500)
+  notes String? @db.VarChar(1000)
+  purchasedOn DateTime? @db.Date
+  total BigInt?
+  currency String @default("BRL") @db.VarChar(3)
+  factEvidence Json @default("{}")
+  version Int @default(0)
+  createdAt DateTime @default(now())
+  charges ExpenseCharge[]
+  commands ExpenseCommand[]
+  @@unique([id, userId])
+  @@index([userId, createdAt])
+}
+
+model ExpenseCharge {
+  chargeId String @id
+  userId String
+  expenseId String
+  expense Expense @relation(fields: [expenseId, userId], references: [id, userId], onDelete: Restrict)
+  charge CardCharge @relation(fields: [chargeId, userId], references: [id, userId], onDelete: Restrict)
+  createdAt DateTime @default(now())
+  @@unique([chargeId, userId])
+  @@index([expenseId, userId])
+}
+
+model ExpenseCommand {
+  id String @id @default(uuid())
+  userId String
+  expenseId String
+  expense Expense @relation(fields: [expenseId, userId], references: [id, userId], onDelete: Restrict)
+  key String @db.VarChar(100)
+  requestHash String @db.VarChar(64)
+  version Int
+  changes Json
+  result Json
+  createdAt DateTime @default(now())
+  @@unique([userId, key])
+  @@unique([expenseId, version])
+  @@index([expenseId, userId])
+}
+
 model BankEntry {
   id String @id @default(uuid())
   userId String
@@ -316,6 +362,7 @@ model CardCharge {
   outcomes ImportOutcome[]
   linkRows ImportRow[] @relation("CardLink")
   distinctRows ImportRow[] @relation("CardDistinct")
+  expenseLink ExpenseCharge?
   @@unique([id, userId])
   @@unique([id, creditAccountId, userId])
   @@index([userId, fingerprint])

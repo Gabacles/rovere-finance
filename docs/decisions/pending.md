@@ -1,12 +1,6 @@
 # Decisões de negócio pendentes
 
-As regras aprovadas estão no [ADR-0002](0002-financial-policies.md). Esta lista não bloqueia trabalho técnico independente.
-
-| ID | Questão | Recomendação e motivo | Bloqueia |
-|---|---|---|---|
-| BIZ-02 | Rotativo, renegociação e encargos | Registrar saldos e encargos informados, sem calcular juros presumidos. | Regras de financiamento de fatura |
-| BIZ-04 | Layouts bancários prioritários | Começar pelos arquivos efetivamente utilizados; CSV genérico e OFX 1.x/2.x permanecem obrigatórios. | Homologação de adaptadores específicos; não bloqueia parser genérico |
-| BIZ-05 | Reembolso que supera o custo após estorno | Pedir revisão do valor a receber e da eventual obrigação de devolver ao terceiro; não ajustar silenciosamente. | Tratamento do excedente |
+Não há questões BIZ ativas que bloqueiem a v0 dentro dos limites adotados. BIZ-02/BIZ-04/BIZ-05 foram resolvidas em 09/10/2026 por delegação do usuário: [políticas canônicas](../v0-policies.md) e [ADR-0009](0009-v0-business-policies.md). Recursos além desses limites exigirão decisões futuras.
 
 BIZ-01 foi resolvida pela escolha de orçamento bruto registrada no ADR-0002: recebimentos aparecem no caixa/custo líquido, sem recompor o orçamento bruto. O ID não será reutilizado.
 

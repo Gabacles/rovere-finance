@@ -28,9 +28,9 @@ export class EntriesController {
     if (!await this.db.creditAccount.findUnique({ where: { id_userId: { id: accountId, userId } } })) fail(404, 'DESTINATION_NOT_FOUND', 'Crédito não encontrado.');
     if (data.statementId && !await this.db.statement.findFirst({ where: { id: data.statementId, userId, creditAccountId: accountId } })) fail(404, 'DESTINATION_NOT_FOUND', 'Fatura não encontrada.');
     const where = { userId, creditAccountId: accountId, ...(data.statementId ? { statementId: data.statementId } : {}) };
-    const values = await this.db.cardCharge.findMany({ where, orderBy: [{ postedOn: 'desc' }, { id: 'asc' }], skip: (page - 1) * 25, take: 25 });
+    const values = await this.db.cardCharge.findMany({ where, include: { expenseLink: { select: { expenseId: true } } }, orderBy: [{ postedOn: 'desc' }, { id: 'asc' }], skip: (page - 1) * 25, take: 25 });
     return { page, total: await this.db.cardCharge.count({ where }), rows: values.map(row => ({ id: row.id, kind: 'card', accountId,
       statementId: row.statementId, cardId: row.cardId, postedOn: row.postedOn.toISOString().slice(0, 10), description: row.description,
-      amount: { currency: row.currency, cents: row.cents.toString() }, installment: row.installment, notes: row.notes })) };
+      amount: { currency: row.currency, cents: row.cents.toString() }, installment: row.installment, notes: row.notes, expenseId: row.expenseLink?.expenseId ?? null })) };
   }
 }
