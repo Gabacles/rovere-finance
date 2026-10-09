@@ -12,11 +12,11 @@ RF-025 concluída localmente na branch `feat/rf-025-card-adjustments`, criada de
 
 `npm run check`: 46 documentos/18 tasks e hash histórico, tipos, 113 unitários, builds e smoke aprovados. Integração: 105 aprovados (10 RF-025). Chromium: 11 jornadas, incluindo compra/correções → plano → CSV/OFX → fatura → pagamento → estorno/associação com resposta perdida → excedente 20 preservando pagamento 50 e reserva → unlink/compensatória/reconfirmação, além das regressões de 500 registros por formato. Duas capturas móveis inspecionadas. Evidências, limites e falhas resolvidas na RF-025. Aviso de deprecação do driver pg registrado, sem falha nos testes; revisar antes de upgrade futuro.
 
-Docker atualizado, quatro serviços saudáveis, décima migration aplicada sem reset; schema/banco sem diferenças; proxy público 200 e histórico de estorno 401 sem sessão. Entrega pronta para publicação/revisão na branch; CI remota ainda a conferir antes de integrar.
+Docker atualizado, quatro serviços saudáveis, décima migration aplicada sem reset; schema/banco sem diferenças; proxy público 200 e histórico de estorno 401 sem sessão. Implementação `9c9edf3` publicada no [PR #12](https://github.com/Gabacles/rovere-finance/pull/12); CI remota ainda a conferir antes de integrar. Registro posterior somente de documentação preserva código validado.
 
 ## Próxima ação concreta
 
-1. Publicar RF-025 e abrir PR para main; conferir head/CI e autorização específica antes de integrar.
+1. Revisar [PR #12](https://github.com/Gabacles/rovere-finance/pull/12) da RF-025 para main; conferir head/CI e autorização específica antes de integrar.
 2. Após integração, RF-026: documentação interativa OpenAPI/Swagger dos contratos reais, antes da fase 3. Atualmente somente contratos Markdown.
 3. Depois de RF-026, detalhar próxima fatia da fase 3: recorrências/receitas/terceiros, respeitando os módulos e limites já definidos. Saldo anterior, financiamento e obrigações consolidadas continuam fora do ciclo básico desta v0, sem inferências automáticas.
 
