@@ -26,9 +26,11 @@ O adaptador extrairá datas, descrições, valores, moeda, conta e identificador
 | Compra já cadastrada manualmente | Sugerir vínculo à parcela existente |
 | Período explícito de faturamento | Associar à fatura correspondente |
 | Apenas intervalo do extrato | Não assumir que seja o período da fatura |
-| Fatura ausente | Permitir seleção em lote ou manter cobrança com vínculo pendente, sinalizando a limitação |
+| Fatura ausente | Manter na revisão e exigir competência confirmada antes de gravar cobranças; permitir seleção em lote |
 
 **Não será permitido multiplicar silenciosamente o valor de uma parcela para inventar o total da compra.** Também não serão geradas parcelas futuras ou anteriores apenas pela semelhança da descrição.
+
+BIZ-03 resolvida em 08/10/2026: sem competência, linhas permanecem na revisão até confirmação explícita do período. Linhas excluídas da seleção não bloqueiam as válidas. [ADR-0005](decisions/0005-missing-statement-period.md). Os [destinos RF-016](destinations.md) permitem cadastrar períodos confirmados, sem inferir competência do intervalo do extrato.
 
 Quando o usuário optar por completar um parcelamento, verá uma proposta com quantidade, valores, primeira parcela conhecida e calendário. As parcelas estimadas serão conciliadas com cobranças efetivas que chegarem posteriormente.
 

@@ -19,6 +19,9 @@ model User {
   sessions      Session[]
   accounts      Account[]
   financialAccounts FinancialAccount[]
+  creditAccounts CreditAccount[]
+  cards         Card[]
+  statements    Statement[]
 }
 
 model Session {
@@ -81,4 +84,49 @@ model FinancialAccount {
   updatedAt DateTime @updatedAt
   @@unique([id, userId])
   @@index([userId])
+}
+
+model CreditAccount {
+  id          String @id @default(uuid())
+  userId      String
+  user        User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name        String @db.VarChar(100)
+  currency    String @default("BRL") @db.VarChar(3)
+  creationKey String @db.VarChar(100)
+  createdAt   DateTime @default(now())
+  cards       Card[]
+  statements  Statement[]
+  @@unique([id, userId])
+  @@unique([userId, creationKey])
+}
+
+model Card {
+  id              String @id @default(uuid())
+  userId          String
+  user            User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  creditAccountId String
+  creditAccount   CreditAccount @relation(fields: [creditAccountId, userId], references: [id, userId], onDelete: Restrict)
+  name            String @db.VarChar(100)
+  kind            String @db.VarChar(10)
+  creationKey     String @db.VarChar(100)
+  createdAt       DateTime @default(now())
+  @@unique([id, userId])
+  @@unique([userId, creationKey])
+  @@index([creditAccountId, userId])
+}
+
+model Statement {
+  id              String @id @default(uuid())
+  userId          String
+  user            User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  creditAccountId String
+  creditAccount   CreditAccount @relation(fields: [creditAccountId, userId], references: [id, userId], onDelete: Restrict)
+  period          String @db.VarChar(7)
+  periodOrigin    String @default("manual") @db.VarChar(10)
+  creationKey     String @db.VarChar(100)
+  createdAt       DateTime @default(now())
+  @@unique([id, userId])
+  @@unique([userId, creationKey])
+  @@unique([creditAccountId, period])
+  @@index([creditAccountId, userId])
 }

@@ -69,20 +69,89 @@
 - Evidências Docker: `docker compose up --build -d --wait --wait-timeout 120` passou; db, Mailpit, API e web saudáveis; migração terminou com código 0. Reexecução não reaplicou a migração. Proxy web: `/` 200, `/api/health` 200, `/api/ready` 200, `/api/me` 401 sem sessão e `/api/auth/get-session` 200. Sem reset do banco de desenvolvimento. Serviços deixados ativos nas portas do README.
 - Falhas resolvidas: geração de SQL passou a usar `--config apps/api/prisma.config.ts`; proteções de origem/CSRF explicitamente habilitadas também em ambiente de teste; descrição acessível da senha separada do label; teardown de schema E2E adaptado ao encerramento de processos no Windows; OpenSSL instalado no estágio de build/migração. Schemas das tentativas iniciais foram removidos somente de `rovere_test`. Overrides transitivos registrados no ADR.
 - Limitações: contas mínimas sem saldos/cartões/movimentações. Isolamento demonstrado para os recursos atuais, sem RLS ou módulos financeiros futuros. SMTP externo, TLS público, retry durável de emails e tratamento de IP atrás de ingress ainda dependem da implantação; [detalhes](../identity.md). CI configurada para integração/E2E, resultado remoto ainda não verificado.
-- Próximo passo: revisar a branch para integração à main; depois decompor RF-014 e resolver BIZ-03 antes do comportamento dependente.
+- Integração: usuário realizou merge pelo PR #1; conferido em `origin/main` (`c167e95`) antes de iniciar RF-015. Árvore local limpa na retomada; não foi necessário refazer testes idênticos da RF-013.
+- Próximo passo: RF-014 e suas subtarefas. BIZ-03 resolvida pelo [ADR-0005](../decisions/0005-missing-statement-period.md).
 
 ## [ ] RF-014 — Primeira fatia vertical de importação CSV e OFX
 
-- Estado: pendente
+- Estado: em andamento
 - Descrição: upload privado, parsing, revisão persistida e confirmação com destino para arquivos fictícios dos dois formatos.
 - Contexto/objetivo: reduzir cadastro manual em lote e provar a arquitetura de importação.
-- Dependências: RF-013; contas/cartões mínimos; resolver BIZ-03 para o caso de fatura ausente.
+- Dependências: RF-013 concluída; RF-015 a RF-018 abaixo. BIZ-03 resolvida: exigir período antes de confirmar cobranças.
 - Atividades e aceite:
-  - [ ] Detalhar esta entrega em tasks menores ao iniciá-la, preservando CSV e OFX no mesmo marco.
-  - [ ] Homologar CSV genérico e OFX 1.x/2.x com fixtures fictícias.
+  - [x] Detalhar esta entrega em tasks menores ao iniciá-la, preservando CSV e OFX no mesmo marco.
+  - [x] Homologar CSV genérico e OFX 1.x/2.x com fixtures fictícias.
   - [ ] Confirmar lote de 500 compras com idempotência, erros e conciliação verificáveis.
   - [ ] Demonstrar isolamento, preservação de metadados e ausência de inferências silenciosas.
 - Testes necessários: parsers, PostgreSQL real, API e E2E de revisão/confirmar/reimportar.
+- Implementação: RF-015 possui adaptadores puros em `packages/importers` na sua branch ainda não integrada à base desta entrega; RF-016 destinos; RF-017 upload/revisão; RF-018 confirmação/aceite vertical. [Catálogo RF-015](https://github.com/Gabacles/rovere-finance/blob/103cc00/docs/import-formats.md).
+- Evidências: ver subtarefas; não há upload ou confirmação financeira executável ainda. Parsing de 500 registros não comprova importação persistida/idempotente.
+- Próximo passo: revisar/integrar RF-015 e RF-016; então RF-017 para revisão persistida, mantendo ambos os formatos no aceite vertical RF-018.
+
+## [x] RF-015 — Adaptadores genéricos CSV e OFX com proveniência
+
+- Estado: concluída
+- Descrição: interpretar CSV configurável e OFX SGML/XML, produzindo candidatos sem gravações financeiras.
+- Contexto/objetivo: reduzir o risco de normalização e comprovar INV-01/INV-03 antes de persistir importações.
+- Dependências: RF-011 e contratos RF-001; BIZ-03 aprovada para validar lacunas de competência.
+- Atividades e aceite:
+  - [x] Tratar encoding, datas, dinheiro exato e mapeamento CSV explícito.
+  - [x] Extrair banco/cartão OFX 1.x/2.x e separar múltiplas contas.
+  - [x] Preservar origem, identificadores, incertezas e sugestões; não criar parcelas, faturas ou totais ausentes.
+  - [x] Testar 500 registros em ambos os formatos, arquivos malformados, entidades e limites computacionais.
+  - [x] Validar workspaces/build/Docker e atualizar evidências antes do commit.
+- Testes necessários: Vitest de parsers, fixtures sintéticas, limites e tipos; build e instalação reproduzível.
+- Implementação: branch `feat/rf-015-import-parsers`; [adaptadores](https://github.com/Gabacles/rovere-finance/blob/103cc00/packages/importers/src/index.ts), [normalização](https://github.com/Gabacles/rovere-finance/blob/103cc00/packages/importers/src/normalize.ts), [testes](https://github.com/Gabacles/rovere-finance/blob/103cc00/packages/importers/test/parsers.test.ts), [catálogo](https://github.com/Gabacles/rovere-finance/blob/103cc00/docs/import-formats.md).
+- Evidências (08/10/2026): `npm run check` passou (27 documentos/11 tasks e hash histórico; tipos dos quatro workspaces; 79 testes, sendo 34 específicos de parsers; builds e smoke HTTP). Casos incluem CSV/OFX com 500 registros, variantes banco/cartão SGML/XML, Windows-1252/UTF-8, descrições multilinha, limites BIGINT, parcelas explícitas/sugeridas, fatura ausente, múltiplas contas, dados inválidos, DTD/entidades, profundidade e limites de tamanho/linhas. `npm audit`: zero vulnerabilidades conhecidas. `docker compose config --quiet` e `docker compose up --build -d --wait --wait-timeout 120` passaram, incluindo `npm ci` no build limpo; quatro serviços saudáveis e migração existente finalizada sem nova aplicação. Docker Desktop estava desligado e foi iniciado pela CLI. Nenhuma migration financeira nesta subtask; banco preservado.
+- Limitação: biblioteca ainda não conectada à API/UI. Compatibilidade restrita ao catálogo homologado; sem conciliação, persistência ou confirmação financeira nesta subtask.
+- Revisão desta retomada (08/10/2026): código e testes inspecionados no commit `103cc00`; `npm run check` passou novamente com 79 testes, tipos, builds, smoke HTTP e 27 documentos/11 tasks. Sem defeitos relevantes encontrados. `git fetch origin` confirmou que esse commit ainda não é ancestral de `origin/main` (`c167e95`). Links de implementação acima apontam ao commit da RF-015; os parsers não fazem parte da base da RF-016.
+- Próximo passo: usuário revisar/integrar RF-015; RF-016 pode avançar independentemente a partir da main. RF-017 exige as duas entregas integradas.
+
+## [x] RF-016 — Destinos mínimos de contas, crédito e faturas
+
+- Estado: concluída
+- Descrição: preparar conta de crédito, cartões e competência da fatura como destinos autorizados da importação.
+- Contexto/objetivo: confirmar destino real sem deduzir vínculos a partir de números no arquivo.
+- Dependências: RF-013; ADR-0005.
+- Atividades e aceite:
+  - [x] Detalhar schema/contratos e migrations sem conflitar `Account` de autenticação com conta financeira.
+  - [x] Cadastrar/listar destinos e períodos com propriedade validada na API e nas relações SQL.
+  - [x] Validar API/banco com dois usuários e UI mínima de seleção de destinos.
+- Testes necessários: migrations, chaves compostas e HTTP contra PostgreSQL real; seleção no navegador.
+- Implementação: branch `feat/rf-016-import-destinations`, criada de `origin/main` atualizada em `c167e95`. [Contratos](../destinations.md), [schema](../../apps/api/prisma/schema.prisma), [migration](../../apps/api/prisma/migrations/202610080002_import_destinations/migration.sql), [serviço](../../apps/api/src/credit/destinations.service.ts), [controller](../../apps/api/src/credit/credit.controller.ts), [UI](../../apps/web/src/destinations.tsx), [período](../../packages/domain/src/statement-period.ts), [integração](../../apps/api/test/destinations.integration.test.ts), [E2E](../../tests/e2e/destinations.spec.ts). Conta bancária RF-013 reutilizada; nenhum saldo/limite/total/vencimento inferido.
+- Evidências (08/10/2026): `npm run check` passou: 27 documentos/11 tasks, links e hash histórico; tipos dos três workspaces; 47 testes unitários (incluindo 2 de competência); builds e smoke HTTP com 2 assets. `npm run test:integration`: 18 aprovados (10 RF-013 e 8 RF-016), com PostgreSQL real/Mailpit, dois usuários, FK composta, cadastro concorrente idempotente, validação e reexecução de migrations sem perder cadastros. `npm run test:e2e`: 2 jornadas Chromium aprovadas na versão final; seleciona conta bancária/crédito, três tipos de cartão, competência explícita, reload, troca de crédito e descarte de resposta atrasada; captura móvel 390×844 inspecionada sem overflow. `docker compose config --quiet` e `docker compose up --build -d --wait --wait-timeout 120` passaram: instalação limpa, build, quatro serviços saudáveis e segunda migration aplicada (exit 0), volume preservado. `node --env-file-if-exists=.env node_modules/prisma/build/index.js migrate diff --from-config-datasource --to-schema apps/api/prisma/schema.prisma --config apps/api/prisma.config.ts --exit-code`: sem diferenças, exit 0. Proxy HTTP: `/`, `/api/health`, `/api/ready` 200; `/api/credit-accounts` 401 sem sessão. Instalações npm local e Docker reportaram zero vulnerabilidades conhecidas. `git diff --check` passou.
+- Falhas resolvidas: build do domínio adicionado antes de typecheck/test/integração; imagem API inclui pacote de domínio compilado. Primeiro E2E falhou por seletores de nome de conta e combobox; ajustados para correspondência exata e papel acessível, com reexecução aprovada.
+- Limitações: cadastros sem ciclo/pagamento/total de fatura ou movimentos. Seleção é local na UI; persistência de revisão depende da RF-017. RF-015 preservada em branch própria, sem merge na main.
+- Próximo passo: revisar/integrar as branches RF-015 e RF-016 antes de criar RF-017 a partir da main atualizada. Commit semântico/push somente na branch da task, conforme AGENTS; nenhuma integração automática à main. CI remota ainda não verificada.
+
+## [ ] RF-017 — Upload privado e revisão persistida dos dois formatos
+
+- Estado: pendente
+- Descrição: receber arquivos CSV/OFX, processar lote em tarefa recuperável e salvar origem/revisão versionadas.
+- Contexto/objetivo: permitir corrigir e retomar centenas de linhas sem cadastro individual.
+- Dependências: RF-015, RF-016; contratos de importação e limites medidos.
+- Atividades e aceite:
+  - [ ] Implementar armazenamento privado, limites e worker com estado/tentativas persistidos.
+  - [ ] Persistir origem e configuração do parser, candidatos, correções e decisões por linha/em lote.
+  - [ ] Disponibilizar prévia paginada, mapeamento CSV, destino/período confirmados e erros claros.
+  - [ ] Testar isolamento de arquivos/lotes, conflitos de versão e recuperação sem sobrescrever revisão.
+- Testes necessários: banco/API, autorização, retry concorrente e E2E da prévia nos dois formatos.
 - Implementação: ainda inexistente.
 - Evidências: nenhuma; não iniciada.
-- Próximo passo: após autenticação e destinos, decompor por contratos e testes da [matriz](../quality.md).
+- Próximo passo: detalhar DTOs e entidades da área de revisão conforme ADR-0003.
+
+## [ ] RF-018 — Confirmação, conciliação e aceite vertical de importação
+
+- Estado: pendente
+- Descrição: confirmar registros selecionados com vínculos, rastreabilidade, atomicidade e idempotência.
+- Contexto/objetivo: concluir o aceite de RF-014 para CSV e OFX em banco e navegador.
+- Dependências: RF-015, RF-016, RF-017; modelo mínimo de movimentos/cobranças detalhado ao iniciar.
+- Atividades e aceite:
+  - [ ] Implementar criação/vínculo/ignorar, preservando decisões manuais e recusando identidades externas conflitantes.
+  - [ ] Confirmar lote de 500 compras em cada formato, com destinos e competência válidos.
+  - [ ] Testar rollback, duplicidade, reenvio simultâneo, perda de resposta e conflito de versão/idempotência.
+  - [ ] Validar jornada upload → revisar → confirmar → reimportar e atualizar o aceite de RF-014.
+- Testes necessários: transações concorrentes no PostgreSQL, API e Playwright; INV-07/08/09.
+- Implementação: ainda inexistente.
+- Evidências: nenhuma; não iniciada.
+- Próximo passo: depois da revisão persistida, detalhar chaves externas e comandos sem antecipar regras financeiras ainda pendentes.

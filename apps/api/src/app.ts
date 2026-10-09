@@ -12,6 +12,8 @@ import type { Identity } from './identity/auth.js';
 import { IDENTITY, SessionGuard } from './identity/guard.js';
 import type { AuthenticatedRequest } from './identity/guard.js';
 import { AccountsController, DATABASE } from './accounts/accounts.controller.js';
+import { CreditController } from './credit/credit.controller.js';
+import { DestinationsService } from './credit/destinations.service.js';
 
 @Controller('health')
 class HealthController {
@@ -46,8 +48,8 @@ export async function createApp(config: AppConfig, db = createDatabase(config.da
   await db.$connect();
   const identity = createIdentity(db, config);
   @Module({
-    controllers: [HealthController, IdentityController, AccountsController],
-    providers: [{ provide: DATABASE, useValue: db }, { provide: IDENTITY, useValue: identity }, SessionGuard, Resources],
+    controllers: [HealthController, IdentityController, AccountsController, CreditController],
+    providers: [{ provide: DATABASE, useValue: db }, { provide: IDENTITY, useValue: identity }, SessionGuard, Resources, DestinationsService],
   })
   class AppModule {}
   const app = await NestFactory.create(AppModule, { logger: ['error', 'warn'], bodyParser: false });

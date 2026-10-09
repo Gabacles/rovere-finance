@@ -2,7 +2,9 @@
 
 Plataforma de gestão financeira pessoal para o mercado brasileiro. Projeto greenfield com importação CSV **e OFX obrigatória na V1**, independente de Open Finance.
 
-**Estado: autenticação e persistência implementadas na RF-013.** Cadastro com confirmação de email, login/logout, recuperação de senha, sessões PostgreSQL e contas mínimas por usuário. Movimentações e importadores ainda não estão disponíveis. Consulte [progresso](docs/progress.md) para evidências e limitações.
+**Estado: autenticação RF-013 e destinos mínimos RF-016 implementados.** Cadastro com confirmação de email, login/logout, recuperação, sessões PostgreSQL, contas bancárias/carteiras, crédito, cartões compartilhados e competências explícitas. Movimentações e upload/revisão de importação ainda não estão disponíveis. [Destinos](docs/destinations.md) e [progresso](docs/progress.md).
+
+RF-015 está concluída na branch `feat/rf-015-import-parsers` (`103cc00`), ainda não integrada à main/base desta branch. [Catálogo dessa entrega](https://github.com/Gabacles/rovere-finance/blob/103cc00/docs/import-formats.md). RF-016 é independente dos parsers; RF-017 exige integração das duas entregas.
 
 ## Retomar o trabalho
 
@@ -37,7 +39,7 @@ Frontend em `http://localhost:5173` (mesma origem de `APP_ORIGIN` no `.env`). AP
 | `npm run typecheck` | Tipos dos workspaces |
 | `npm test` | Primitivas do domínio e configuração segura |
 | `npm run db:migrate` | Aplica migrations versionadas sem reset do banco |
-| `npm run test:integration` | API, sessões, email e isolamento em PostgreSQL real |
+| `npm run test:integration` | API, sessões, email, destinos, idempotência e isolamento em PostgreSQL real |
 | `npm run test:e2e` | Jornada no Chromium; antes, `npx playwright install chromium` |
 | `npm run build` | Compilação do domínio, API e frontend |
 | `npm run smoke:web` | HTTP do frontend compilado e assets; executar após build, não substitui E2E |

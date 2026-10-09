@@ -1,49 +1,31 @@
 # Progresso e ponto de retomada
 
-Atualizado em 08/10/2026. Fonte dos estados e evidências: [tasks](tasks/README.md).
+Atualizado em 08/10/2026. Estados, critérios e evidências pertencem às [tasks](tasks/README.md).
 
-## Contexto confirmado
+## Contexto e revisão
 
-Arquitetura geral aprovada e execução incremental autorizada. O usuário também aprovou orçamento bruto, recorrências ajustadas ao último dia, BRL e competência da fatura com caixa separado. [ADRs](decisions/README.md).
+Arquitetura geral e execução incremental aprovadas. Orçamento bruto, recorrências no último dia de meses curtos, BRL e competência da fatura com caixa separado permanecem aprovados. BIZ-03 já foi resolvida na RF-015: competência confirmada obrigatória antes de gravar cobranças; incompletas permanecem na revisão. [ADRs](decisions/README.md).
+
+RF-000/RF-001 e RF-010 a RF-013 permanecem concluídas após inspeção da documentação, primitivas, manifests, identidade, autorização, migrations e testes. Sem problemas relevantes que exijam reimplementação. A base da main ainda não continha a decomposição RF-015 a RF-018 nem a decisão BIZ-03; esses registros foram sincronizados nesta retomada, preservando a distinção entre branches.
+
+RF-015 revisada no commit `103cc00`: `npm run check` aprovado com 79 testes, 27 documentos/11 tasks, tipos, builds e smoke HTTP. Continua na branch `feat/rf-015-import-parsers`, fora de `origin/main`. [Implementação nessa versão](https://github.com/Gabacles/rovere-finance/tree/103cc00/packages/importers). Não confundir esses 79 testes com a base da RF-016, que ainda não inclui os parsers.
 
 ## Entrega atual
 
-Fase 0 concluída: documentação por assunto, arquivo original integral preservado, ADRs, contratos e invariantes definidos ([RF-000/RF-001](tasks/phase-0.md)).
+RF-016 concluída na branch `feat/rf-016-import-destinations`, criada de `origin/main` atualizada em `c167e95`, sem merge na main. Implementados crédito, cartões físicos/virtuais/adicionais compartilhados, competências manuais explícitas, relações SQL por proprietário e seleção de destinos. [Contrato e limites](destinations.md), [task e evidências](tasks/phase-1.md).
 
-RF-010 a RF-013 concluídas: workspaces React/Vite, NestJS e domínio; primitivas exatas de dinheiro/datas; PostgreSQL e migrations; cadastro com confirmação de email, login/logout, recuperação, sessões persistidas e contas mínimas isoladas por usuário. [Tasks e evidências](tasks/phase-1.md), [identidade](identity.md) e [ADR-0004](decisions/0004-identity-persistence.md).
+`npm run check` passou com 47 testes unitários, tipos, builds, smoke HTTP e documentação. Também passaram 18 testes de integração PostgreSQL/Mailpit e duas jornadas Chromium, incluindo descarte de resposta atrasada na seleção; layout móvel inspecionado. Docker reconstruído com instalação limpa, quatro serviços saudáveis e migration finalizada; volume preservado. Schema versus banco sem diferenças; proxy público 200 e destino privado 401 sem sessão. [Comandos completos e limitações](tasks/phase-1.md). Não há upload, revisão persistida, confirmação financeira, movimentos, saldo ou limite.
 
-## Versionamento
+## Versionamento e ambiente
 
-Em 08/10/2026, o push inicial da `main` foi concluído em `https://github.com/Gabacles/rovere-finance.git` (base até `f73b755`). A RF-013 foi desenvolvida na branch `feat/rf-013-authentication`, destinada à revisão antes do merge. Commits semânticos em inglês, identidade Git do usuário e sem assinatura/coautoria do agente. Conferir `git status -sb`, `git log` e tracking remoto ao retomar; nunca presumir que a branch foi integrada à main.
+`git fetch origin` confirmou RF-013 integrada via PR #1 e RF-015 ainda fora da main. RF-016 não depende do código de parsers; reutiliza a decisão já aprovada do ADR-0005. Entrega preparada para revisão na sua branch, com diff/checks conferidos; commit/push seguem o fluxo AGENTS. Não integrar branches automaticamente à main.
 
-Movimentações, cartões, orçamento e importadores ainda não existem. O suporte CSV/OFX continua obrigatório na V1 e independe de Open Finance. Cadastro mínimo de contas não representa saldos ou integração bancária; tipos de importação não são parsers.
+Serviços ativos: PostgreSQL 15432, API 3100, frontend `http://127.0.0.1:18080`, SMTP local 11025 e Mailpit `http://127.0.0.1:18025`. Sem usuários predefinidos; cadastrar/confirmar pela interface. Testes criam schemas próprios em `rovere_test`, sem reset do banco de desenvolvimento. Para parar preservando volume: `docker compose down`.
 
-## Validação executada em 08/10/2026
-
-- `npm run docs:check`: 25 documentos, links, 7 tasks e SHA-256 do arquivo histórico verificados.
-- `npm run typecheck`: workspaces aprovados.
-- `npm test`: 45 testes unitários aprovados.
-- `npm run test:integration`: 10 testes contra PostgreSQL real e SMTP local aprovados.
-- `npm run test:e2e`: jornada completa Chromium aprovada; screenshot móvel inspecionado.
-- `npm run build`: domínio, API e frontend compilados.
-- `npm run smoke:web`: HTML e 2 assets compilados servidos por HTTP; não é teste de renderização/E2E.
-- `docker compose config --quiet`: configuração válida.
-- `docker compose up --build -d --wait --wait-timeout 120`: imagens construídas, quatro serviços saudáveis e migração concluída (exit 0); reexecução preservou dados.
-- HTTP via proxy: frontend, liveness e readiness retornaram 200; recurso privado sem sessão retornou 401.
-- `npm audit` e auditoria de produção: nenhuma vulnerabilidade conhecida reportada após correções transitivas.
-
-CI ampliada com PostgreSQL, Mailpit, integração e Chromium. Resultado remoto desta branch ainda não verificado. Falhas resolvidas, comandos e limites da entrega estão registrados na RF-013.
-
-## Ambiente e ocorrências resolvidas
-
-Docker Desktop ativo. Serviços Rovere deixados ativos: PostgreSQL 15432, API 3100, frontend `http://127.0.0.1:18080`, SMTP local 11025 e Mailpit `http://127.0.0.1:18025`. Portas padrão ocupadas por serviços alheios não foram alteradas. Para parar preservando volume: `docker compose down`. Testes usam schemas próprios em `rovere_test`, sem tocar no banco de desenvolvimento. Não há credenciais de usuários pré-criadas; cadastro e confirmação disponíveis na interface/Mailpit.
-
-Não há bloqueio de ambiente conhecido. A implantação pública ainda exige configuração operacional documentada em identidade. Decisões financeiras pendentes permanecem abertas; nenhuma foi inferida nesta entrega.
+BIZ-02, BIZ-04 e BIZ-05 continuam abertas; RF-016 não implementa comportamentos dependentes. [Pendências](decisions/pending.md). CI existente cobre check, integração e Chromium; resultado remoto desta entrega ainda não verificado.
 
 ## Próxima ação concreta
 
-1. Revisar RF-013 e verificar o estado do merge antes de criar a próxima branch a partir da main atualizada.
-2. Decompor RF-014: destinos de contas/cartões, upload privado, staging, CSV e OFX no mesmo marco, revisão e idempotência em banco.
-3. Apresentar proposta para BIZ-03 (fatura ausente) antes de implementar comportamento dependente; avançar nos contratos/fixtures independentes. Reusar a autorização por proprietário e testar também arquivos/lotes entre usuários.
-
-Consultar [decisões pendentes](decisions/pending.md) antes de qualquer regra dependente. Não confundir o scaffolding com a entrega 1 completa. A próxima sessão deve inspecionar código e testes antes de confiar neste resumo.
+1. Revisar/integrar RF-015 e RF-016; verificar main atualizada antes de criar a branch seguinte.
+2. RF-017: upload privado CSV/OFX, tarefa recuperável e revisão persistida/versionada com destino/período explícitos.
+3. RF-018: confirmação transacional, conciliação e aceite de 500 compras por formato. RF-014 permanece em andamento; parsers e destinos não concluem a importação vertical.

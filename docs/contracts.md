@@ -1,6 +1,6 @@
 # Contratos e invariantes fundamentais
 
-Estado: especificação inicial da fase 0. Tipos compartilhados e primitivas em `packages/domain`; endpoints financeiros e persistência ainda não implementados. Decisões pendentes são delimitadas em [pending.md](decisions/pending.md).
+Estado: especificação inicial da fase 0, primitivas em `packages/domain`, identidade RF-013 e [destinos RF-016](destinations.md) implementados. Movimentos, cobranças e confirmação de importação ainda não implementados. Decisões pendentes em [pending.md](decisions/pending.md).
 
 ## Convenções
 
@@ -85,7 +85,7 @@ Falha da transação mantém o lote em revisão e não publica gravações parci
 
 Decisões por linha: `create`, `link` (ID existente autorizado), `skip`. “Manter ambas” significa `create` com decisão explícita de que a correspondência é distinta. Identidade externa conflitante exige resolução; não pode ser contornada por um merge aproximado.
 
-Campos de parcela, fatura e total usam estado de conhecimento e proveniência. Uma sugestão “03/10” é carregada separadamente; só vira informação confirmada após ação do usuário. A ausência de período permanece pendente de BIZ-03 antes da confirmação desse caso.
+Campos de parcela, fatura e total usam estado de conhecimento e proveniência. Uma sugestão “03/10” é carregada separadamente; só vira informação confirmada após ação do usuário. BIZ-03 resolvida: linhas de cartão sem competência permanecem na revisão; confirmação financeira exige período informado e confirmado ([ADR-0005](decisions/0005-missing-statement-period.md)).
 
 ## Esboço dos contratos HTTP futuros
 
