@@ -102,6 +102,7 @@ model CreditAccount {
   statements  Statement[]
   importBlocks ImportBlock[]
   charges CardCharge[]
+  installmentPlans InstallmentPlan[]
   @@unique([id, userId])
   @@unique([userId, creationKey])
 }
@@ -288,6 +289,7 @@ model Expense {
   createdAt DateTime @default(now())
   charges ExpenseCharge[]
   commands ExpenseCommand[]
+  installmentPlan InstallmentPlan?
   @@unique([id, userId])
   @@index([userId, createdAt])
 }
@@ -298,8 +300,10 @@ model ExpenseCharge {
   expenseId String
   expense Expense @relation(fields: [expenseId, userId], references: [id, userId], onDelete: Restrict)
   charge CardCharge @relation(fields: [chargeId, userId], references: [id, userId], onDelete: Restrict)
+  installmentMatch InstallmentMatch?
   createdAt DateTime @default(now())
   @@unique([chargeId, userId])
+  @@unique([chargeId, expenseId, userId])
   @@index([expenseId, userId])
 }
 
@@ -317,6 +321,55 @@ model ExpenseCommand {
   @@unique([userId, key])
   @@unique([expenseId, version])
   @@index([expenseId, userId])
+}
+
+model InstallmentPlan {
+  id String @id @default(uuid())
+  userId String
+  expenseId String @unique
+  expense Expense @relation(fields: [expenseId, userId], references: [id, userId], onDelete: Restrict)
+  creditAccountId String
+  creditAccount CreditAccount @relation(fields: [creditAccountId, userId], references: [id, userId], onDelete: Restrict)
+  total BigInt
+  currency String @default("BRL") @db.VarChar(3)
+  count Int
+  firstPeriod String @db.VarChar(7)
+  cadence String @default("monthly") @db.VarChar(7)
+  evidence Json
+  createdAt DateTime @default(now())
+  forecasts InstallmentForecast[]
+  @@unique([expenseId, userId])
+  @@unique([id, expenseId, userId])
+  @@index([creditAccountId, userId])
+}
+
+model InstallmentForecast {
+  id String @id @default(uuid())
+  userId String
+  expenseId String
+  planId String
+  plan InstallmentPlan @relation(fields: [planId, expenseId, userId], references: [id, expenseId, userId], onDelete: Restrict)
+  number Int
+  period String @db.VarChar(7)
+  plannedCents BigInt
+  match InstallmentMatch?
+  @@unique([planId, number])
+  @@unique([id, expenseId, userId])
+  @@index([expenseId, userId])
+}
+
+model InstallmentMatch {
+  forecastId String @id
+  expenseId String
+  userId String
+  forecast InstallmentForecast @relation(fields: [forecastId, expenseId, userId], references: [id, expenseId, userId], onDelete: Restrict)
+  chargeId String @unique
+  expenseCharge ExpenseCharge @relation(fields: [chargeId, expenseId, userId], references: [chargeId, expenseId, userId], onDelete: Restrict)
+  confirmedCents BigInt
+  evidence Json
+  createdAt DateTime @default(now())
+  @@unique([forecastId, expenseId, userId])
+  @@unique([chargeId, expenseId, userId])
 }
 
 model BankEntry {

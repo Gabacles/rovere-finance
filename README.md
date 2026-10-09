@@ -2,7 +2,7 @@
 
 Plataforma de gestão financeira pessoal para o mercado brasileiro. Projeto greenfield com importação CSV **e OFX obrigatória na V1**, independente de Open Finance.
 
-**Estado: importação RF-014/RF-018, faturas RF-020 e compras RF-021 implementadas.** CSV/OFX privados, confirmação atômica/idempotente, fatos de fatura e compras manuais completas/parciais com histórico e versão. Cobranças são associadas explicitamente, sem inferir total/data original nem duplicar registros. Sem saldos, limites, plano completo, pagamentos ou orçamento. [Compras](docs/purchases.md), [faturas](docs/card-statements.md) e [progresso](docs/progress.md).
+**Estado: importação RF-014/RF-018, faturas RF-020, compras RF-021 e planos RF-022 implementados.** CSV/OFX privados, confirmação atômica/idempotente, compras completas/parciais, fatos de fatura e planos mensais confirmados com histórico e versão. Previsões são conciliadas explicitamente com cobranças, preservando diferenças/origem; sem inferir total/data original, gerar cobranças ausentes ou duplicar registros. Sem saldos, limites, pagamentos ou orçamento. [Parcelas](docs/installment-plans.md), [compras](docs/purchases.md) e [progresso](docs/progress.md).
 
 RF-015 integrada pelo PR #2 e RF-016 pelo PR #4. Parsers CSV/OFX em `packages/importers`: [catálogo](docs/import-formats.md). A revisão nunca cria movimentações automaticamente.
 

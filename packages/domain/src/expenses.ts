@@ -3,6 +3,7 @@ import type { CivilDate } from './civil-date.js';
 import { parseCents, toMoneyDTO } from './money.js';
 import type { MoneyDTO } from './money.js';
 import type { KnownValue } from './import-contracts.js';
+import type { InstallmentPlanDTO } from './installment-plans.js';
 
 export interface ExpenseFacts { purchasedOn: KnownValue<CivilDate>; total: KnownValue<MoneyDTO> }
 export interface ExpenseChargeDTO {
@@ -12,6 +13,7 @@ export interface ExpenseChargeDTO {
 export interface ExpenseDTO {
   id: string; version: number; description: string; notes: string | null; facts: ExpenseFacts;
   knowledge: 'partial' | 'complete'; charges: ExpenseChargeDTO[];
+  installmentPlan?: InstallmentPlanDTO | null;
 }
 export interface ExpensePatch {
   description?: string; notes?: string | null;

@@ -6,6 +6,7 @@ import type { Expense, Prisma } from '../generated/prisma/client.js';
 import { DATABASE } from '../accounts/accounts.controller.js';
 import type { Database } from '../database.js';
 import { fail, json, key, object, version } from '../imports/validation.js';
+import { readInstallmentPlan } from './installment-projection.js';
 
 type Tx = Prisma.TransactionClient;
 function facts(row: Expense): ExpenseFacts {
@@ -27,19 +28,19 @@ function normalize(body: unknown, creating: boolean): ExpensePatch {
   try { return normalizeExpensePatch(body, creating); }
   catch (error) { fail(400, 'INVALID_EXPENSE', 'Confira descrição, data original e total não negativo em BRL.', [{ field: error instanceof ExpenseError ? error.field : 'expense', code: 'INVALID_EXPENSE' }]); }
 }
-async function details(tx: Tx | Database, userId: string, id: string): Promise<ExpenseDTO> {
+export async function expenseDetails(tx: Tx | Database, userId: string, id: string): Promise<ExpenseDTO> {
   const row = await tx.expense.findUnique({ where: { id_userId: { id, userId } }, include: { charges: { include: { charge: true }, orderBy: { chargeId: 'asc' } } } });
   if (!row) fail(404, 'EXPENSE_NOT_FOUND', 'Compra não encontrada.');
   const value = facts(row);
   return { id: row.id, version: row.version, description: row.description, notes: row.notes, facts: value, knowledge: expenseKnowledge(value),
-    charges: row.charges.map(({ charge }) => ({ id: charge.id, creditAccountId: charge.creditAccountId, statementId: charge.statementId,
+    installmentPlan: await readInstallmentPlan(tx, userId, id), charges: row.charges.map(({ charge }) => ({ id: charge.id, creditAccountId: charge.creditAccountId, statementId: charge.statementId,
       postedOn: charge.postedOn.toISOString().slice(0, 10), description: charge.description, amount: toMoneyDTO(parseCents(charge.cents.toString())), installment: charge.installment, notes: charge.notes })) };
 }
 
 @Injectable()
 export class ExpensesService {
   constructor(@Inject(DATABASE) private readonly db: Database) {}
-  get(userId: string, id: string) { return details(this.db, userId, id); }
+  get(userId: string, id: string) { return expenseDetails(this.db, userId, id); }
   async list(userId: string, query: unknown) {
     const data = object(query, ['page']);
     if (data.page !== undefined && (typeof data.page !== 'string' || !/^[1-9]\d{0,4}$/.test(data.page))) fail(400, 'INVALID_QUERY', 'Página inválida.');
@@ -74,8 +75,9 @@ export class ExpensesService {
         const value = changeExpenseFacts(unknownExpenseFacts(), patch.facts, decisionId);
         const row = await tx.expense.create({ data: { userId, description: patch.description!, notes: patch.notes ?? null, ...storage(value) } }); expenseId = row.id;
       } else {
-        previous = await details(tx, userId, expenseId);
+        previous = await expenseDetails(tx, userId, expenseId);
         if (previous.version !== expectedVersion) fail(409, 'EXPENSE_VERSION_CONFLICT', 'A compra mudou. Recarregue os dados antes de salvar.');
+        if (previous.installmentPlan && patch.facts?.total !== undefined && patch.facts.total?.cents !== previous.installmentPlan.total.cents) fail(409, 'PLAN_TOTAL_LOCKED', 'O total tem um plano confirmado. Revise o plano antes de alterar o total.');
         const updated = await tx.expense.updateMany({ where: { id: expenseId, userId, version: expectedVersion! },
           data: { ...(patch.description === undefined ? {} : { description: patch.description }), ...(patch.notes === undefined ? {} : { notes: patch.notes }),
             ...storage(changeExpenseFacts(previous.facts, patch.facts, decisionId)), version: { increment: 1 } } });
@@ -90,10 +92,11 @@ export class ExpensesService {
           await tx.expenseCharge.create({ data: { userId, expenseId, chargeId } });
         } else {
           if (!current || current.userId !== userId || current.expenseId !== expenseId) fail(409, 'CHARGE_LINK_CONFLICT', 'O vínculo mudou. Recarregue os dados.');
+          if (await tx.installmentMatch.findUnique({ where: { chargeId } })) fail(409, 'INSTALLMENT_MATCH_EXISTS', 'Desconcilie a parcela antes de desassociar a cobrança.');
           await tx.expenseCharge.delete({ where: { chargeId } });
         }
       }
-      const result = await details(tx, userId, expenseId);
+      const result = await expenseDetails(tx, userId, expenseId);
       await tx.expenseCommand.create({ data: { id: decisionId, userId, expenseId, key: token, requestHash: hash, version: result.version, changes: json({ patch, previous, current: result }), result: json(result) } });
       return result;
     });

@@ -5,6 +5,7 @@ import type { Response } from 'express';
 import { SessionGuard } from '../identity/guard.js';
 import type { AuthenticatedRequest } from '../identity/guard.js';
 import { ExpensesService } from './expenses.service.js';
+import { InstallmentsService } from './installments.service.js';
 
 @Catch()
 class ExpenseErrors implements ExceptionFilter {
@@ -20,10 +21,13 @@ class ExpenseErrors implements ExceptionFilter {
 @UseGuards(SessionGuard)
 @UseFilters(new ExpenseErrors())
 export class ExpensesController {
-  constructor(@Inject(ExpensesService) private readonly expenses: ExpensesService) {}
+  constructor(@Inject(ExpensesService) private readonly expenses: ExpensesService, @Inject(InstallmentsService) private readonly installments: InstallmentsService) {}
   @Get() list(@Req() req: AuthenticatedRequest, @Query() query: unknown) { return this.expenses.list(req.ownerId, query); }
   @Post() create(@Req() req: AuthenticatedRequest, @Body() body: unknown, @Headers('idempotency-key') key: unknown) { return this.expenses.create(req.ownerId, body, key); }
   @Get(':id') get(@Req() req: AuthenticatedRequest, @Param('id') id: string) { return this.expenses.get(req.ownerId, id); }
   @Get(':id/history') history(@Req() req: AuthenticatedRequest, @Param('id') id: string) { return this.expenses.history(req.ownerId, id); }
   @Patch(':id') update(@Req() req: AuthenticatedRequest, @Param('id') id: string, @Body() body: unknown, @Headers('idempotency-key') key: unknown) { return this.expenses.update(req.ownerId, id, body, key); }
+  @Post(':id/installment-plan') plan(@Req() req: AuthenticatedRequest, @Param('id') id: string, @Body() body: unknown, @Headers('idempotency-key') key: unknown) { return this.installments.create(req.ownerId, id, body, key); }
+  @Post(':id/installment-plan/matches') match(@Req() req: AuthenticatedRequest, @Param('id') id: string, @Body() body: unknown, @Headers('idempotency-key') key: unknown) { return this.installments.match(req.ownerId, id, body, key); }
+  @Post(':id/installment-plan/matches/:number/remove') remove(@Req() req: AuthenticatedRequest, @Param('id') id: string, @Param('number') number: string, @Body() body: unknown, @Headers('idempotency-key') key: unknown) { return this.installments.remove(req.ownerId, id, number, body, key); }
 }
