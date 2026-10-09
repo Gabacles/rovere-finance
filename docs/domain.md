@@ -35,6 +35,8 @@ RF-021 implementa [compras manuais](purchases.md), com dados completos/parciais 
 
 RF-022 implementa [planos mensais confirmados](installment-plans.md), previsões separadas das cobranças, divisão exata reutilizada e conciliação explícita com preservação de origem/diferenças. Plano não informa pagamento nem cria fatura ou cobrança ausente.
 
+RF-023 implementa [natureza manual e total calculado](statement-calculation.md), condicionado à cobertura atual explicitamente confirmada. Consumo, saldo anterior, créditos e pagamentos informados ficam separados; nenhum efeito de caixa/liquidação ou ajuste para fazer coincidir com o declarado é presumido.
+
 **Uma cobrança importada pode existir sem a compra completa conhecida.** Por exemplo, um arquivo pode informar apenas a parcela 3/10 de R$ 120. O modelo deverá aceitar esse conhecimento parcial sem inventar data original, total exato ou parcelas anteriores.
 
 Campos e restrições essenciais:

@@ -57,21 +57,25 @@ Entrega incremental após RF-014/RF-018. Não confundir dados de fatura com paga
 - Limitações: um plano mensal imutável por compra; sem substituição/cancelamento/redistribuição, datas de cobrança/vencimento inferidas, classificação financeira, pagamentos ou projeção global. Conciliação é explícita após confirmar importação, inclusive quando há diferença; não implica pago. Magnitudes seguem intervalo BIGINT não negativo (magnitude de MIN_CENTS não representável é recusada). Guarda de 10 mil parcelas não comprova capacidade de produção. Histórico privado continua nos comandos da compra.
 - Versionamento: implementação `b2599e2` publicada no [PR #9](https://github.com/Gabacles/rovere-finance/pull/9), para main. Atualização final somente de documentação não altera código validado. CI remota ainda pendente; conferir head/resultado antes de integrar, sem merge automático na main.
 - Próximo passo: conferir PR/head/CI e integrar com autorização específica; depois RF-023 a partir da main atualizada, natureza explícita das linhas e total calculado separado do declarado.
+- Integração conferida: usuário mergeou PR #9 na main `600ca74`; CI push/PR aprovada no head final `558bbe8` ([execução](https://github.com/Gabacles/rovere-finance/actions/runs/37971486701)). Código/merge conferidos sem reimplementar RF-022.
 
-## [ ] RF-023 — Natureza das linhas e consultas do ciclo da fatura
+## [x] RF-023 — Natureza das linhas e consultas do ciclo da fatura
 
-- Estado: pendente
+- Estado: concluída
 - Descrição: confirmar natureza financeira das linhas e consultar total calculado separado do declarado, com diferenças para revisão.
 - Contexto/objetivo: não classificar consumo/pagamento/estorno por descrição ou sinal; preparar obrigação consultável sem ajuste artificial.
 - Dependências: RF-020/RF-021; natureza e convenções de cálculo detalhadas antes do comportamento dependente.
 - Atividades e aceite:
-  - [ ] Definir classificação explícita, total declarado/calculado e efeitos de cada natureza.
-  - [ ] Implementar consultas e revisão de diferenças sem gerar lançamentos para fazer bater.
-  - [ ] Demonstrar competências independentes do caixa e ausência de dupla contagem.
+  - [x] Definir classificação explícita, total declarado/calculado e efeitos de cada natureza.
+  - [x] Implementar consultas e revisão de diferenças sem gerar lançamentos para fazer bater.
+  - [x] Demonstrar competências independentes do caixa e ausência de dupla contagem.
 - Testes necessários: domínio, banco/API, consultas e INV-04/INV-12 nos conceitos já implementados.
-- Implementação: ainda inexistente; fatos informados da fatura disponíveis na RF-020.
-- Evidências: nenhuma; não iniciada.
-- Próximo passo: apresentar recomendações para qualquer regra financeira ainda não definida antes de implementá-la.
+- Implementação: branch `feat/rf-023-statement-calculations`, base main `600ca74`; [contrato](../statement-calculation.md), [ADR-0011](../decisions/0011-explicit-line-nature-and-coverage.md), [domínio puro](../../packages/domain/src/statement-calculation.ts), [classificação](../../apps/api/src/credit/card-charges.service.ts), [controller](../../apps/api/src/credit/card-charges.controller.ts), [resumo/cobertura](../../apps/api/src/credit/statements.service.ts), [migration](../../apps/api/prisma/migrations/202610090005_statement_calculation/migration.sql), [UI](../../apps/web/src/statement-calculation.tsx), [integração](../../apps/api/test/statement-calculation.integration.test.ts), [Chromium](../../tests/e2e/statement-calculation.spec.ts). Natureza manual/magnitude confirmada, versionamento/idempotência/histórico, cobertura com assinatura e snapshot privado, subtotais antes de liquidações e diferença explícita, sem ajustes artificiais. Resumo atualizado após tentativa de confirmação de importação, inclusive resposta perdida. Swagger mapeado na RF-026 por pedido do usuário.
+- Evidências (09/10/2026): `npm run typecheck` aprovado; `npm test -- --run packages/domain/test/statement-calculation.test.ts`: 4 aprovados inicialmente; teste adicional de compensação incluído na validação final completa. `npm run check`: 42 documentos/18 tasks, links/hash histórico, tipos de quatro workspaces, 106 unitários (5 RF-023), builds e smoke HTML/2 assets aprovados. `npm run test:integration -- --run apps/api/test/statement-calculation.integration.test.ts`: 10 aprovados; `npm run test:integration`: 81 aprovados em PostgreSQL real/Mailpit. Cobrem empty/unknown versus zero explicitamente confirmado, todas as naturezas, pagamentos versus consumo/saldo anterior, período versus data de origem/caixa, reenvio simultâneo/replay após correção, concorrência/versionamento, cobertura stale/reconfirm/limpeza e snapshots, reimportação CSV/OFX preservando classificação/cobertura, nova linha invalidando atualidade sem apagar ciclo fechado, exclusão de Expense/planos/previsões/BankEntry dos totais, dependências de parcelas nos dois sentidos, isolamento/API/FKs, rollback de classificação/histórico e cobertura/histórico, imutabilidade/restart, overflow, validação/origem/chave e JSON redigido. `npm run test:e2e -- tests/e2e/statement-calculation.spec.ts`: jornada aprovada; `npm run test:e2e`: 9 jornadas aprovadas, incluindo resposta perdida de classificação, refresh após importação, magnitudes/sinais originais, cobertura explícita, divergência de 0,01, reload, conflito/recarregar, reconfirmar e histórico; regressões de 500 registros por formato mantidas. Duas capturas móveis inspecionadas, sem overflow do documento; tabela com rolagem própria. `docker compose config --quiet` e `docker compose up --build -d --wait --wait-timeout 120`: quatro serviços saudáveis, oitava migration `202610090005_statement_calculation` exit 0, volume preservado. `node node_modules/prisma/build/index.js migrate diff --from-config-datasource --to-schema apps/api/prisma/schema.prisma --config apps/api/prisma.config.ts --exit-code`: sem diferenças. Proxy público 200, ready ok, cobrança sem sessão 401. `git diff --check` aprovado.
+- Falhas/ajustes: revisão de constraints antes da execução reforçou branches não nulos, evidência e coerência da magnitude; coverage guarda assinatura/snapshot no histórico. Revisão final detectou possível overflow intermediário dependente da ordem de débitos/créditos compensatórios: `sumCents` acumula em BigInt e verifica intervalo no resultado final, com teste de permutações. Validações repetidas na versão corrigida. Não houve reset ou alteração de dados pessoais.
+- Limitações: classificação individual em páginas de 25, sem inferência automática; total completo exige declaração atual de cobertura. Total antes de liquidações, sem saldo restante, pagamento/atraso, transferência de saldo anterior entre obrigações ou dívida consolidada entre faturas. Sem ajustes/reversões da RF-025 ou efeito automático em terceiros/orçamento. Histórico HTTP vinte comandos; capacidade de produção/retenção ainda não homologadas.
+- Versionamento: entrega local validada; publicar branch e abrir PR para revisão. CI remota pendente; sem merge automático na main.
+- Próximo passo: conferir PR/head/CI e integrar com autorização específica; depois RF-024, alocações de caixa e saldos revalidados sem descontar pagamentos informados duas vezes. RF-026 após RF-025.
 
 ## [ ] RF-024 — Pagamentos de fatura e alocações de caixa
 
@@ -102,3 +106,20 @@ Entrega incremental após RF-014/RF-018. Não confundir dados de fatura com paga
 - Implementação: ainda inexistente.
 - Evidências: nenhuma; não iniciada.
 - Próximo passo: detalhar apenas quando as dependências se aproximarem; manter limites das políticas da v0.
+
+## [ ] RF-026 — Documentação interativa da API com OpenAPI/Swagger
+
+- Estado: pendente
+- Descrição: disponibilizar especificação OpenAPI e Swagger UI para entender e exercitar as rotas existentes.
+- Contexto/objetivo: solicitado pelo usuário em 09/10/2026; atualmente há contratos Markdown, sem Swagger instalado/rota executável. Implementar após fechar ciclo de cartão, antes da fase 3, e manter nas entregas seguintes.
+- Dependências: RF-025 integrada; inventário de controllers, validações e contratos reais da API na versão da implementação.
+- Atividades e aceite:
+  - [ ] Publicar JSON OpenAPI validado e UI navegável por módulos, com rotas, operationIds estáveis, entradas, respostas e erros reais.
+  - [ ] Documentar sessão/cookies, origem confiável, expectedVersion, Idempotency-Key, multipart CSV/OFX, paginação e estados de conhecimento.
+  - [ ] Representar centavos como strings e datas civis, com exemplos fictícios, sem segredos/dados reais ou endpoints inexistentes.
+  - [ ] Documentar identidade e política de acesso à UI/spec em desenvolvimento/produção, sem desabilitar guardas, CSRF ou limites para permitir testes na UI.
+  - [ ] Validar contratos/schema e smoke HTTP da UI/spec; adicionar verificação de atualização da documentação na CI e instruções no README.
+- Testes necessários: validação OpenAPI, inventário de cobertura de rotas, integração HTTP/autorização e navegação mínima Swagger no navegador.
+- Implementação: ainda inexistente; stack/versões serão verificadas ao iniciar, respeitando NestJS existente.
+- Evidências: busca em código/manifests confirmou somente intenção OpenAPI e contratos Markdown, sem implementação Swagger.
+- Próximo passo: após RF-025, implementar em branch própria; não gerar SDK de rotas futuras nem antecipar nesta RF-023.

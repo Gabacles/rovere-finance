@@ -139,6 +139,8 @@ model Statement {
   dueOn           DateTime? @db.Date
   declaredTotal   BigInt?
   cycle           String? @db.VarChar(6)
+  coverage        String? @db.VarChar(8)
+  coverageHash    String? @db.VarChar(64)
   factEvidence    Json @default("{}")
   factChanges     StatementFactChange[]
   createdAt       DateTime @default(now())
@@ -416,10 +418,32 @@ model CardCharge {
   linkRows ImportRow[] @relation("CardLink")
   distinctRows ImportRow[] @relation("CardDistinct")
   expenseLink ExpenseCharge?
+  version Int @default(0)
+  classificationKind String? @db.VarChar(16)
+  classifiedCents BigInt?
+  classificationEvidence Json @default("{}")
+  commands CardChargeCommand[]
   @@unique([id, userId])
   @@unique([id, creditAccountId, userId])
   @@index([userId, fingerprint])
   @@index([creditAccountId, userId, postedOn])
+}
+
+model CardChargeCommand {
+  id String @id @default(uuid())
+  userId String
+  creditAccountId String
+  chargeId String
+  charge CardCharge @relation(fields: [chargeId, creditAccountId, userId], references: [id, creditAccountId, userId], onDelete: Restrict)
+  key String @db.VarChar(100)
+  requestHash String @db.VarChar(64)
+  version Int
+  changes Json
+  result Json
+  createdAt DateTime @default(now())
+  @@unique([userId, key])
+  @@unique([chargeId, version])
+  @@index([chargeId, userId])
 }
 
 model BankExternalIdentity {

@@ -32,7 +32,7 @@ const messages: Record<string, string> = {
 const statuses: Record<string, string> = { uploaded: 'Aguardando interpretação', parsing: 'Interpretando arquivo', review: 'Em revisão', confirmed: 'Confirmada', failed: 'Falha na interpretação', cancelled: 'Removida' };
 function known<T>(value: KnownValue<T>): T | undefined { return value.state === 'confirmed' ? value.value : undefined; }
 class ApiError extends Error { constructor(public code: string) { super(messages[code] ?? 'Não foi possível concluir. Confira os dados e tente novamente.'); } }
-export function Imports({ accounts, onExpired, catalogVersion }: { accounts: Destination[]; onExpired: () => void; catalogVersion: number }) {
+export function Imports({ accounts, onExpired, catalogVersion, onFinancialChanged }: { accounts: Destination[]; onExpired: () => void; catalogVersion: number; onFinancialChanged: () => void }) {
   const [batches, setBatches] = useState<Batch[]>([]); const [batchId, setBatchId] = useState(''); const [batch, setBatch] = useState<Batch | null>(null);
   const [rows, setRows] = useState<Page | null>(null); const [page, setPage] = useState(1); const [refresh, setRefresh] = useState(0);
   const [format, setFormat] = useState('csv'); const [credits, setCredits] = useState<Destination[]>([]);
@@ -136,7 +136,7 @@ export function Imports({ accounts, onExpired, catalogVersion }: { accounts: Des
       await api(`/imports/${batchId}/confirm`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Idempotency-Key': attempt.key }, body: JSON.stringify({ expectedVersion: attempt.version }) });
       setMessage('Importação confirmada. Resultado salvo.');
     } catch (error) { setMessage(error instanceof Error ? error.message : 'Falha de conexão. Confira o resultado ao recarregar.'); }
-    finally { setBusy(false); setRefresh(value => value + 1); }
+    finally { setBusy(false); setRefresh(value => value + 1); onFinancialChanged(); }
   }
   async function loadEntries(block: Block) {
     const accountId = block.kind === 'bank' ? block.financialAccountId : block.creditAccountId;

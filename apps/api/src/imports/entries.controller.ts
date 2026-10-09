@@ -5,6 +5,7 @@ import { SessionGuard } from '../identity/guard.js';
 import type { AuthenticatedRequest } from '../identity/guard.js';
 import { ImportErrors } from './errors.js';
 import { fail, object } from './validation.js';
+import { classification } from '../credit/card-classification.js';
 
 @Controller('entries')
 @UseGuards(SessionGuard)
@@ -31,6 +32,6 @@ export class EntriesController {
     const values = await this.db.cardCharge.findMany({ where, include: { expenseLink: { select: { expenseId: true } } }, orderBy: [{ postedOn: 'desc' }, { id: 'asc' }], skip: (page - 1) * 25, take: 25 });
     return { page, total: await this.db.cardCharge.count({ where }), rows: values.map(row => ({ id: row.id, kind: 'card', accountId,
       statementId: row.statementId, cardId: row.cardId, postedOn: row.postedOn.toISOString().slice(0, 10), description: row.description,
-      amount: { currency: row.currency, cents: row.cents.toString() }, installment: row.installment, notes: row.notes, expenseId: row.expenseLink?.expenseId ?? null })) };
+      amount: { currency: row.currency, cents: row.cents.toString() }, installment: row.installment, notes: row.notes, expenseId: row.expenseLink?.expenseId ?? null, version: row.version, classification: classification(row) })) };
   }
 }

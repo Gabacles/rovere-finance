@@ -24,4 +24,6 @@ O roadmap é macro. Detalhar apenas a fase atual e a próxima entrega próxima. 
 - [Fase 1 — fundação e primeira importação](tasks/phase-1.md)
 - [Fase 2 — compras e ciclo de cartão](tasks/phase-2.md)
 
+RF-026 (OpenAPI/Swagger) foi solicitada para depois do ciclo de cartão e antes da fase 3; critérios na fase 2. A documentação interativa ainda não está implementada.
+
 As fases seguintes serão decompostas ao se aproximarem. Não marcar fases inteiras como prontas por existir scaffolding.

@@ -6,23 +6,25 @@ import type { KnownValue } from './import-contracts.js';
 import type { StatementDTO } from './destinations.js';
 
 export type StatementCycle = 'open' | 'closed';
+export type StatementCoverage = 'complete' | 'partial';
 export interface StatementFacts {
   closingOn: KnownValue<CivilDate>;
   dueOn: KnownValue<CivilDate>;
   declaredTotal: KnownValue<MoneyDTO>;
   cycle: KnownValue<StatementCycle>;
+  coverage: KnownValue<StatementCoverage>;
 }
 export interface StatementDetailsDTO extends StatementDTO { version: number; facts: StatementFacts }
 export class StatementFactError extends TypeError {
   constructor(public readonly field: string) { super('Invalid statement fact.'); }
 }
 export function unknownStatementFacts(): StatementFacts {
-  return { closingOn: { state: 'unknown' }, dueOn: { state: 'unknown' }, declaredTotal: { state: 'unknown' }, cycle: { state: 'unknown' } };
+  return { closingOn: { state: 'unknown' }, dueOn: { state: 'unknown' }, declaredTotal: { state: 'unknown' }, cycle: { state: 'unknown' }, coverage: { state: 'unknown' } };
 }
 /** Informational facts only; does not infer payment, overdue state or charge dates. */
 export function changeStatementFacts(previous: StatementFacts, patch: unknown, decisionId: string): StatementFacts {
   if (!patch || typeof patch !== 'object' || Array.isArray(patch) || !Object.keys(patch).length ||
-    Object.keys(patch).some(key => !['closingOn', 'dueOn', 'declaredTotal', 'cycle'].includes(key))) throw new StatementFactError('facts');
+    Object.keys(patch).some(key => !['closingOn', 'dueOn', 'declaredTotal', 'cycle', 'coverage'].includes(key))) throw new StatementFactError('facts');
   const next = { ...previous };
   const confirmed = <T>(value: T): KnownValue<T> => ({ state: 'confirmed', value, evidence: { kind: 'user', decisionId } });
   for (const [field, value] of Object.entries(patch)) {
@@ -32,6 +34,9 @@ export function changeStatementFacts(previous: StatementFacts, patch: unknown, d
       else if (field === 'cycle') {
         if (value !== 'open' && value !== 'closed') throw new TypeError();
         next.cycle = confirmed(value);
+      } else if (field === 'coverage') {
+        if (value !== 'complete' && value !== 'partial') throw new TypeError();
+        next.coverage = confirmed(value);
       } else {
         if (!value || typeof value !== 'object' || Array.isArray(value)) throw new TypeError();
         const money = value as Record<string, unknown>;

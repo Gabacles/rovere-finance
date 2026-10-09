@@ -25,6 +25,8 @@ export class StatementsController {
   get(@Req() req: AuthenticatedRequest, @Param('creditId') creditId: string, @Param('statementId') statementId: string) { return this.statements.get(req.ownerId, creditId, statementId); }
   @Get('history')
   history(@Req() req: AuthenticatedRequest, @Param('creditId') creditId: string, @Param('statementId') statementId: string) { return this.statements.history(req.ownerId, creditId, statementId); }
+  @Get('summary')
+  summary(@Req() req: AuthenticatedRequest, @Param('creditId') creditId: string, @Param('statementId') statementId: string) { return this.statements.summary(req.ownerId, creditId, statementId); }
   @Patch()
   update(@Req() req: AuthenticatedRequest, @Param('creditId') creditId: string, @Param('statementId') statementId: string, @Body() body: unknown) { return this.statements.update(req.ownerId, creditId, statementId, body); }
 }
