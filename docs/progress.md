@@ -12,11 +12,11 @@ RF-021 concluída localmente na branch `feat/rf-021-manual-purchases`, criada da
 
 `npm run check`: 38 documentos/17 tasks e hash histórico, tipos, 97 unitários, builds e smoke aprovados. Integração: 59 aprovados (10 RF-021). Chromium: 7 jornadas, incluindo criação com resposta perdida, associação posterior à importação, conflito/reload/histórico/desassociação e regressões CSV/OFX de 500 registros. Duas capturas móveis inspecionadas. Comandos, limites e ajustes na task RF-021; resultados anteriores preservados nas tasks de suas versões.
 
-Docker atualizado, quatro serviços saudáveis, sexta migration aplicada sem reset; schema/banco sem diferenças; proxy público 200 e compras privadas 401 sem sessão. Entrega pronta para publicação/revisão na branch; CI remota ainda a conferir antes de integrar.
+Docker atualizado, quatro serviços saudáveis, sexta migration aplicada sem reset; schema/banco sem diferenças; proxy público 200 e compras privadas 401 sem sessão. Implementação `776cdc1` publicada no [PR #8](https://github.com/Gabacles/rovere-finance/pull/8); CI remota ainda a conferir antes de integrar. Atualização final somente de documentação preserva a implementação validada.
 
 ## Próxima ação concreta
 
-1. Publicar RF-021 e abrir PR para main; conferir head/CI, revisão e autorização específica antes de integrar.
+1. Revisar [PR #8](https://github.com/Gabacles/rovere-finance/pull/8) da RF-021 para main; conferir head/CI e autorização específica antes de integrar.
 2. Após integração, RF-022: plano de parcelas e previsões com total, quantidade e calendário explicitamente confirmados; reutilizar distribuição exata existente.
 3. RF-023 a RF-025: natureza/totais calculados, pagamentos/alocações e ajustes/estornos. A V1 ainda não está concluída.
 
