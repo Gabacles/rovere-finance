@@ -12,7 +12,7 @@ Fase 2 detalhada em RF-020 a RF-025. RF-020 concluída na branch `feat/rf-020-st
 
 `npm run check`: 35 documentos/17 tasks e hash histórico, tipos, 93 unitários, builds e smoke aprovados. Integração: 49 aprovados, incluindo isolamento, versão concorrente, rollback, histórico, zero versus unknown e importação histórica em ciclo fechado. Chromium: 6 jornadas, com dados de fatura/reload/conflito e os fluxos CSV/OFX de 500 registros; captura móvel inspecionada.
 
-Docker atualizado, quatro serviços saudáveis, quinta migration aplicada sem reset; schema/banco sem diferenças; proxy público 200 e fatura privada 401 sem sessão. Falhas/ajustes e comandos na task RF-020. CI remota desta nova branch ainda não verificada; resultados anteriores mantidos nas tasks de suas versões.
+Docker atualizado, quatro serviços saudáveis, quinta migration aplicada sem reset; schema/banco sem diferenças; proxy público 200 e fatura privada 401 sem sessão. Falhas/ajustes e comandos na task RF-020. Implementação `fa4a323` publicada no [PR #7](https://github.com/Gabacles/rovere-finance/pull/7); CI em execução, resultado final/head ainda a conferir antes do merge. Resultados anteriores mantidos nas tasks de suas versões.
 
 ## Próxima ação concreta
 
