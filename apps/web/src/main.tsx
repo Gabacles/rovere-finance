@@ -2,6 +2,7 @@ import { StrictMode, useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { createRoot } from 'react-dom/client';
 import './styles.css';
+import { Destinations } from './destinations';
 
 function App() {
   const [user, setUser] = useState<{ name: string; email: string } | null>(null);
@@ -14,9 +15,9 @@ function App() {
     return params.has('error') ? 'O link é inválido ou expirou. Solicite outro.' : params.has('verified') ? 'Email confirmado. Entre para continuar.' : '';
   });
   const [accounts, setAccounts] = useState<{ id: string; name: string }[]>([]);
-  async function api(path: string, body?: unknown) {
+  async function api(path: string, body?: unknown, idempotencyKey?: string) {
     const response = await fetch(`/api${path}`, { method: body === undefined ? 'GET' : 'POST',
-      headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json', ...(idempotencyKey ? { 'Idempotency-Key': idempotencyKey } : {}) }, credentials: 'same-origin',
       ...(body === undefined ? {} : { body: JSON.stringify(body) }) });
     const data = await response.json();
     if (!response.ok) {
@@ -25,6 +26,10 @@ function App() {
         EMAIL_NOT_VERIFIED: 'Confirme seu email antes de entrar.',
         INVALID_EMAIL_OR_PASSWORD: 'Email ou senha inválidos.',
         INVALID_TOKEN: 'O link é inválido ou expirou. Solicite outro.',
+        INVALID_NAME: 'O nome deve conter de 1 a 100 caracteres.',
+        INVALID_STATEMENT_PERIOD: 'Informe uma competência válida no formato AAAA-MM.',
+        STATEMENT_PERIOD_EXISTS: 'Esta competência já está cadastrada. Selecione o período existente.',
+        IDEMPOTENCY_CONFLICT: 'Os dados deste envio mudaram. Confira e tente novamente.',
       };
       throw new Error(response.status === 429 ? 'Muitas tentativas. Aguarde um minuto.' : errors[data.code as string] ?? 'Não foi possível concluir. Confira os dados e tente novamente.');
     }
@@ -104,6 +109,7 @@ function App() {
           {user && <p className="note">Movimentações e importação de arquivos estarão disponíveis nas próximas entregas.</p>}
         </>}
       </section>
+      {user && <Destinations key={user.email} accounts={accounts} api={api} />}
       <footer>Organização hoje. Tranquilidade amanhã.</footer>
     </main>
   );

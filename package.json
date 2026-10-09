@@ -17,7 +17,7 @@
     "prebuild": "npm run db:generate",
     "pretypecheck": "npm run db:generate && npm run build --workspace=@rovere/domain",
     "pretest": "npm run db:generate && npm run build --workspace=@rovere/domain",
-    "test:integration": "npm run db:generate && npm run build --workspace=@rovere/api && vitest run --config vitest.integration.config.ts",
+    "test:integration": "npm run db:generate && npm run build --workspace=@rovere/domain && npm run build --workspace=@rovere/api && vitest run --config vitest.integration.config.ts",
     "test:e2e": "npm run build && playwright test",
     "dev:api": "npm run dev --workspace=@rovere/api",
     "dev:web": "npm run dev --workspace=@rovere/web",

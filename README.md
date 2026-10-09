@@ -2,9 +2,9 @@
 
 Plataforma de gestão financeira pessoal para o mercado brasileiro. Projeto greenfield com importação CSV **e OFX obrigatória na V1**, independente de Open Finance.
 
-**Estado: autenticação e persistência implementadas na RF-013.** Cadastro com confirmação de email, login/logout, recuperação de senha, sessões PostgreSQL e contas mínimas por usuário. Movimentações e fluxo de importação na interface ainda não estão disponíveis. Consulte [progresso](docs/progress.md) para evidências e limitações.
+**Estado: autenticação RF-013 e destinos mínimos RF-016 implementados.** Cadastro com confirmação de email, login/logout, recuperação, sessões PostgreSQL, contas bancárias/carteiras, crédito, cartões compartilhados e competências explícitas. Movimentações e upload/revisão de importação ainda não estão disponíveis. [Destinos](docs/destinations.md) e [progresso](docs/progress.md).
 
-RF-015 acrescenta a biblioteca de parsing CSV/OFX e fixtures sintéticas. Upload, revisão na interface e confirmação financeira ainda estão pendentes na RF-014. Compatibilidade e configuração: [catálogo de formatos](docs/import-formats.md).
+RF-015 integrada pelo PR #2; parsers CSV/OFX disponíveis em `packages/importers`. [Catálogo](docs/import-formats.md). RF-016 atualizada com essa base; upload e revisão persistida são a próxima entrega RF-017.
 
 ## Retomar o trabalho
 
@@ -39,7 +39,7 @@ Frontend em `http://localhost:5173` (mesma origem de `APP_ORIGIN` no `.env`). AP
 | `npm run typecheck` | Tipos dos workspaces |
 | `npm test` | Primitivas do domínio e configuração segura |
 | `npm run db:migrate` | Aplica migrations versionadas sem reset do banco |
-| `npm run test:integration` | API, sessões, email e isolamento em PostgreSQL real |
+| `npm run test:integration` | API, sessões, email, destinos, idempotência e isolamento em PostgreSQL real |
 | `npm run test:e2e` | Jornada no Chromium; antes, `npx playwright install chromium` |
 | `npm run build` | Compilação do domínio, API e frontend |
 | `npm run smoke:web` | HTTP do frontend compilado e assets; executar após build, não substitui E2E |
@@ -69,7 +69,6 @@ Este Compose é de desenvolvimento (`NODE_ENV=development`, HTTP e segredos fict
 - `apps/web`: React/Vite.
 - `apps/api`: NestJS/REST.
 - `packages/domain`: valores, datas e contratos sem frameworks.
-- `packages/importers`: adaptadores CSV/OFX, normalização com proveniência e erros por linha.
 - `docs`: arquitetura, domínio, decisões, tasks e evidências.
 - `scripts`: verificações de manutenção do repositório.
 

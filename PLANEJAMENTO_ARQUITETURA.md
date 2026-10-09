@@ -18,6 +18,7 @@ Leia primeiro [AGENTS.md](AGENTS.md), depois o [estado atual](docs/progress.md) 
 | Open Finance futuro | [Integrações](docs/integrations.md) |
 | Segurança e operação | [Segurança](docs/security.md) |
 | Autenticação e isolamento atuais | [Identidade](docs/identity.md) |
+| Contas de crédito, cartões e períodos | [Destinos](docs/destinations.md) |
 | Estratégia de testes e aceite da V1 | [Qualidade](docs/quality.md) |
 | Fases macro | [Roadmap](docs/roadmap.md) |
 | Situação e retomada | [Progresso](docs/progress.md) |

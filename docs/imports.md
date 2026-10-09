@@ -26,9 +26,11 @@ O adaptador extrairá datas, descrições, valores, moeda, conta e identificador
 | Compra já cadastrada manualmente | Sugerir vínculo à parcela existente |
 | Período explícito de faturamento | Associar à fatura correspondente |
 | Apenas intervalo do extrato | Não assumir que seja o período da fatura |
-| Fatura ausente | Manter linhas na revisão; exigir período informado/confirmado antes de gravar cobranças financeiras; permitir seleção do período em lote |
+| Fatura ausente | Manter na revisão e exigir competência confirmada antes de gravar cobranças; permitir seleção em lote |
 
 **Não será permitido multiplicar silenciosamente o valor de uma parcela para inventar o total da compra.** Também não serão geradas parcelas futuras ou anteriores apenas pela semelhança da descrição.
+
+BIZ-03 resolvida em 08/10/2026: sem competência, linhas permanecem na revisão até confirmação explícita do período. Linhas excluídas da seleção não bloqueiam as válidas. [ADR-0005](decisions/0005-missing-statement-period.md). Os [destinos RF-016](destinations.md) permitem cadastrar períodos confirmados, sem inferir competência do intervalo do extrato.
 
 Quando o usuário optar por completar um parcelamento, verá uma proposta com quantidade, valores, primeira parcela conhecida e calendário. As parcelas estimadas serão conciliadas com cobranças efetivas que chegarem posteriormente.
 
@@ -68,4 +70,4 @@ Reverter uma importação respeitará as dependências criadas depois dela. Regi
 
 O estado persistido da revisão, o comando de confirmação e as invariantes estão em [contracts.md](contracts.md). O adaptador não deve efetuar gravações financeiras; ele produz candidatos para revisão.
 
-BIZ-03 aprovada: competência é obrigatória na confirmação de cartão. A pendência pertence à revisão, sem cobranças financeiras fora de fatura. [ADR-0005](decisions/0005-missing-statement-period.md). Compatibilidade implementada, configurações e limites estão no [catálogo de formatos](import-formats.md).
+Parsers homologados, fixtures e guardas computacionais: [catálogo RF-015](import-formats.md). Não equivalem à capacidade validada do pipeline de upload/worker.

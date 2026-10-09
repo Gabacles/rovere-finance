@@ -84,9 +84,9 @@
   - [ ] Confirmar lote de 500 compras com idempotência, erros e conciliação verificáveis.
   - [ ] Demonstrar isolamento, preservação de metadados e ausência de inferências silenciosas.
 - Testes necessários: parsers, PostgreSQL real, API e E2E de revisão/confirmar/reimportar.
-- Implementação: RF-015 inicia adaptadores puros em `packages/importers`; RF-016 destinos; RF-017 upload/revisão; RF-018 confirmação/aceite vertical. [Catálogo](../import-formats.md).
+- Implementação: RF-015 possui adaptadores puros em `packages/importers` integrados pelo PR #2; RF-016 destinos; RF-017 upload/revisão; RF-018 confirmação/aceite vertical. [Catálogo RF-015](../import-formats.md).
 - Evidências: ver subtarefas; não há upload ou confirmação financeira executável ainda. Parsing de 500 registros não comprova importação persistida/idempotente.
-- Próximo passo: RF-016 e RF-017 para destinos e revisão persistida, mantendo ambos os formatos no aceite vertical RF-018.
+- Próximo passo: revisar/integrar RF-015 e RF-016; então RF-017 para revisão persistida, mantendo ambos os formatos no aceite vertical RF-018.
 
 ## [x] RF-015 — Adaptadores genéricos CSV e OFX com proveniência
 
@@ -104,22 +104,26 @@
 - Implementação: branch `feat/rf-015-import-parsers`; [adaptadores](../../packages/importers/src/index.ts), [normalização](../../packages/importers/src/normalize.ts), [testes](../../packages/importers/test/parsers.test.ts), [catálogo](../import-formats.md).
 - Evidências (08/10/2026): `npm run check` passou (27 documentos/11 tasks e hash histórico; tipos dos quatro workspaces; 79 testes, sendo 34 específicos de parsers; builds e smoke HTTP). Casos incluem CSV/OFX com 500 registros, variantes banco/cartão SGML/XML, Windows-1252/UTF-8, descrições multilinha, limites BIGINT, parcelas explícitas/sugeridas, fatura ausente, múltiplas contas, dados inválidos, DTD/entidades, profundidade e limites de tamanho/linhas. `npm audit`: zero vulnerabilidades conhecidas. `docker compose config --quiet` e `docker compose up --build -d --wait --wait-timeout 120` passaram, incluindo `npm ci` no build limpo; quatro serviços saudáveis e migração existente finalizada sem nova aplicação. Docker Desktop estava desligado e foi iniciado pela CLI. Nenhuma migration financeira nesta subtask; banco preservado.
 - Limitação: biblioteca ainda não conectada à API/UI. Compatibilidade restrita ao catálogo homologado; sem conciliação, persistência ou confirmação financeira nesta subtask.
-- Próximo passo: RF-016 após revisão/merge da branch.
+- Revisão desta retomada (08/10/2026): código e testes inspecionados no commit `103cc00`; `npm run check` passou novamente com 79 testes, tipos, builds, smoke HTTP e 27 documentos/11 tasks. Sem defeitos relevantes encontrados. `git fetch origin` confirmou que esse commit ainda não é ancestral de `origin/main` (`c167e95`). RF-015 posteriormente integrada pelo usuário no PR #2 (`49ec1c9`); RF-016 atualizada com essa main na continuidade autorizada.
+- Próximo passo: usuário revisar/integrar RF-015; RF-016 pode avançar independentemente a partir da main. RF-017 exige as duas entregas integradas.
 
-## [ ] RF-016 — Destinos mínimos de contas, crédito e faturas
+## [x] RF-016 — Destinos mínimos de contas, crédito e faturas
 
-- Estado: pendente
+- Estado: concluída
 - Descrição: preparar conta de crédito, cartões e competência da fatura como destinos autorizados da importação.
 - Contexto/objetivo: confirmar destino real sem deduzir vínculos a partir de números no arquivo.
 - Dependências: RF-013; ADR-0005.
 - Atividades e aceite:
-  - [ ] Detalhar schema/contratos e migrations sem conflitar `Account` de autenticação com conta financeira.
-  - [ ] Cadastrar/listar destinos e períodos com propriedade validada na API e nas relações SQL.
-  - [ ] Validar API/banco com dois usuários e UI mínima de seleção de destinos.
+  - [x] Detalhar schema/contratos e migrations sem conflitar `Account` de autenticação com conta financeira.
+  - [x] Cadastrar/listar destinos e períodos com propriedade validada na API e nas relações SQL.
+  - [x] Validar API/banco com dois usuários e UI mínima de seleção de destinos.
 - Testes necessários: migrations, chaves compostas e HTTP contra PostgreSQL real; seleção no navegador.
-- Implementação: ainda inexistente além de `FinancialAccount` mínimo da RF-013.
-- Evidências: nenhuma; não iniciada.
-- Próximo passo: ler domínio e detalhar cartões compartilhando conta de crédito, sem inventar saldo/limite.
+- Implementação: branch `feat/rf-016-import-destinations`, criada de `origin/main` atualizada em `c167e95`. [Contratos](../destinations.md), [schema](../../apps/api/prisma/schema.prisma), [migration](../../apps/api/prisma/migrations/202610080002_import_destinations/migration.sql), [serviço](../../apps/api/src/credit/destinations.service.ts), [controller](../../apps/api/src/credit/credit.controller.ts), [UI](../../apps/web/src/destinations.tsx), [período](../../packages/domain/src/statement-period.ts), [integração](../../apps/api/test/destinations.integration.test.ts), [E2E](../../tests/e2e/destinations.spec.ts). Conta bancária RF-013 reutilizada; nenhum saldo/limite/total/vencimento inferido.
+- Evidências (08/10/2026): `npm run check` passou: 27 documentos/11 tasks, links e hash histórico; tipos dos três workspaces; 47 testes unitários (incluindo 2 de competência); builds e smoke HTTP com 2 assets. `npm run test:integration`: 18 aprovados (10 RF-013 e 8 RF-016), com PostgreSQL real/Mailpit, dois usuários, FK composta, cadastro concorrente idempotente, validação e reexecução de migrations sem perder cadastros. `npm run test:e2e`: 2 jornadas Chromium aprovadas na versão final; seleciona conta bancária/crédito, três tipos de cartão, competência explícita, reload, troca de crédito e descarte de resposta atrasada; captura móvel 390×844 inspecionada sem overflow. `docker compose config --quiet` e `docker compose up --build -d --wait --wait-timeout 120` passaram: instalação limpa, build, quatro serviços saudáveis e segunda migration aplicada (exit 0), volume preservado. `node --env-file-if-exists=.env node_modules/prisma/build/index.js migrate diff --from-config-datasource --to-schema apps/api/prisma/schema.prisma --config apps/api/prisma.config.ts --exit-code`: sem diferenças, exit 0. Proxy HTTP: `/`, `/api/health`, `/api/ready` 200; `/api/credit-accounts` 401 sem sessão. Instalações npm local e Docker reportaram zero vulnerabilidades conhecidas. `git diff --check` passou.
+- Falhas resolvidas: build do domínio adicionado antes de typecheck/test/integração; imagem API inclui pacote de domínio compilado. Primeiro E2E falhou por seletores de nome de conta e combobox; ajustados para correspondência exata e papel acessível, com reexecução aprovada.
+- Limitações: cadastros sem ciclo/pagamento/total de fatura ou movimentos. Seleção é local na UI; persistência de revisão depende da RF-017. RF-015 integrada pelo usuário via PR #2; esta entrega incorpora os parsers na atualização da branch.
+- Atualização nesta continuidade: `origin/main` (`49ec1c9`) incorporada à branch RF-016 e validada por `npm run check` (28 documentos/11 tasks, 81 testes, tipos/builds/smoke), `npm run test:integration` (18) e `npm run test:e2e` (2). Nenhuma funcionalidade validada foi reimplementada; conflitos resolvidos preservando ambas as entregas. Revisão automática rejeitou merge/push na main por falta de autorização explícita específica; ação não executada, autorização solicitada.
+- Próximo passo: revisar/integrar as branches RF-015 e RF-016 antes de criar RF-017 a partir da main atualizada. Commit semântico/push somente na branch da task, conforme AGENTS; nenhuma integração automática à main. CI remota ainda não verificada.
 
 ## [ ] RF-017 — Upload privado e revisão persistida dos dois formatos
 

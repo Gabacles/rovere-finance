@@ -1,6 +1,6 @@
 # Contratos e invariantes fundamentais
 
-Estado: especificação inicial da fase 0. Tipos compartilhados e primitivas em `packages/domain`; endpoints financeiros e persistência ainda não implementados. Decisões pendentes são delimitadas em [pending.md](decisions/pending.md).
+Estado: especificação inicial da fase 0, primitivas em `packages/domain`, identidade RF-013 e [destinos RF-016](destinations.md) implementados. Movimentos, cobranças e confirmação de importação ainda não implementados. Decisões pendentes em [pending.md](decisions/pending.md).
 
 ## Convenções
 

@@ -19,6 +19,7 @@ COPY --from=build /app/apps/web/package.json apps/web/package.json
 COPY --from=build /app/packages/domain/package.json packages/domain/package.json
 RUN npm ci --omit=dev --workspace=@rovere/api --include-workspace-root=false
 COPY --from=build /app/apps/api/dist apps/api/dist
+COPY --from=build /app/packages/domain/dist packages/domain/dist
 USER node
 EXPOSE 3000
 CMD ["node", "apps/api/dist/main.js"]

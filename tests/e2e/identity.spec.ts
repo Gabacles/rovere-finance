@@ -18,8 +18,8 @@ test('register, verify, login, persist, logout and recover access', async ({ pag
   await page.getByLabel('Senha', { exact: true }).fill(password);
   await page.getByRole('button', { name: 'Entrar', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Suas contas' })).toBeVisible();
-  await page.getByLabel('Nome da conta').fill('Conta fictícia no navegador');
-  await page.getByRole('button', { name: 'Adicionar conta' }).click();
+  await page.getByLabel('Nome da conta', { exact: true }).fill('Conta fictícia no navegador');
+  await page.getByRole('button', { name: 'Adicionar conta', exact: true }).click();
   await expect(page.getByRole('listitem')).toContainText('Conta fictícia no navegador');
   await page.reload();
   await expect(page.getByRole('listitem')).toContainText('Conta fictícia no navegador');
