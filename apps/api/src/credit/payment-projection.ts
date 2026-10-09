@@ -42,6 +42,6 @@ export async function statementPayments(tx: Tx, userId: string, creditAccountId:
   const rows = await tx.statementPaymentAllocation.findMany({ where, include: { source: { include: { bankEntry: true } } }, orderBy: [{ createdAt: 'desc' }, { id: 'asc' }], skip: (page - 1) * 25, take: 25 });
   return { statementId, creditAccountId, period: context.row.period, statementVersion: context.row.version, candidates: context.candidates,
     blockers: [...context.blockers, ...(sourceCurrent ? [] : ['PAYMENT_SOURCE_CHANGED'])], basis: basis ? { kind: basis.kind as PaymentBasisKind, total: money(basis.total), evidence: basis.evidence as unknown as Evidence, current } : null,
-    progress: paymentProgress(basis ? money(basis.total) : null, current && sourceCurrent, active.map(value => money(value.cents))),
+    progress: paymentProgress(basis ? money(basis.total) : null, current && sourceCurrent, active.map(value => money(value.cents)), basis?.excessReviewConfirmed ?? false),
     allocations: { page, total, rows: rows.map(value => ({ id: value.id, bankEntryId: value.bankEntryId, accountId: value.accountId, amount: money(value.cents), postedOn: value.source.bankEntry.postedOn.toISOString().slice(0, 10), description: value.source.bankEntry.description, reversedAt: value.reversedAt?.toISOString() ?? null, evidence: value.evidence as unknown as Evidence })) } };
 }

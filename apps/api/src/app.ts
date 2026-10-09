@@ -29,6 +29,8 @@ import { CardChargesController } from './credit/card-charges.controller.js';
 import { CardChargesService } from './credit/card-charges.service.js';
 import { PaymentsController, PaymentSourcesController } from './credit/payments.controller.js';
 import { PaymentsService } from './credit/payments.service.js';
+import { AdjustmentsController, RefundsController } from './credit/adjustments.controller.js';
+import { AdjustmentsService } from './credit/adjustments.service.js';
 
 @Controller('health')
 class HealthController {
@@ -64,9 +66,9 @@ export async function createApp(config: AppConfig, db = createDatabase(config.da
   await db.$connect();
   const identity = createIdentity(db, config);
   @Module({
-    controllers: [HealthController, IdentityController, AccountsController, CreditController, ImportsController, EntriesController, StatementsController, ExpensesController, CardChargesController, PaymentsController, PaymentSourcesController],
+    controllers: [HealthController, IdentityController, AccountsController, CreditController, ImportsController, EntriesController, StatementsController, ExpensesController, CardChargesController, PaymentsController, PaymentSourcesController, AdjustmentsController, RefundsController],
     providers: [{ provide: DATABASE, useValue: db }, { provide: IDENTITY, useValue: identity },
-      { provide: IMPORT_WORKER_ENABLED, useValue: config.importsWorkerEnabled !== false }, SessionGuard, Resources, DestinationsService, ImportsService, ImportWorker, ConfirmationService, StatementsService, ExpensesService, InstallmentsService, CardChargesService, PaymentsService],
+      { provide: IMPORT_WORKER_ENABLED, useValue: config.importsWorkerEnabled !== false }, SessionGuard, Resources, DestinationsService, ImportsService, ImportWorker, ConfirmationService, StatementsService, ExpensesService, InstallmentsService, CardChargesService, PaymentsService, AdjustmentsService],
   })
   class AppModule {}
   const app = await NestFactory.create(AppModule, { logger: ['error', 'warn'], bodyParser: false });

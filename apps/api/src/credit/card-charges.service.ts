@@ -10,8 +10,8 @@ import { chargeDetails } from './card-classification.js';
 export class CardChargesService {
   constructor(@Inject(DATABASE) private readonly db: Database) {}
   async get(userId: string, id: string) {
-    const row = await this.db.cardCharge.findUnique({ where: { id_userId: { id, userId } } });
-    if (!row) fail(404, 'CHARGE_NOT_FOUND', 'Cobrança não encontrada.'); return chargeDetails(row);
+    const row = await this.db.cardCharge.findUnique({ where: { id_userId: { id, userId } }, include: { manualAdjustment: { include: { reversal: true } }, reversalOf: true } });
+    if (!row) fail(404, 'CHARGE_NOT_FOUND', 'Cobrança não encontrada.'); return { ...chargeDetails(row), ...(row.manualAdjustment ? { manualAdjustment: { reason: row.manualAdjustment.reason, evidence: row.manualAdjustment.evidence, reversalChargeId: row.manualAdjustment.reversal?.reversalChargeId ?? null }, reversalOfChargeId: row.reversalOf?.originalChargeId ?? null } : {}) };
   }
   async history(userId: string, id: string) {
     await this.get(userId, id); return this.db.cardChargeCommand.findMany({ where: { chargeId: id, userId }, select: { id: true, version: true, changes: true, createdAt: true }, orderBy: { version: 'desc' }, take: 20 });
@@ -29,6 +29,8 @@ export class CardChargesService {
       const replay = await tx.cardChargeCommand.findUnique({ where: { userId_key: { userId, key: commandKey } } });
       if (replay) { if (replay.requestHash !== hash) fail(409, 'IDEMPOTENCY_CONFLICT', 'Esta chave já foi usada com outros dados.'); return replay.result; }
       if (row.version !== expectedVersion) fail(409, 'CHARGE_VERSION_CONFLICT', 'A cobrança mudou. Recarregue os dados antes de salvar.');
+      if (await tx.manualCardAdjustment.findUnique({ where: { chargeId: id } })) fail(409, 'MANUAL_ADJUSTMENT_IMMUTABLE', 'Ajuste informado é imutável. Use uma reversão explícita.');
+      if (await tx.expenseRefund.findUnique({ where: { chargeId: id } }) && (!value || value.nature !== 'refund')) fail(409, 'REFUND_DEPENDENCY', 'Desassocie o estorno da compra antes de mudar sua natureza.');
       if (value && value.nature !== 'purchase' && await tx.installmentMatch.findUnique({ where: { chargeId: id } })) fail(409, 'CLASSIFICATION_DEPENDENCY', 'Desconcilie a parcela antes de atribuir outra natureza à cobrança.');
       const decisionId = randomUUID(); const previous = chargeDetails(row);
       const changed = await tx.cardCharge.updateMany({ where: { id, userId, version: expectedVersion }, data: { version: { increment: 1 }, classificationKind: value?.nature ?? null,

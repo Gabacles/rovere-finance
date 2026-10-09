@@ -39,6 +39,8 @@ RF-023 implementa [natureza manual e total calculado](statement-calculation.md),
 
 RF-024 implementa [alocações de pagamentos](statement-payments.md): base e saída confirmadas, limites da origem/destino revalidados sob concorrência, saldo derivado de alocações ativas e reversão explícita sem novo consumo/caixa. Contexto financeiro alterado exige revisão, preservando registros anteriores.
 
+RF-025 implementa [ajustes/estornos rastreáveis](card-adjustments.md), reversão compensatória manual, custo elegível separado da compra original e revisão de excedente preservando pagamentos reais. Ciclo básico validado com CSV/OFX, sem implicar conclusão de terceiros, orçamento ou toda a V1.
+
 **Uma cobrança importada pode existir sem a compra completa conhecida.** Por exemplo, um arquivo pode informar apenas a parcela 3/10 de R$ 120. O modelo deverá aceitar esse conhecimento parcial sem inventar data original, total exato ou parcelas anteriores.
 
 Campos e restrições essenciais:
