@@ -1,0 +1,9 @@
+{
+  "name": "@rovere/importers",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": { ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" } },
+  "scripts": { "build": "tsc -p tsconfig.json", "typecheck": "tsc -p tsconfig.test.json" },
+  "dependencies": { "@rovere/domain": "0.1.0", "csv-parse": "7.0.3", "fast-xml-parser": "5.11.2" }
+}

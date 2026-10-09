@@ -21,7 +21,7 @@
     "test:e2e": "npm run build && playwright test",
     "dev:api": "npm run dev --workspace=@rovere/api",
     "dev:web": "npm run dev --workspace=@rovere/web",
-    "build": "npm run build --workspace=@rovere/domain && npm run build --workspace=@rovere/api && npm run build --workspace=@rovere/web",
+    "build": "npm run build --workspace=@rovere/domain && npm run build --workspace=@rovere/importers && npm run build --workspace=@rovere/api && npm run build --workspace=@rovere/web",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "test": "npm run build --workspace=@rovere/api && vitest run",
     "docs:check": "node scripts/check-docs.mjs",

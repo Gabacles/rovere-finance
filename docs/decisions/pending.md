@@ -14,4 +14,6 @@ BIZ-03 resolvida em 08/10/2026: exigir competência confirmada antes de gravar c
 
 Limites de 10 MB/10 mil linhas e retenção de 30 dias são propostas técnicas, ainda sujeitas a medição e política de privacidade. Não apresentá-los como capacidade testada ou obrigação legal.
 
+Guardas computacionais dos parsers RF-015: [catálogo](../import-formats.md). Não definem retenção ou desempenho do pipeline persistido.
+
 Quando resolvida, mover a decisão para seu documento canônico e registrar a aprovação/ADR, removendo-a desta lista ativa. Não repetir perguntas já respondidas.

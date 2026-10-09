@@ -101,4 +101,4 @@ Campos de parcela, fatura e total usam estado de conhecimento e proveniência. U
 | `POST /api/receivables` | Despesa, terceiro e cronograma | Origem autorizada e limite de reembolso |
 | `POST /api/settlements` | Movimento, destinos tipados, alocações | INV-06; transação e concorrência |
 
-DTOs OpenAPI completos, erros e exemplos serão detalhados quando a task do endpoint se aproximar. Não gerar SDK de endpoints ainda inexistentes. A única rota inicialmente executável é `GET /api/health`, de liveness: ela não comprova prontidão do banco.
+DTOs OpenAPI completos, erros e exemplos financeiros serão detalhados quando a task do endpoint se aproximar. Não gerar SDK de endpoints ainda inexistentes. As rotas já executáveis da RF-013 estão em [identidade](identity.md); liveness e readiness de banco são distintas.

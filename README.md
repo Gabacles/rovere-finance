@@ -4,7 +4,7 @@ Plataforma de gestão financeira pessoal para o mercado brasileiro. Projeto gree
 
 **Estado: autenticação RF-013 e destinos mínimos RF-016 implementados.** Cadastro com confirmação de email, login/logout, recuperação, sessões PostgreSQL, contas bancárias/carteiras, crédito, cartões compartilhados e competências explícitas. Movimentações e upload/revisão de importação ainda não estão disponíveis. [Destinos](docs/destinations.md) e [progresso](docs/progress.md).
 
-RF-015 está concluída na branch `feat/rf-015-import-parsers` (`103cc00`), ainda não integrada à main/base desta branch. [Catálogo dessa entrega](https://github.com/Gabacles/rovere-finance/blob/103cc00/docs/import-formats.md). RF-016 é independente dos parsers; RF-017 exige integração das duas entregas.
+RF-015 integrada pelo PR #2; parsers CSV/OFX disponíveis em `packages/importers`. [Catálogo](docs/import-formats.md). RF-016 atualizada com essa base; upload e revisão persistida são a próxima entrega RF-017.
 
 ## Retomar o trabalho
 

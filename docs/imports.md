@@ -69,3 +69,5 @@ Reverter uma importação respeitará as dependências criadas depois dela. Regi
 ## Contratos
 
 O estado persistido da revisão, o comando de confirmação e as invariantes estão em [contracts.md](contracts.md). O adaptador não deve efetuar gravações financeiras; ele produz candidatos para revisão.
+
+Parsers homologados, fixtures e guardas computacionais: [catálogo RF-015](import-formats.md). Não equivalem à capacidade validada do pipeline de upload/worker.
