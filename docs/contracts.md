@@ -85,7 +85,7 @@ Falha da transação mantém o lote em revisão e não publica gravações parci
 
 Decisões por linha: `create`, `link` (ID existente autorizado), `skip`. “Manter ambas” significa `create` com decisão explícita de que a correspondência é distinta. Identidade externa conflitante exige resolução; não pode ser contornada por um merge aproximado.
 
-Campos de parcela, fatura e total usam estado de conhecimento e proveniência. Uma sugestão “03/10” é carregada separadamente; só vira informação confirmada após ação do usuário. A ausência de período permanece pendente de BIZ-03 antes da confirmação desse caso.
+Campos de parcela, fatura e total usam estado de conhecimento e proveniência. Uma sugestão “03/10” é carregada separadamente; só vira informação confirmada após ação do usuário. BIZ-03 resolvida: linhas de cartão sem competência permanecem na revisão; confirmação financeira exige período informado e confirmado ([ADR-0005](decisions/0005-missing-statement-period.md)).
 
 ## Esboço dos contratos HTTP futuros
 
@@ -101,4 +101,4 @@ Campos de parcela, fatura e total usam estado de conhecimento e proveniência. U
 | `POST /api/receivables` | Despesa, terceiro e cronograma | Origem autorizada e limite de reembolso |
 | `POST /api/settlements` | Movimento, destinos tipados, alocações | INV-06; transação e concorrência |
 
-DTOs OpenAPI completos, erros e exemplos serão detalhados quando a task do endpoint se aproximar. Não gerar SDK de endpoints ainda inexistentes. A única rota inicialmente executável é `GET /api/health`, de liveness: ela não comprova prontidão do banco.
+DTOs OpenAPI completos, erros e exemplos financeiros serão detalhados quando a task do endpoint se aproximar. Não gerar SDK de endpoints ainda inexistentes. As rotas já executáveis da RF-013 estão em [identidade](identity.md); liveness e readiness de banco são distintas.

@@ -2,7 +2,9 @@
 
 Plataforma de gestão financeira pessoal para o mercado brasileiro. Projeto greenfield com importação CSV **e OFX obrigatória na V1**, independente de Open Finance.
 
-**Estado: autenticação e persistência implementadas na RF-013.** Cadastro com confirmação de email, login/logout, recuperação de senha, sessões PostgreSQL e contas mínimas por usuário. Movimentações e importadores ainda não estão disponíveis. Consulte [progresso](docs/progress.md) para evidências e limitações.
+**Estado: autenticação e persistência implementadas na RF-013.** Cadastro com confirmação de email, login/logout, recuperação de senha, sessões PostgreSQL e contas mínimas por usuário. Movimentações e fluxo de importação na interface ainda não estão disponíveis. Consulte [progresso](docs/progress.md) para evidências e limitações.
+
+RF-015 acrescenta a biblioteca de parsing CSV/OFX e fixtures sintéticas. Upload, revisão na interface e confirmação financeira ainda estão pendentes na RF-014. Compatibilidade e configuração: [catálogo de formatos](docs/import-formats.md).
 
 ## Retomar o trabalho
 
@@ -67,6 +69,7 @@ Este Compose é de desenvolvimento (`NODE_ENV=development`, HTTP e segredos fict
 - `apps/web`: React/Vite.
 - `apps/api`: NestJS/REST.
 - `packages/domain`: valores, datas e contratos sem frameworks.
+- `packages/importers`: adaptadores CSV/OFX, normalização com proveniência e erros por linha.
 - `docs`: arquitetura, domínio, decisões, tasks e evidências.
 - `scripts`: verificações de manutenção do repositório.
 
