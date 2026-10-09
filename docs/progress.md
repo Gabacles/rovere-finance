@@ -12,11 +12,11 @@ RF-023 concluída localmente na branch `feat/rf-023-statement-calculations`, cri
 
 `npm run check`: 42 documentos/18 tasks e hash histórico, tipos, 106 unitários, builds e smoke aprovados. Integração: 81 aprovados (10 RF-023). Chromium: 9 jornadas, com resposta perdida, classificação/cobertura/diferença, conflito/reload/histórico, refresh após confirmação de importação e regressões de 500 registros por formato. Duas capturas móveis inspecionadas. Comandos, limites e ajustes na RF-023; resultados anteriores preservados nas tasks de suas versões.
 
-Docker atualizado, quatro serviços saudáveis, oitava migration aplicada sem reset; schema/banco sem diferenças; proxy público 200 e cobrança privada 401 sem sessão. Entrega pronta para publicação/revisão na branch; CI remota ainda a conferir antes de integrar.
+Docker atualizado, quatro serviços saudáveis, oitava migration aplicada sem reset; schema/banco sem diferenças; proxy público 200 e cobrança privada 401 sem sessão. Implementação `954f00e` publicada no [PR #10](https://github.com/Gabacles/rovere-finance/pull/10); CI remota ainda a conferir antes de integrar. Registro posterior somente de documentação preserva código validado.
 
 ## Próxima ação concreta
 
-1. Publicar RF-023 e abrir PR para main; conferir head/CI e autorização específica antes de integrar.
+1. Revisar [PR #10](https://github.com/Gabacles/rovere-finance/pull/10) da RF-023 para main; conferir head/CI e autorização específica antes de integrar.
 2. Após integração, RF-024: pagamentos/alocações bancárias, revalidando dinheiro disponível e saldo conhecido, sem descontar pagamento informado e alocação duas vezes.
 3. RF-025: ajustes/estornos e aceite do ciclo. RF-026: OpenAPI/Swagger após RF-025 e antes da fase 3, solicitada pelo usuário; atualmente somente contratos Markdown. A V1 ainda não está concluída.
 
