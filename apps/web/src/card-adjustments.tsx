@@ -1,0 +1,40 @@
+import { useEffect, useRef, useState } from 'react';
+import type { FormEvent } from 'react';
+import { ADJUSTMENT_NATURES, oppositeAdjustmentNature } from '@rovere/domain';
+import type { CardNature, StatementDetailsDTO } from '@rovere/domain';
+import { centsInput, amountInput } from './money-input';
+type Api = (path: string, body?: unknown, key?: string, method?: 'GET' | 'POST' | 'PATCH') => Promise<any>;
+const labels = { fee: 'Tarifa informada', interest: 'Juros informados', other_debit: 'Outro débito', other_credit: 'Outro crédito', refund: 'Estorno' };
+export function CardAdjustmentsPanel({ creditId, value, api, parentBusy, setParentBusy, onChanged, financialVersion }: { creditId: string; value: StatementDetailsDTO; api: Api; parentBusy: boolean; setParentBusy: (busy: boolean) => void; onChanged: (value: StatementDetailsDTO) => void; financialVersion: number }) {
+  const [rows, setRows] = useState<{ id: string; description: string; amount: { cents: string } }[]>([]); const [page, setPage] = useState(1); const [total, setTotal] = useState(0); const [selected, setSelected] = useState<any>(null);
+  const [busy, setBusy] = useState(false); const [loading, setLoading] = useState(false); const [message, setMessage] = useState(''); const [refresh, setRefresh] = useState(0); const [history, setHistory] = useState<any[] | null>(null); const pending = useRef<{ signature: string; key: string } | null>(null);
+  const path = `/credit-accounts/${creditId}/statements/${value.id}/adjustments`; const disabled = busy || loading || parentBusy;
+  useEffect(() => { let active = true; setLoading(true); void api(`/entries?kind=card&accountId=${creditId}&statementId=${value.id}&page=${page}`).then(data => { if (active) { setRows(data.rows); setTotal(data.total); } }).catch(error => { if (active) setMessage(error.message); }).finally(() => { if (active) setLoading(false); }); return () => { active = false; }; }, [creditId, value.id, value.version, page, refresh, financialVersion]);
+  async function choose(id: string) { setBusy(true); setParentBusy(true); try { setSelected(await api(`/card-charges/${id}`)); setMessage(''); } catch (error) { setMessage(error instanceof Error ? error.message : 'Falha de conexão.'); } finally { setBusy(false); setParentBusy(false); } }
+  async function save(event: FormEvent<HTMLFormElement>, reversing = false) {
+    event.preventDefault(); const data = new FormData(event.currentTarget);
+    try {
+      const body: Record<string, unknown> = { expectedStatementVersion: value.version, postedOn: data.get('postedOn'), description: data.get('description'), amount: { currency: 'BRL', cents: centsInput(String(data.get('amount') ?? '')) }, classification: { nature: data.get('nature'), amount: { currency: 'BRL', cents: centsInput(String(data.get('magnitude') ?? '')) } }, reason: data.get('reason'), informedConfirmed: true };
+      if (reversing) { body.expectedChargeVersion = selected.version; body.expectedOriginalStatementVersion = value.version; }
+      const target = reversing ? `${path}/${selected.id}/reverse` : path; const signature = JSON.stringify({ target, body }); if (pending.current?.signature !== signature) pending.current = { signature, key: crypto.randomUUID() };
+      setBusy(true); setParentBusy(true); setMessage(''); await api(target, body, pending.current.key); onChanged(await api(`/credit-accounts/${creditId}/statements/${value.id}`)); pending.current = null; setSelected(null); setHistory(null); setRefresh(current => current + 1); setMessage(reversing ? 'Reversão compensatória registrada; original preservado.' : 'Ajuste informado registrado. Confira cobertura e base de pagamentos.');
+    } catch (error) { setMessage(error instanceof Error ? error.message : 'Confira os valores.'); } finally { setBusy(false); setParentBusy(false); }
+  }
+  async function showHistory() { setBusy(true); setParentBusy(true); try { setHistory(await api(`${path}/history`)); } catch (error) { setMessage(error instanceof Error ? error.message : 'Falha de conexão.'); } finally { setBusy(false); setParentBusy(false); } }
+  const fields = (reverse = false) => <>
+    <label>{reverse ? 'Data da reversão informada' : 'Data do ajuste informado'}<input name="postedOn" type="date" min="0001-01-01" max="9999-12-31" required disabled={disabled} /></label>
+    <label>{reverse ? 'Descrição da reversão' : 'Descrição do ajuste'}<input name="description" required maxLength={500} disabled={disabled} /></label>
+    <label>{reverse ? 'Valor da reversão com sinal' : 'Valor do ajuste com sinal'}<input name="amount" inputMode="decimal" required disabled={disabled} /></label>
+    <label>{reverse ? 'Natureza da reversão' : 'Natureza do ajuste'}<select name="nature" required disabled={disabled} defaultValue=""><option value="">Escolha uma natureza informada</option>{(reverse ? [oppositeAdjustmentNature(selected.classification.value.nature as CardNature)] : ADJUSTMENT_NATURES).map(key => <option key={key} value={key}>{labels[key]}</option>)}</select></label>
+    <label>{reverse ? 'Magnitude da reversão em reais' : 'Magnitude do ajuste em reais'}<input name="magnitude" inputMode="decimal" required disabled={disabled} /></label>
+    <label>{reverse ? 'Motivo da reversão' : 'Motivo do ajuste'}<input name="reason" maxLength={1000} required disabled={disabled} /></label>
+    <label className="check"><input type="checkbox" required disabled={disabled} />{reverse ? 'Confirmo a reversão informada, com mesma magnitude e efeito contrário, preservando o original.' : 'Confirmo que os valores, data e natureza deste ajuste foram informados; não são estimativas.'}</label>
+  </>;
+  return <div className="import-review"><h3>Ajustes informados e reversões</h3><p>Registre somente fatos conhecidos. Estornos podem ser associados à compra na seção Compras; pagamento e saldo excedente exigem revisão explícita.</p>{message && <p role="status">{message}</p>}
+    <form key={`create:${value.version}:${refresh}`} onSubmit={event => void save(event)}>{fields()}<button disabled={disabled}>Registrar ajuste informado</button></form>
+    <h4>Consultar ajuste existente</h4><label>Registro para revisar ajuste<select value={selected?.id ?? ''} disabled={disabled} onChange={event => { if (event.target.value) void choose(event.target.value); else setSelected(null); }}><option value="">Selecione um registro</option>{rows.map(row => <option key={row.id} value={row.id}>{row.description} · BRL {amountInput(row.amount.cents)}</option>)}</select></label>
+    <nav><button className="secondary" disabled={disabled || page === 1} onClick={() => { setPage(page - 1); setSelected(null); }}>Ajustes anteriores</button><span>Página {page}</span><button className="secondary" disabled={disabled || page * 25 >= total} onClick={() => { setPage(page + 1); setSelected(null); }}>Próximos ajustes</button><button className="secondary" disabled={disabled} onClick={() => setRefresh(current => current + 1)}>Atualizar ajustes</button></nav>
+    {selected && <>{selected.manualAdjustment ? <><p>Origem manual: {selected.manualAdjustment.reason}{selected.manualAdjustment.reversalChargeId ? ' · Reversão já registrada' : selected.reversalOfChargeId ? ' · Linha compensatória' : ''}</p>{!selected.manualAdjustment.reversalChargeId && !selected.reversalOfChargeId && <form key={`${selected.id}:${selected.version}`} onSubmit={event => void save(event, true)}>{fields(true)}<button disabled={disabled}>Registrar reversão do ajuste</button></form>}</> : <p>Registro importado: preserve a origem e revise a natureza/vínculos. Reversão manual nesta v0 é destinada a ajustes informados criados aqui.</p>}</>}
+    <button className="secondary" disabled={disabled} onClick={() => void showHistory()}>Histórico de ajustes da fatura</button>{history && <div className="statement-history"><h4>Últimos 20 comandos de ajuste</h4>{history.map(row => <p key={row.id}>{row.createdAt} · {row.changes.decision.operation === 'reverse' ? 'Reversão registrada' : row.changes.decision.operation === 'create' ? 'Ajuste registrado' : 'Vínculo revisado'} · {row.changes.current.charge.description}</p>)}</div>}
+  </div>;
+}

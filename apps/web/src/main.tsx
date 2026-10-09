@@ -60,7 +60,7 @@ function App() {
         INVALID_PAYMENT_AMOUNT: 'Informe valor positivo, exato e em BRL.',
         PAYMENT_BASIS_UNAVAILABLE: 'A base mudou ou não está disponível. Confira saldo anterior, total e cobertura.',
         PAYMENT_BASIS_REVIEW_REQUIRED: 'Confirme ou revise a base da obrigação antes de alocar.',
-        PAYMENT_TOTAL_BELOW_ALLOCATED: 'Reverta as alocações afetadas antes de reduzir a base abaixo do valor já alocado.',
+        PAYMENT_TOTAL_BELOW_ALLOCATED: 'Confirme preservar os pagamentos reais e revisar o excedente, ou corrija explicitamente as alocações.',
         OUTFLOW_AMOUNT_MISMATCH: 'A magnitude confirmada deve corresponder à saída bancária original.',
         PAYMENT_SOURCE_EXCEEDED: 'O valor supera o disponível deste movimento bancário.',
         PAYMENT_BALANCE_EXCEEDED: 'O valor supera o saldo conhecido desta fatura.',
@@ -69,9 +69,23 @@ function App() {
         PAYMENT_SOURCE_CHANGED: 'A saída confirmada mudou e exige revisão.',
         PAYMENT_ALLOCATION_NOT_FOUND: 'Alocação não encontrada.',
         PAYMENT_ALREADY_REVERSED: 'Esta alocação já foi revertida.',
+        INVALID_ADJUSTMENT: 'Confirme dados, natureza, magnitude, data e motivo do ajuste informado.',
+        INVALID_ADJUSTMENT_REASON: 'Informe um motivo de 1 a 1000 caracteres.',
+        ADJUSTMENT_VERSION_CONFLICT: 'Compra, ajuste ou fatura mudou. Atualize os dados antes de continuar.',
+        MANUAL_ADJUSTMENT_NOT_FOUND: 'Ajuste manual não encontrado.',
+        MANUAL_ADJUSTMENT_IMMUTABLE: 'Ajuste informado é imutável. Use uma reversão explícita.',
+        ADJUSTMENT_ALREADY_REVERSED: 'Não repetir reversão nem gerar cadeia automática.',
+        ADJUSTMENT_REVERSAL_INCOMPATIBLE: 'Confirme efeito contrário e mesma magnitude do ajuste original.',
+        REFUND_DEPENDENCY: 'Desassocie o estorno da compra antes de mudar sua natureza ou reverter o ajuste.',
+        REFUND_EXCEEDS_TOTAL: 'Estornos associados superariam o total original. Revise os créditos antes de alterar vínculos ou total.',
+        REFUND_ALREADY_LINKED: 'Este crédito já tem associação de estorno.',
+        REFUND_INCOMPATIBLE: 'Confirme uma linha de estorno efetivo, com magnitude correspondente e ainda não revertida.',
+        REFUND_LINK_NOT_FOUND: 'Associação de estorno não encontrada.',
+        INVALID_REFUND: 'Confirme o crédito, sua magnitude positiva em BRL e a associação à compra.',
       };
       throw new Error(response.status === 429 ? 'Muitas tentativas. Aguarde um minuto.' : errors[data.code as string] ?? 'Não foi possível concluir. Confira os dados e tente novamente.');
     }
+    if (method !== 'GET' && (path.includes('/adjustments') || path.includes('/refunds'))) setFinancialVersion(value => value + 1);
     return data;
   }
   useEffect(() => {
@@ -150,7 +164,7 @@ function App() {
       </section>
       {user && <Destinations key={`destinations:${user.email}`} accounts={accounts} api={api} onChanged={() => setCatalogVersion(value => value + 1)} financialVersion={financialVersion} />}
       {user && <Imports key={`imports:${user.email}`} accounts={accounts} catalogVersion={catalogVersion} onFinancialChanged={() => setFinancialVersion(value => value + 1)} onExpired={() => { setUser(null); setAccounts([]); }} />}
-      {user && <Expenses key={`expenses:${user.email}`} api={api} catalogVersion={catalogVersion} />}
+      {user && <Expenses key={`expenses:${user.email}`} api={api} catalogVersion={catalogVersion} financialVersion={financialVersion} />}
       <footer>Organização hoje. Tranquilidade amanhã.</footer>
     </main>
   );
