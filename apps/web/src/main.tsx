@@ -56,6 +56,19 @@ function App() {
         INVALID_CLASSIFICATION: 'Confirme natureza e magnitude do valor original em BRL.',
         CHARGE_VERSION_CONFLICT: 'A cobrança mudou. Recarregue os dados antes de salvar.',
         CLASSIFICATION_DEPENDENCY: 'A natureza e a parcela conciliada não correspondem. Revise a classificação ou desconcilie a parcela explicitamente.',
+        PAYMENT_CONFIRMATION_REQUIRED: 'Confirme a base antes de pagamentos, a obrigação independente e a saída bancária.',
+        INVALID_PAYMENT_AMOUNT: 'Informe valor positivo, exato e em BRL.',
+        PAYMENT_BASIS_UNAVAILABLE: 'A base mudou ou não está disponível. Confira saldo anterior, total e cobertura.',
+        PAYMENT_BASIS_REVIEW_REQUIRED: 'Confirme ou revise a base da obrigação antes de alocar.',
+        PAYMENT_TOTAL_BELOW_ALLOCATED: 'Reverta as alocações afetadas antes de reduzir a base abaixo do valor já alocado.',
+        OUTFLOW_AMOUNT_MISMATCH: 'A magnitude confirmada deve corresponder à saída bancária original.',
+        PAYMENT_SOURCE_EXCEEDED: 'O valor supera o disponível deste movimento bancário.',
+        PAYMENT_BALANCE_EXCEEDED: 'O valor supera o saldo conhecido desta fatura.',
+        BANK_VERSION_CONFLICT: 'O movimento mudou. Atualize pagamentos e movimentos antes de alocar.',
+        BANK_ENTRY_NOT_FOUND: 'Movimento bancário não encontrado.',
+        PAYMENT_SOURCE_CHANGED: 'A saída confirmada mudou e exige revisão.',
+        PAYMENT_ALLOCATION_NOT_FOUND: 'Alocação não encontrada.',
+        PAYMENT_ALREADY_REVERSED: 'Esta alocação já foi revertida.',
       };
       throw new Error(response.status === 429 ? 'Muitas tentativas. Aguarde um minuto.' : errors[data.code as string] ?? 'Não foi possível concluir. Confira os dados e tente novamente.');
     }

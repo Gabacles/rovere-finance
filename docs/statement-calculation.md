@@ -16,6 +16,8 @@ Classificação de `CardCharge` é manual, versionada e auditada: natureza e mag
 
 O total calculado considera somente cobranças efetivas desta fatura/competência. Não soma Expense, planos, previsões ou BankEntry. Pagamento de fatura não cria consumo; classificá-lo não liquida obrigação nem gera caixa. Diferença com total declarado pode refletir registros faltantes ou convenções da instituição (inclusive pagamentos apresentados no extrato): nunca criar ajuste ou presumir dívida/pagamento para fazer coincidir. Ajustes/estornos com dependências financeiras são RF-025; aqui somente se classifica linha já existente.
 
+RF-024 implementa [alocações bancárias](statement-payments.md) em consulta/comandos próprios: saldo restante usa base explicitamente escolhida menos alocações ativas, sem descontar o subtotal de pagamentos informados novamente. Este resumo continua antes de liquidações e não altera seu significado ao registrar pagamento.
+
 ## Cobertura e desconhecimento
 
 Subtotal conhecido usa somente linhas classificadas e é apresentado como subtotal, nunca como fatura completa. Total calculado completo exige todas as linhas classificadas e cobertura `complete` explicitamente confirmada para o conjunto atual. Fatura vazia não equivale a total zero sem essa confirmação. `partial`/unknown preservam incompletude.

@@ -3,6 +3,7 @@ import type { FormEvent } from 'react';
 import type { KnownValue, StatementDetailsDTO, StatementFacts } from '@rovere/domain';
 import { amountInput, centsInput } from './money-input';
 import { StatementCalculationPanel } from './statement-calculation';
+import { StatementPaymentsPanel } from './statement-payments';
 
 type Api = (path: string, body?: unknown, key?: string, method?: 'GET' | 'POST' | 'PATCH') => Promise<any>;
 interface History { id: string; version: number; changes: { current: StatementFacts }; createdAt: string }
@@ -64,6 +65,7 @@ export function StatementFactsPanel({ creditId, statements, api, financialVersio
       </form>
       <nav aria-label="Revisão dos dados da fatura"><button className="secondary" disabled={busy} onClick={() => { setMessage(''); setRefresh(number => number + 1); }}>Recarregar dados da fatura</button><button className="secondary" disabled={busy} onClick={() => void showHistory()}>Consultar histórico da fatura</button></nav>
       <StatementCalculationPanel key={value.id} creditId={creditId} statementId={statementId} api={api} statementVersion={value.version} parentBusy={busy} setParentBusy={setBusy} onStatementChanged={next => { setValue(next); setHistory(null); }} financialVersion={financialVersion} />
+      <StatementPaymentsPanel key={`payments:${value.id}`} creditId={creditId} statementId={statementId} api={api} statementVersion={value.version} financialVersion={financialVersion} parentBusy={busy} setParentBusy={setBusy} onStatementChanged={next => { setValue(next); setHistory(null); }} />
       {history && <div><h3>Últimas 20 alterações</h3>{history.length === 0 ? <p>Nenhuma alteração de dados registrada.</p> : history.map(item => <div className="statement-history" key={item.id}>
         <p>Versão {item.version} · {new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short', timeZone: 'America/Sao_Paulo' }).format(new Date(item.createdAt))}</p>
         <p>Ciclo: {cycleName(item.changes.current.cycle)} · Total declarado: {item.changes.current.declaredTotal.state === 'confirmed' ? `BRL ${amountInput(item.changes.current.declaredTotal.value.cents)}` : 'Não informado'}</p>

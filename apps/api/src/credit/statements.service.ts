@@ -13,7 +13,7 @@ function known<T>(value: T | null, evidence: Evidence | undefined): KnownValue<T
   if (!evidence) throw new Error('STATEMENT_EVIDENCE_MISSING');
   return { state: 'confirmed', value, evidence };
 }
-function details(row: Statement): StatementDetailsDTO {
+export function statementDetails(row: Statement): StatementDetailsDTO {
   const evidence = row.factEvidence as unknown as Partial<Record<keyof StatementFacts, Evidence>>;
   return { id: row.id, creditAccountId: row.creditAccountId, period: parseStatementPeriod(row.period), periodOrigin: 'manual', version: row.version,
     facts: { closingOn: known(row.closingOn ? parseCivilDate(row.closingOn.toISOString().slice(0, 10)) : null, evidence.closingOn),
@@ -30,7 +30,7 @@ export class StatementsService {
   async get(userId: string, creditAccountId: string, statementId: string) {
     const row = await this.db.statement.findFirst({ where: { id: statementId, creditAccountId, userId } });
     if (!row) destinationError(404, 'STATEMENT_NOT_FOUND', 'Fatura não encontrada.');
-    return details(row);
+    return statementDetails(row);
   }
   async history(userId: string, creditAccountId: string, statementId: string) {
     await this.get(userId, creditAccountId, statementId);
@@ -39,7 +39,7 @@ export class StatementsService {
   async summary(userId: string, creditAccountId: string, statementId: string): Promise<StatementSummaryDTO> {
     return this.db.$transaction(async tx => {
       const row = await tx.statement.findFirst({ where: { id: statementId, creditAccountId, userId } }); if (!row) destinationError(404, 'STATEMENT_NOT_FOUND', 'Fatura não encontrada.');
-      const lines = await tx.cardCharge.findMany({ where: { statementId, creditAccountId, userId } }); const value = details(row);
+      const lines = await tx.cardCharge.findMany({ where: { statementId, creditAccountId, userId } }); const value = statementDetails(row);
       const coverageCurrent = row.coverage === 'complete' && row.coverageHash === lineSetHash(lines);
       return { statementVersion: row.version, facts: value.facts, ...calculateStatement(lines.map(classification), value.facts, coverageCurrent) };
     }, { isolationLevel: 'RepeatableRead' });
@@ -51,7 +51,7 @@ export class StatementsService {
       await tx.$queryRaw`SELECT "id" FROM "User" WHERE "id" = ${userId} FOR UPDATE`;
       const row = await tx.statement.findFirst({ where: { id: statementId, creditAccountId, userId } });
       if (!row) destinationError(404, 'STATEMENT_NOT_FOUND', 'Fatura não encontrada.');
-      const previous = details(row); const decisionId = randomUUID(); let facts: StatementFacts;
+      const previous = statementDetails(row); const decisionId = randomUUID(); let facts: StatementFacts;
       try { facts = changeStatementFacts(previous.facts, data.facts, decisionId); }
       catch (error) { destinationError(400, 'INVALID_STATEMENT_FACTS', 'Confira datas, ciclo e total declarado em BRL.', error instanceof StatementFactError ? error.field : 'facts'); }
       const evidence = Object.fromEntries(Object.entries(facts).filter(([, value]) => value.state === 'confirmed').map(([field, value]) => [field, value.state === 'confirmed' ? value.evidence : undefined]));
@@ -65,7 +65,7 @@ export class StatementsService {
       if (updated.count !== 1) destinationError(409, 'STATEMENT_VERSION_CONFLICT', 'A fatura mudou. Recarregue os dados antes de salvar.');
       await tx.statementFactChange.create({ data: { id: decisionId, userId, creditAccountId, statementId, version: (expectedVersion as number) + 1,
         changes: json({ patch: data.facts, previous: previous.facts, current: facts, previousCoverageHash: row.coverageHash, coverageHash, ...(coverageLines ? { coverageSnapshot: lineSetSnapshot(coverageLines) } : {}) }) } });
-      return details(await tx.statement.findFirstOrThrow({ where: { id: statementId, creditAccountId, userId } }));
+      return statementDetails(await tx.statement.findFirstOrThrow({ where: { id: statementId, creditAccountId, userId } }));
     });
   }
 }

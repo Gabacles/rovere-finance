@@ -37,6 +37,8 @@ RF-022 implementa [planos mensais confirmados](installment-plans.md), previsões
 
 RF-023 implementa [natureza manual e total calculado](statement-calculation.md), condicionado à cobertura atual explicitamente confirmada. Consumo, saldo anterior, créditos e pagamentos informados ficam separados; nenhum efeito de caixa/liquidação ou ajuste para fazer coincidir com o declarado é presumido.
 
+RF-024 implementa [alocações de pagamentos](statement-payments.md): base e saída confirmadas, limites da origem/destino revalidados sob concorrência, saldo derivado de alocações ativas e reversão explícita sem novo consumo/caixa. Contexto financeiro alterado exige revisão, preservando registros anteriores.
+
 **Uma cobrança importada pode existir sem a compra completa conhecida.** Por exemplo, um arquivo pode informar apenas a parcela 3/10 de R$ 120. O modelo deverá aceitar esse conhecimento parcial sem inventar data original, total exato ou parcelas anteriores.
 
 Campos e restrições essenciais:
