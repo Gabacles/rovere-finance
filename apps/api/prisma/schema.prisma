@@ -22,6 +22,7 @@ model User {
   creditAccounts CreditAccount[]
   cards         Card[]
   statements    Statement[]
+  importBatches ImportBatch[]
 }
 
 model Session {
@@ -82,6 +83,7 @@ model FinancialAccount {
   currency  String @default("BRL") @db.VarChar(3)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  importBlocks ImportBlock[]
   @@unique([id, userId])
   @@index([userId])
 }
@@ -96,6 +98,7 @@ model CreditAccount {
   createdAt   DateTime @default(now())
   cards       Card[]
   statements  Statement[]
+  importBlocks ImportBlock[]
   @@unique([id, userId])
   @@unique([userId, creationKey])
 }
@@ -110,7 +113,9 @@ model Card {
   kind            String @db.VarChar(10)
   creationKey     String @db.VarChar(100)
   createdAt       DateTime @default(now())
+  importBlocks    ImportBlock[]
   @@unique([id, userId])
+  @@unique([id, creditAccountId, userId])
   @@unique([userId, creationKey])
   @@index([creditAccountId, userId])
 }
@@ -125,8 +130,110 @@ model Statement {
   periodOrigin    String @default("manual") @db.VarChar(10)
   creationKey     String @db.VarChar(100)
   createdAt       DateTime @default(now())
+  importBlocks    ImportBlock[]
   @@unique([id, userId])
+  @@unique([id, creditAccountId, userId])
   @@unique([userId, creationKey])
   @@unique([creditAccountId, period])
   @@index([creditAccountId, userId])
+}
+
+model ImportBatch {
+  id             String @id @default(uuid())
+  userId         String
+  user           User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  filename       String @db.VarChar(160)
+  format         String @db.VarChar(3)
+  configuration  Json
+  requestHash    String @db.VarChar(64)
+  creationKey    String @db.VarChar(100)
+  status         String @default("uploaded") @db.VarChar(10)
+  version        Int @default(0)
+  size           Int
+  rowCount       Int @default(0)
+  attempts       Int @default(0)
+  leaseToken     String?
+  leaseUntil     DateTime?
+  errorCode      String? @db.VarChar(100)
+  parsedMetadata Json?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  file           ImportFile?
+  blocks         ImportBlock[]
+  revisions      ImportReviewRevision[]
+  @@unique([id, userId])
+  @@unique([userId, creationKey])
+  @@index([status, leaseUntil, createdAt])
+  @@index([userId, createdAt])
+}
+
+model ImportFile {
+  batchId String @id
+  userId  String
+  batch   ImportBatch @relation(fields: [batchId, userId], references: [id, userId], onDelete: Cascade)
+  bytes   Bytes
+  @@unique([batchId, userId])
+}
+
+model ImportBlock {
+  id                 String @id
+  batchId            String
+  userId             String
+  batch              ImportBatch @relation(fields: [batchId, userId], references: [id, userId], onDelete: Cascade)
+  kind               String @db.VarChar(4)
+  metadata           Json
+  financialAccountId String?
+  financialAccount   FinancialAccount? @relation(fields: [financialAccountId, userId], references: [id, userId], onDelete: Restrict)
+  creditAccountId    String?
+  creditAccount      CreditAccount? @relation(fields: [creditAccountId, userId], references: [id, userId], onDelete: Restrict)
+  cardId             String?
+  card               Card? @relation(fields: [cardId, creditAccountId, userId], references: [id, creditAccountId, userId], onDelete: Restrict)
+  statementId        String?
+  statement          Statement? @relation(fields: [statementId, creditAccountId, userId], references: [id, creditAccountId, userId], onDelete: Restrict)
+  periodOverride     Boolean @default(false)
+  decisionId         String?
+  sources            ImportSourceRecord[]
+  @@unique([id, batchId, userId])
+  @@index([batchId, userId])
+}
+
+model ImportSourceRecord {
+  id         String @id
+  batchId    String
+  userId     String
+  blockId    String
+  block      ImportBlock @relation(fields: [blockId, batchId, userId], references: [id, batchId, userId], onDelete: Cascade)
+  ordinal    Int
+  raw        String
+  fields     Json
+  period     Json
+  row        ImportRow?
+  @@unique([id, batchId, userId])
+  @@unique([batchId, ordinal])
+}
+
+model ImportRow {
+  id             String @id
+  batchId        String
+  userId         String
+  sourceRecordId String
+  source         ImportSourceRecord @relation(fields: [sourceRecordId, batchId, userId], references: [id, batchId, userId], onDelete: Cascade)
+  candidate      Json
+  corrections    Json @default("{}")
+  selected       Boolean @default(true)
+  action         String @default("create") @db.VarChar(6)
+  reason         String? @db.VarChar(500)
+  @@unique([sourceRecordId, batchId, userId])
+  @@index([batchId, userId])
+}
+
+model ImportReviewRevision {
+  id        String @id @default(uuid())
+  batchId   String
+  userId    String
+  batch     ImportBatch @relation(fields: [batchId, userId], references: [id, userId], onDelete: Cascade)
+  version   Int
+  changes   Json
+  createdAt DateTime @default(now())
+  @@unique([batchId, version])
 }

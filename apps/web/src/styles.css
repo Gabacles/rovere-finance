@@ -16,6 +16,26 @@ input, select { width: 100%; min-width: 0; border: 1px solid #98aaa1; border-rad
 .destination-forms { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 32px; margin-top: 24px; }
 .destination-forms form { align-content: start; }
 .destination-forms h3 { margin: 0; }
+fieldset { min-width: 0; margin: 0; padding: 16px; display: grid; gap: 16px; border: 1px solid #dde3d9; border-radius: 8px; }
+legend { padding: 0 8px; font-weight: 600; }
+.check { display: flex; align-items: start; gap: 10px; font-size: 14px; font-weight: 400; }
+input[type=checkbox] { width: auto; margin: 4px 0; flex-shrink: 0; }
+.import-list, .import-actions { display: flex; flex-wrap: wrap; gap: 12px; margin: 20px 0; }
+.import-list button { overflow-wrap: anywhere; max-width: 100%; }
+.import-review { border-top: 1px solid #dde3d9; margin-top: 32px; padding-top: 16px; }
+.block-destination, .row-editor { margin: 24px 0; padding: 16px; border: 1px solid #dde3d9; border-radius: 8px; }
+.block-destination h4 { margin: 0; }
+.block-destination p { margin: 0; overflow-wrap: anywhere; }
+.import-table { overflow-x: auto; max-width: 100%; margin-top: 24px; }
+table { border-collapse: collapse; width: 100%; min-width: 620px; text-align: left; font-size: 14px; }
+th, td { border-bottom: 1px solid #dde3d9; padding: 12px 8px; vertical-align: top; }
+td { max-width: 300px; overflow-wrap: anywhere; }
+td button { font-size: 13px; margin-top: 8px; }
+pre { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 12px; }
+details { margin-top: 12px; }
+summary { cursor: pointer; }
+details label { margin-top: 12px; }
+nav span { align-self: center; }
 button { border: 0; border-radius: 8px; background: #215743; color: white; padding: 12px 20px; font: inherit; font-weight: 600; cursor: pointer; }
 button:disabled { opacity: .65; cursor: wait; }
 button.secondary { color: #215743; background: #e7eee6; }

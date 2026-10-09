@@ -5,6 +5,7 @@ export interface AppConfig {
   smtpUrl: string;
   mailFrom: string;
   production: boolean;
+  importsWorkerEnabled?: boolean;
 }
 
 export function readConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {

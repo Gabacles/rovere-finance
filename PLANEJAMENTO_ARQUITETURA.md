@@ -14,6 +14,7 @@ Leia primeiro [AGENTS.md](AGENTS.md), depois o [estado atual](docs/progress.md) 
 | Contratos e invariantes | [Contratos](docs/contracts.md) |
 | Importações e conciliação | [Importação](docs/imports.md) |
 | Formatos implementados e limites | [Catálogo de formatos](docs/import-formats.md) |
+| Upload privado e revisão executáveis | [Revisão de importação](docs/import-review.md) |
 | Experiência e dashboard | [UX](docs/ux.md) |
 | Open Finance futuro | [Integrações](docs/integrations.md) |
 | Segurança e operação | [Segurança](docs/security.md) |

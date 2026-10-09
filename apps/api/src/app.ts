@@ -1,4 +1,5 @@
 import 'reflect-metadata';
+import { randomUUID } from 'node:crypto';
 import { Controller, Get, Module, Inject, Injectable, Req, UseGuards, ServiceUnavailableException } from '@nestjs/common';
 import type { OnApplicationShutdown } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
@@ -14,6 +15,9 @@ import type { AuthenticatedRequest } from './identity/guard.js';
 import { AccountsController, DATABASE } from './accounts/accounts.controller.js';
 import { CreditController } from './credit/credit.controller.js';
 import { DestinationsService } from './credit/destinations.service.js';
+import { ImportsController } from './imports/imports.controller.js';
+import { ImportsService } from './imports/imports.service.js';
+import { IMPORT_WORKER_ENABLED, ImportWorker } from './imports/worker.js';
 
 @Controller('health')
 class HealthController {
@@ -40,16 +44,18 @@ class IdentityController {
 
 @Injectable()
 class Resources implements OnApplicationShutdown {
-  constructor(@Inject(DATABASE) private readonly db: Database, @Inject(IDENTITY) private readonly identity: Identity) {}
-  async onApplicationShutdown() { await this.identity.close(); await this.db.$disconnect(); }
+  constructor(@Inject(DATABASE) private readonly db: Database, @Inject(IDENTITY) private readonly identity: Identity,
+    @Inject(ImportWorker) private readonly imports: ImportWorker) {}
+  async onApplicationShutdown() { await this.imports.stop(); await this.identity.close(); await this.db.$disconnect(); }
 }
 
 export async function createApp(config: AppConfig, db = createDatabase(config.databaseUrl)) {
   await db.$connect();
   const identity = createIdentity(db, config);
   @Module({
-    controllers: [HealthController, IdentityController, AccountsController, CreditController],
-    providers: [{ provide: DATABASE, useValue: db }, { provide: IDENTITY, useValue: identity }, SessionGuard, Resources, DestinationsService],
+    controllers: [HealthController, IdentityController, AccountsController, CreditController, ImportsController],
+    providers: [{ provide: DATABASE, useValue: db }, { provide: IDENTITY, useValue: identity },
+      { provide: IMPORT_WORKER_ENABLED, useValue: config.importsWorkerEnabled !== false }, SessionGuard, Resources, DestinationsService, ImportsService, ImportWorker],
   })
   class AppModule {}
   const app = await NestFactory.create(AppModule, { logger: ['error', 'warn'], bodyParser: false });
@@ -64,7 +70,8 @@ export async function createApp(config: AppConfig, db = createDatabase(config.da
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('Referrer-Policy', 'no-referrer');
     if (!['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
-      if (req.headers.origin !== config.publicOrigin || !req.is('application/json')) {
+      const upload = req.method === 'POST' && req.path === '/api/imports' && req.is('multipart/form-data');
+      if (req.headers.origin !== config.publicOrigin || !(req.is('application/json') || upload)) {
         res.status(403).json({ code: 'UNTRUSTED_REQUEST', message: 'Origem ou formato de requisição inválidos.' });
         return;
       }
@@ -72,6 +79,14 @@ export async function createApp(config: AppConfig, db = createDatabase(config.da
     next();
   });
   server.all('/api/auth/{*path}', toNodeHandler(identity.auth));
+  server.use('/api/imports', express.json({ limit: '64kb' }));
   server.use(express.json({ limit: '16kb' }));
+  server.use((error: unknown, req: express.Request, res: express.Response, next: express.NextFunction) => {
+    if (req.path.startsWith('/api/imports') && error && typeof error === 'object' && 'status' in error && [400, 413].includes(error.status as number)) {
+      res.status(error.status as number).json({ code: 'INVALID_REQUEST', message: 'Os dados enviados são inválidos ou excedem o limite.', requestId: randomUUID() });
+      return;
+    }
+    next(error);
+  });
   return app;
 }

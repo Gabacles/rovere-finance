@@ -1,6 +1,6 @@
 # Destinos mínimos de importação
 
-RF-016 implementa cadastros de crédito e seleção de destinos. Upload, revisão e movimentos/cobranças pertencem à RF-017/RF-018. Não há cálculo financeiro nestes cadastros.
+RF-016 implementa cadastros de crédito e seleção de destinos. [Upload/revisão RF-017](import-review.md) disponível; movimentos/cobranças e confirmação pertencem à RF-018. Não há cálculo financeiro nestes cadastros.
 
 ## Modelo e conhecimento
 
@@ -37,6 +37,6 @@ Erros novos de validação/autorização/conflito têm `code`, `message`, `reque
 
 FK composta `(creditAccountId, userId)` referencia `(id, userId)` do crédito. Escritas/atualizações diretas no SQL não podem ligar usuários diferentes. SQL restringe moeda, tipo, competência e origem manual. Não há RLS.
 
-Interface permite cadastrar crédito/cartões/períodos e selecionar conta bancária ou crédito com competência, deixando cartão desconhecido quando necessário. Trocar crédito limpa cartão/competência e descarta respostas de consultas anteriores. Cadastros persistem após reload; seleção ainda é local e será persistida com a revisão RF-017. Upload/confirmação financeira ainda não estão disponíveis.
+Interface permite cadastrar crédito/cartões/períodos e selecionar conta bancária ou crédito com competência, deixando cartão desconhecido quando necessário. Trocar crédito limpa cartão/competência e descarta respostas de consultas anteriores. Cadastros persistem após reload; seleção nesta seção continua local; RF-017 persiste o destino ao salvar o bloco da revisão. Upload/revisão disponíveis; confirmação financeira permanece na RF-018.
 
 Implementação: [serviço](../apps/api/src/credit/destinations.service.ts), [controller](../apps/api/src/credit/credit.controller.ts), [UI](../apps/web/src/destinations.tsx). Testes: [integração](../apps/api/test/destinations.integration.test.ts) e [Chromium](../tests/e2e/destinations.spec.ts); resultados na [task](tasks/phase-1.md).
