@@ -24,7 +24,7 @@ export class EntriesController {
       const where = { userId, accountId };
       const values = await this.db.bankEntry.findMany({ where, orderBy: [{ postedOn: 'desc' }, { id: 'asc' }], skip: (page - 1) * 25, take: 25 });
       return { page, total: await this.db.bankEntry.count({ where }), rows: values.map(row => ({ id: row.id, kind: 'bank', accountId,
-        postedOn: row.postedOn.toISOString().slice(0, 10), description: row.description, amount: { currency: row.currency, cents: row.cents.toString() }, notes: row.notes })) };
+        postedOn: row.postedOn.toISOString().slice(0, 10), description: row.description, amount: { currency: row.currency, cents: row.cents.toString() }, notes: row.notes, version: row.version })) };
     }
     if (!await this.db.creditAccount.findUnique({ where: { id_userId: { id: accountId, userId } } })) fail(404, 'DESTINATION_NOT_FOUND', 'Crédito não encontrado.');
     if (data.statementId && !await this.db.statement.findFirst({ where: { id: data.statementId, userId, creditAccountId: accountId } })) fail(404, 'DESTINATION_NOT_FOUND', 'Fatura não encontrada.');

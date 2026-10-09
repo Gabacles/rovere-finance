@@ -143,6 +143,8 @@ model Statement {
   coverageHash    String? @db.VarChar(64)
   factEvidence    Json @default("{}")
   factChanges     StatementFactChange[]
+  paymentBasis    StatementPaymentBasis?
+  paymentCommands StatementPaymentCommand[]
   createdAt       DateTime @default(now())
   importBlocks    ImportBlock[]
   charges         CardCharge[]
@@ -390,10 +392,75 @@ model BankEntry {
   outcomes ImportOutcome[]
   linkRows ImportRow[] @relation("BankLink")
   distinctRows ImportRow[] @relation("BankDistinct")
+  version Int @default(0)
+  paymentSource StatementPaymentSource?
+  paymentCommands StatementPaymentCommand[]
   @@unique([id, userId])
   @@unique([id, accountId, userId])
   @@index([userId, fingerprint])
   @@index([accountId, userId, postedOn])
+}
+
+model StatementPaymentBasis {
+  statementId String @id
+  creditAccountId String
+  userId String
+  statement Statement @relation(fields: [statementId, creditAccountId, userId], references: [id, creditAccountId, userId], onDelete: Restrict)
+  kind String @db.VarChar(10)
+  total BigInt
+  referenceHash String @db.VarChar(64)
+  evidence Json
+  snapshot Json
+  allocations StatementPaymentAllocation[]
+  @@unique([statementId, creditAccountId, userId])
+}
+
+model StatementPaymentSource {
+  bankEntryId String @id
+  accountId String
+  userId String
+  bankEntry BankEntry @relation(fields: [bankEntryId, accountId, userId], references: [id, accountId, userId], onDelete: Restrict)
+  originalCents BigInt
+  confirmedCents BigInt
+  evidence Json
+  allocations StatementPaymentAllocation[]
+  @@unique([bankEntryId, accountId, userId])
+}
+
+model StatementPaymentAllocation {
+  id String @id @default(uuid())
+  statementId String
+  creditAccountId String
+  userId String
+  basis StatementPaymentBasis @relation(fields: [statementId, creditAccountId, userId], references: [statementId, creditAccountId, userId], onDelete: Restrict)
+  bankEntryId String
+  accountId String
+  source StatementPaymentSource @relation(fields: [bankEntryId, accountId, userId], references: [bankEntryId, accountId, userId], onDelete: Restrict)
+  cents BigInt
+  evidence Json
+  createdAt DateTime @default(now())
+  reversedAt DateTime?
+  reversalId String?
+  @@index([statementId, userId])
+  @@index([bankEntryId, userId])
+}
+
+model StatementPaymentCommand {
+  id String @id @default(uuid())
+  userId String
+  statementId String
+  creditAccountId String
+  statement Statement @relation(fields: [statementId, creditAccountId, userId], references: [id, creditAccountId, userId], onDelete: Restrict)
+  bankEntryId String?
+  accountId String?
+  bankEntry BankEntry? @relation(fields: [bankEntryId, accountId, userId], references: [id, accountId, userId], onDelete: Restrict)
+  key String @db.VarChar(100)
+  requestHash String @db.VarChar(64)
+  changes Json
+  result Json
+  createdAt DateTime @default(now())
+  @@unique([userId, key])
+  @@index([statementId, userId])
 }
 
 model CardCharge {

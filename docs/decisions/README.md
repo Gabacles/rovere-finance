@@ -13,6 +13,7 @@
 | [ADR-0009](0009-v0-business-policies.md) | Aceita | Limites recomendados de encargos, formatos e excedentes de reembolso para a v0 |
 | [ADR-0010](0010-confirmed-installment-forecasts.md) | Aceita | Previsões mensais confirmadas, separadas de cobranças e conciliadas explicitamente |
 | [ADR-0011](0011-explicit-line-nature-and-coverage.md) | Aceita | Natureza manual e cobertura atual confirmada para total calculado completo |
+| [ADR-0012](0012-explicit-statement-payment-allocations.md) | Aceita | Base confirmada e alocações bancárias de fatura com reservas revalidadas |
 | [Pendências](pending.md) | Por decisão | Questões que exigem definição antes do comportamento dependente |
 
 ADRs registram por que uma decisão foi tomada. Regras atuais ficam nos documentos de domínio, contratos e importação. Alterações futuras devem indicar o ADR substituído, preservando o histórico.
