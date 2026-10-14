@@ -5,8 +5,9 @@ Estado individual, critérios, implementação e evidências são mantidos nos a
 - [Fase 0 — contexto e contratos](phase-0.md)
 - [Fase 1 — base técnica e importação](phase-1.md)
 - [Fase 2 — compras e ciclo de cartão](phase-2.md)
+- [Fase 3 — planejamento e terceiros](phase-3.md)
 
-Não decompor agora todas as fases futuras. [Roadmap macro](../roadmap.md) e [ponto de retomada](../progress.md).
+Fase 3: RF-027 implementada e validada; RF-028 a RF-036 permanecem pendentes. Recomendações ainda abertas estão na própria fase, com indicação das tasks dependentes. Fases 4/5 permanecem macro. [Roadmap](../roadmap.md) e [ponto de retomada](../progress.md).
 
 ## Convenção
 

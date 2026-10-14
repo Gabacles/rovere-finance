@@ -4,22 +4,28 @@ Atualizado em 14/10/2026. Estados, critérios e evidências nas [tasks](tasks/RE
 
 ## Entrega atual
 
-RF-025 integrada pelo usuário via [PR #12](https://github.com/Gabacles/rovere-finance/pull/12) na main `fe318b2`; CI final aprovada em `9cc6643`. Código/merge/evidências conferidos, mantendo as entregas anteriores e CSV/OFX obrigatórios. Ciclo básico de cartão validado dentro dos limites da v0; a V1 inteira ainda não está concluída.
+RF-026 integrada na main `a5b0b62` pelo [PR #13](https://github.com/Gabacles/rovere-finance/pull/13), após RF-025/PR #12. Merge e CI do head `1de60af` e da main conferidos no GitHub; comparação com implementação `224c81a` sem diferenças de código. O registro anterior de “aguardando integração” foi corrigido. Evidências e links das execuções na [fase 2](tasks/phase-2.md).
 
-RF-026 concluída localmente na branch `feat/rf-026-api-documentation`, criada dessa main: Swagger UI `/api/docs`, JSON `/api/openapi.json`, [snapshot](api/openapi.json) com 85 operações reais, contratos HTTP/identidade e checagem de inventário/atualização na CI. UI na mesma origem da aplicação, sessões/Origin/CSRF/limites preservados. Produção desabilitada por padrão e acesso autenticado quando habilitada. [Uso/manutenção](api-documentation.md), [fase 2](tasks/phase-2.md). Sem migration ou alteração das regras financeiras. Implementação `224c81a` no [PR #13](https://github.com/Gabacles/rovere-finance/pull/13), aguardando revisão/CI remota e integração; registro posterior somente documental.
+Swagger UI `/api/docs`, JSON `/api/openapi.json` e snapshot agora com 91 operações (seis de receitas) preservam sessão/Origin/CSRF e política de produção. Ciclo básico de cartão e CSV/OFX continuam no escopo de regressão; isso não conclui toda a V1.
 
-## Validação executada
+Planejamento local da [fase 3](tasks/phase-3.md), originalmente em `docs/phase-3-planning` sem commit/push, preservado ao criar `feat/rf-027-planned-incomes` de `origin/main` conferida por fetch em `a5b0b62`. **RF-027 concluída e validada:** domínio, migration aditiva, API, UI, histórico, idempotência/versões e OpenAPI. Receitas previstas não movimentam caixa. RF-028 a RF-036 continuam pendentes; P3-01 a P3-07 não implementadas. Nenhum merge/push direto na main.
 
-`npm run check` aprovado: 47 documentos/18 tasks e hash histórico, tipos, 117 unitários, builds, OpenAPI/schema/inventário/snapshot (85 operações) sem conexão com banco e smoke. Integração: 109 aprovados, incluindo quatro RF-026 com contratos HTTP e política de documentação em produção/opt-in/revogação. Chromium: 12 jornadas aprovadas, incluindo Swagger autenticado/leitura/escrita, além das regressões de 500 CSV/500 OFX e ciclo de cartão. Docker atualizado, quatro serviços saudáveis, volume preservado, sem migrations novas. UI/JSON/assets pelo proxy público 200/no-store; `/api/me` 401 sem sessão. Evidências/falhas/limites detalhados na task.
+Implementação `e5df0b3` publicada em `origin/feat/rf-027-planned-incomes`, com identidade Git configurada, commit semântico e sem assinatura/coautoria do agente. [Abrir revisão da branch](https://github.com/Gabacles/rovere-finance/compare/main...feat/rf-027-planned-incomes?expand=1). Registro posterior somente documental; CI remota e integração ainda a conferir/autorizar.
+
+## Conferência e validação
+
+Inspeção inicial confirmou ausência de receitas persistidas; RF-027 acrescenta somente Income manual previsto/cancelado e journal próprio, sem caixa. Recorrências/terceiros/liquidações de receitas continuam ausentes. Disponibilidade bancária atual considera apenas faturas; RF-028 precisará de consulta conjunta. Estorno de cartão não é reembolso de terceiro.
+
+RF-027: `npm run check` aprovado (146 unitários, tipos, builds, 91 operações OpenAPI e smoke), `npm run test:integration` (118 testes/12 suites), `npm run test:e2e` (13 jornadas) e `git diff --check` aprovados. Docker atualizado saudável e migration aplicada sem reset do volume. Incluem CSV/OFX, ciclo de cartão e Swagger; contratos anteriores do OpenAPI preservados. Evidências, falha inicial resolvida e limites na [task](tasks/phase-3.md). Resultados históricos RF-026 permanecem na fase 2.
 
 ## Próxima ação concreta
 
-1. Revisar [PR #13](https://github.com/Gabacles/rovere-finance/pull/13) da RF-026 para main; conferir head/CI e autorização específica antes de integrar.
-2. Após integração da RF-026, detalhar e executar primeira fatia da fase 3 (planejamento/recorrências/receitas/terceiros), mantendo entregas pequenas e as políticas já aprovadas.
-3. Saldo anterior, financiamento e obrigações consolidadas continuam fora do ciclo básico desta v0, sem inferências automáticas.
+1. Abrir/revisar PR da branch RF-027 e conferir CI remota; integrar somente com autorização específica. Nenhum PR/merge automático realizado nesta entrega.
+2. Após revisão/integração autorizada, detalhar RF-028 e resolver P3-03 antes de liquidações. Não copiar disponibilidade exclusiva de faturas.
+3. Resolver as demais propostas antes dos comportamentos dependentes. RF-032 permanece alternativa independente futura; nenhuma outra task iniciada nesta entrega.
 
 ## Políticas e ambiente
 
-BIZ-02/BIZ-04/BIZ-05 resolvidas por delegação: encargos informados sem juros presumidos, CSV/OFX genéricos até layouts comprovados, revisão explícita de excedentes de reembolso. [Políticas](v0-policies.md). BIZ-01/BIZ-03 preservadas. Retenção continua proposta técnica/de privacidade; não há decisão BIZ bloqueante nesses limites.
+BIZ-01 a BIZ-05 preservadas: orçamento bruto, BRL, calendário ancorado, competência explícita de fatura, encargos informados sem juros presumidos, CSV/OFX genéricos e revisão explícita de excedentes de reembolso. [Políticas](v0-policies.md) e [pendências](decisions/pending.md). Saldo anterior, financiamento, transferências próprias, saldos de referência e orçamento/relatórios não são entregues pelo planejamento da fase 3.
 
-Serviços ativos: PostgreSQL 15432, API 3100, frontend `http://127.0.0.1:18080`, SMTP 11025 e Mailpit 18025. Volume preservado; testes somente em schemas próprios de `rovere_test`. Sem usuários predefinidos ou envio externo. Aviso pg sobre consultas concorrentes permanece registrado para revisão antes de upgrade, sem falha financeira observada. [README](../README.md).
+Docker RF-027 validado em PostgreSQL 15432, API 3100, frontend `http://127.0.0.1:18080`, SMTP 11025 e Mailpit 18025. Testes usam schemas próprios de `rovere_test`, dados fictícios e email local, sem reset do volume. Node 24.14.0/npm 11.9.0 em `C:/nvm4w/nodejs` exigem execução autorizada fora do sandbox; não houve rejeição automática. Histórico HTTP de receitas mostra últimas 20 versões; journal integral no banco. Recuperação de tentativa incerta conserva dados/chave enquanto a tela estiver montada, sem persistir rascunho no navegador após reload. Aviso pg sobre consultas concorrentes continua registrado para revisão antes de upgrade. [Comandos](../README.md).

@@ -4,6 +4,8 @@ Estado: primitivas, identidade, destinos, [importação RF-018](import-confirmat
 
 ## Convenções
 
+RF-027: [contrato executável de receitas previstas](planned-incomes.md), com seis rotas autenticadas, versões, idempotência e histórico. Sem liquidação ou inferência de caixa.
+
 - IDs opacos. A API resolve o proprietário pela sessão; nunca aceita proprietário arbitrário no corpo.
 - Dinheiro trafega como `{ currency: 'BRL', cents: '10000' }`. A string é inteira decimal canônica, sem separador, expoente ou sinal `+`; `-0` é inválido. Banco: inteiro de 64 bits. Cálculos usam `bigint` e verificam overflow.
 - Datas civis: `YYYY-MM-DD`, calendário gregoriano, anos 0001 a 9999. Instantes: ISO 8601 UTC com timezone original preservado na origem. Não transformar data civil em instante para determinar competência.
@@ -101,4 +103,4 @@ Campos de parcela, fatura e total usam estado de conhecimento e proveniência. U
 | `POST /api/receivables` | Despesa, terceiro e cronograma | Origem autorizada e limite de reembolso |
 | `POST /api/settlements` | Movimento, destinos tipados, alocações | INV-06; transação e concorrência |
 
-Contratos HTTP reais estão nos documentos de cada módulo e no [OpenAPI versionado](api/openapi.json), servido junto à Swagger UI. [Uso e manutenção](api-documentation.md); critérios RF-026 em [tasks](tasks/phase-2.md). Não gerar SDK de endpoints ainda inexistentes: receitas/terceiros acima são esboço futuro. Rotas de identidade em [identidade](identity.md); liveness e readiness de banco são distintas.
+Contratos HTTP reais estão nos documentos de cada módulo e no [OpenAPI versionado](api/openapi.json), servido junto à Swagger UI. [Uso e manutenção](api-documentation.md); critérios RF-026 em [tasks](tasks/phase-2.md). Não gerar SDK de endpoints ainda inexistentes: terceiros e liquidações acima são esboço futuro. Rotas de identidade em [identidade](identity.md); liveness e readiness de banco são distintas.

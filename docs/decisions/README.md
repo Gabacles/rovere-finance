@@ -16,5 +16,6 @@
 | [ADR-0012](0012-explicit-statement-payment-allocations.md) | Aceita | Base confirmada e alocações bancárias de fatura com reservas revalidadas |
 | [ADR-0013](0013-traceable-card-adjustments-and-refunds.md) | Aceita | Ajustes/estornos rastreáveis e excedentes preservando pagamentos reais |
 | [Pendências](pending.md) | Por decisão | Questões que exigem definição antes do comportamento dependente |
+| [ADR-0014](0014-manual-planned-incomes.md) | Aceita | Receitas previstas manuais sem efeito de caixa |
 
 ADRs registram por que uma decisão foi tomada. Regras atuais ficam nos documentos de domínio, contratos e importação. Alterações futuras devem indicar o ADR substituído, preservando o histórico.

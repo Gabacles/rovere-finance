@@ -4,6 +4,8 @@
 
 ## Modelo conceitual
 
+RF-027 implementa [receitas previstas avulsas](planned-incomes.md) manuais, com fatos conhecidos/desconhecidos e cancelamento terminal. Não registra recebimento ou efeito de caixa; IncomeSettlement e recorrências permanecem futuras.
+
 A separação principal será entre **o fato econômico, sua programação, seu movimento de caixa e a evidência de origem**.
 
 | Grupo | Entidades principais | Relações e regras |
