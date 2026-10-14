@@ -1,11 +1,12 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { Inject, Injectable } from '@nestjs/common';
-import { allocatedTotal, assertPaymentLimits, confirmOutflow, paymentMoney, PaymentRuleError } from '@rovere/domain';
+import { assertPaymentLimits, confirmOutflow, paymentMoney, PaymentRuleError } from '@rovere/domain';
 import type { MoneyDTO, PaymentBasisKind } from '@rovere/domain';
 import { DATABASE } from '../accounts/accounts.controller.js';
 import type { Database } from '../database.js';
 import { fail, json, key, object, version } from '../imports/validation.js';
 import { bankPaymentSource, money, paymentContext, statementPayments } from './payment-projection.js';
+import { bankReservations, confirmBankSource } from '../accounts/bank-availability.js';
 type Decision = { operation: 'basis'; kind: PaymentBasisKind; referenceHash: string; beforePaymentsConfirmed: true; independentObligationConfirmed: true; preserveOverpaymentConfirmed?: true }
   | { operation: 'allocate'; bankEntryId: string; expectedBankVersion: number; confirmedOutflow: MoneyDTO; outflowConfirmed: true; amount: MoneyDTO }
   | { operation: 'reverse'; allocationId: string; expectedBankVersion: number };
@@ -55,8 +56,9 @@ export class PaymentsService {
           if (!context.row.paymentBasis || !previous.basis?.current || previous.progress.state === 'review_required') fail(409, 'PAYMENT_BASIS_REVIEW_REQUIRED', 'Confirme ou revise a base da obrigação antes de alocar.');
           try { confirmOutflow(bank.cents.toString(), decision.confirmedOutflow); } catch { fail(400, 'OUTFLOW_AMOUNT_MISMATCH', 'A magnitude confirmada deve corresponder à saída bancária original.'); }
           if (bank.paymentSource && (bank.paymentSource.originalCents !== bank.cents || bank.paymentSource.confirmedCents !== BigInt(decision.confirmedOutflow.cents))) fail(409, 'PAYMENT_SOURCE_CHANGED', 'A saída confirmada mudou e exige revisão.');
-          const sourceActive = await tx.statementPaymentAllocation.findMany({ where: { bankEntryId: bank.id, userId, reversedAt: null }, select: { cents: true } }); const statementActive = await tx.statementPaymentAllocation.findMany({ where: { statementId, userId, reversedAt: null }, select: { cents: true } });
-          try { assertPaymentLimits(decision.confirmedOutflow, sourceActive.map(value => money(value.cents)), money(context.row.paymentBasis.total), statementActive.map(value => money(value.cents)), decision.amount); }
+          await confirmBankSource(tx, userId, bank.id, 'outflow', decision.confirmedOutflow, decisionId);
+          const sourceActive = await bankReservations(tx, userId, bank.id); const statementActive = await tx.statementPaymentAllocation.findMany({ where: { statementId, userId, reversedAt: null }, select: { cents: true } });
+          try { assertPaymentLimits(decision.confirmedOutflow, sourceActive, money(context.row.paymentBasis.total), statementActive.map(value => money(value.cents)), decision.amount); }
           catch (error) { fail(409, error instanceof PaymentRuleError ? error.code : 'PAYMENT_LIMIT_INVALID', 'O valor supera o disponível do movimento ou o saldo conhecido da fatura.'); }
           if (!bank.paymentSource) await tx.statementPaymentSource.create({ data: { bankEntryId: bank.id, accountId, userId, originalCents: bank.cents, confirmedCents: BigInt(decision.confirmedOutflow.cents), evidence } });
           await tx.statementPaymentAllocation.create({ data: { statementId, creditAccountId, userId, bankEntryId: bank.id, accountId, cents: BigInt(decision.amount.cents), evidence } });

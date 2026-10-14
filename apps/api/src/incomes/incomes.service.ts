@@ -1,6 +1,6 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { Inject, Injectable } from '@nestjs/common';
-import { changeIncomeFacts, IncomeError, incomeKnowledge, incomeTransition, normalizeIncomePatch, parseCivilDate, parseCents, toMoneyDTO, unknownIncomeFacts } from '@rovere/domain';
+import { allocatedTotal, assertIncomeReceiptChange, changeIncomeFacts, IncomeError, IncomeSettlementError, incomeKnowledge, incomeTransition, normalizeIncomePatch, parseCivilDate, parseCents, toMoneyDTO, unknownIncomeFacts } from '@rovere/domain';
 import type { Evidence, IncomeDTO, IncomeFacts, IncomePatch, KnownValue } from '@rovere/domain';
 import type { Income, Prisma } from '../generated/prisma/client.js';
 import { DATABASE } from '../accounts/accounts.controller.js';
@@ -36,7 +36,7 @@ function expected(value: unknown): number {
   if (result >= 2147483647) fail(400, 'INVALID_VERSION', 'Versão inválida.');
   return result;
 }
-async function get(tx: Prisma.TransactionClient | Database, userId: string, id: string) {
+export async function incomeDetails(tx: Prisma.TransactionClient | Database, userId: string, id: string) {
   const row = await tx.income.findUnique({ where: { id_userId: { id, userId } } });
   if (!row) fail(404, 'INCOME_NOT_FOUND', 'Previsão de receita não encontrada.');
   return details(row);
@@ -44,7 +44,7 @@ async function get(tx: Prisma.TransactionClient | Database, userId: string, id: 
 @Injectable()
 export class IncomesService {
   constructor(@Inject(DATABASE) private readonly db: Database) {}
-  get(userId: string, id: string) { return get(this.db, userId, id); }
+  get(userId: string, id: string) { return incomeDetails(this.db, userId, id); }
   async list(userId: string, query: unknown) {
     const data = object(query, ['page']);
     if (data.page !== undefined && (typeof data.page !== 'string' || !/^[1-9]\d{0,4}$/.test(data.page))) fail(400, 'INVALID_QUERY', 'Página inválida.');
@@ -74,7 +74,7 @@ export class IncomesService {
       if (replay) {
         if (replay.requestHash !== hash) fail(409, 'IDEMPOTENCY_CONFLICT', 'Esta chave já foi usada com outros dados.');
         // Authorization is scoped to the current session owner even for old snapshots.
-        await get(tx, userId, replay.incomeId);
+        await incomeDetails(tx, userId, replay.incomeId);
         return replay.result as unknown as IncomeDTO;
       }
       const decisionId = randomUUID(); let previous: IncomeDTO | null = null;
@@ -82,17 +82,20 @@ export class IncomesService {
         const row = await tx.income.create({ data: { userId, description: patch.description!, notes: patch.notes ?? null,
           origin: json({ kind: 'manual', decisionId }), ...storage(changeIncomeFacts(unknownIncomeFacts(), patch.facts, decisionId)) } }); incomeId = row.id;
       } else {
-        previous = await get(tx, userId, incomeId);
+        previous = await incomeDetails(tx, userId, incomeId);
         if (previous.version !== expectedVersion) fail(409, 'INCOME_VERSION_CONFLICT', 'A previsão mudou. Recarregue os dados antes de confirmar.');
         let state: IncomeDTO['state'];
         try { state = incomeTransition(previous.state, action === 'cancel' ? 'cancel' : 'edit'); }
         catch { fail(409, 'INCOME_CANCELLED', 'A previsão foi cancelada. Cadastre uma nova previsão para planejar outra receita.'); }
+        const active = await tx.incomeSettlement.findMany({ where: { incomeId, userId, reversedAt: null }, select: { cents: true } });
+        try { assertIncomeReceiptChange(action === 'cancel' ? 'cancel' : 'edit', allocatedTotal(active.map(row => toMoneyDTO(parseCents(row.cents.toString())))), patch.facts?.expectedAmount); }
+        catch (error) { fail(409, error instanceof IncomeSettlementError ? error.code : 'INCOME_RECEIPTS_REVIEW_REQUIRED', 'Revise explicitamente os recebimentos vinculados antes de cancelar, limpar ou reduzir o previsto abaixo do já recebido. Histórico e movimentos foram preservados.'); }
         const updated = await tx.income.updateMany({ where: { id: incomeId, userId, version: expectedVersion! }, data: {
           ...(patch.description === undefined ? {} : { description: patch.description }), ...(patch.notes === undefined ? {} : { notes: patch.notes }),
           ...storage(changeIncomeFacts(previous.facts, patch.facts, decisionId)), state, version: { increment: 1 } } });
         if (updated.count !== 1) fail(409, 'INCOME_VERSION_CONFLICT', 'A previsão mudou. Recarregue os dados antes de confirmar.');
       }
-      const result = await get(tx, userId, incomeId);
+      const result = await incomeDetails(tx, userId, incomeId);
       await tx.incomeCommand.create({ data: { id: decisionId, userId, incomeId, key: token, requestHash: hash, version: result.version,
         changes: json({ action, patch, previous, current: result }), result: json(result) } });
       return result;

@@ -1,10 +1,11 @@
 import { createHash } from 'node:crypto';
-import { allocatedTotal, calculateStatement, parseCents, paymentProgress, subtractCents, toMoneyDTO } from '@rovere/domain';
+import { calculateStatement, parseCents, paymentProgress, toMoneyDTO } from '@rovere/domain';
 import type { BankPaymentSourceDTO, Evidence, MoneyDTO, PaymentBasisKind, PaymentCandidate, StatementPaymentsDTO } from '@rovere/domain';
 import type { Prisma } from '../generated/prisma/client.js';
 import { fail } from '../imports/validation.js';
 import { classification, lineSetHash, lineSetSnapshot } from './card-classification.js';
 import { statementDetails } from './statements.service.js';
+import { bankSource } from '../accounts/bank-availability.js';
 type Tx = Prisma.TransactionClient;
 export const money = (value: bigint): MoneyDTO => toMoneyDTO(parseCents(value.toString()));
 
@@ -24,14 +25,10 @@ export async function paymentContext(tx: Tx, userId: string, creditAccountId: st
   return { row, candidates, blockers, snapshot };
 }
 export async function bankPaymentSource(tx: Tx, userId: string, id: string): Promise<BankPaymentSourceDTO> {
-  const row = await tx.bankEntry.findUnique({ where: { id_userId: { id, userId } }, include: { paymentSource: true } });
-  if (!row) fail(404, 'BANK_ENTRY_NOT_FOUND', 'Movimento bancário não encontrado.');
-  const allocations = await tx.statementPaymentAllocation.findMany({ where: { bankEntryId: id, userId, reversedAt: null }, select: { cents: true } });
-  const allocated = allocatedTotal(allocations.map(value => money(value.cents))); const source = row.paymentSource;
-  const current = !!source && source.originalCents === row.cents && row.currency === 'BRL' && parseCents(allocated.cents) <= source.confirmedCents;
-  return { id, accountId: row.accountId, version: row.version, postedOn: row.postedOn.toISOString().slice(0, 10), description: row.description, amount: money(row.cents),
-    confirmedOutflow: source ? { amount: money(source.confirmedCents), evidence: source.evidence as unknown as Evidence } : null, current, allocated,
-    available: current && source ? { state: 'available', amount: toMoneyDTO(subtractCents(parseCents(source.confirmedCents.toString()), parseCents(allocated.cents))) } : { state: 'unknown' } };
+  const source = await bankSource(tx, userId, id); const outflow = source.confirmation?.direction === 'outflow';
+  const { confirmation, ...value } = source;
+  return { ...value, confirmedOutflow: outflow && confirmation ? { amount: confirmation.amount, evidence: confirmation.evidence } : null,
+    current: source.current && outflow, available: source.current && outflow ? source.available : { state: 'unknown' } };
 }
 export async function statementPayments(tx: Tx, userId: string, creditAccountId: string, statementId: string, page = 1): Promise<StatementPaymentsDTO> {
   const context = await paymentContext(tx, userId, creditAccountId, statementId); const basis = context.row.paymentBasis;

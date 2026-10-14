@@ -20,6 +20,7 @@ Leia primeiro [AGENTS.md](AGENTS.md), depois o [estado atual](docs/progress.md) 
 | Dados e ciclo informado de fatura | [Faturas](docs/card-statements.md) |
 | Compra manual e cobranças associadas | [Compras](docs/purchases.md) |
 | Receitas previstas avulsas | [Receitas previstas](docs/planned-incomes.md) |
+| Recebimentos e reservas bancárias conjuntas | [Liquidações de receitas](docs/income-settlements.md) |
 | Planos e conciliação de parcelas | [Parcelas](docs/installment-plans.md) |
 | Natureza e total calculado de fatura | [Cálculo da fatura](docs/statement-calculation.md) |
 | Pagamentos e disponibilidade de movimentos | [Alocações de fatura](docs/statement-payments.md) |

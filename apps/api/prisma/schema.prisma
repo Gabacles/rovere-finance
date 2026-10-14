@@ -43,6 +43,7 @@ model Income {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   commands IncomeCommand[]
+  settlements IncomeSettlement[]
   @@unique([id, userId])
   @@index([userId, createdAt, id])
 }
@@ -434,6 +435,7 @@ model BankEntry {
   distinctRows ImportRow[] @relation("BankDistinct")
   version Int @default(0)
   paymentSource StatementPaymentSource?
+  confirmation BankEntryConfirmation?
   paymentCommands StatementPaymentCommand[]
   @@unique([id, userId])
   @@unique([id, accountId, userId])
@@ -464,8 +466,43 @@ model StatementPaymentSource {
   originalCents BigInt
   confirmedCents BigInt
   evidence Json
+  direction String @default("outflow") @db.VarChar(7)
+  confirmation BankEntryConfirmation @relation(fields: [bankEntryId, accountId, userId, direction], references: [bankEntryId, accountId, userId, direction], onDelete: Restrict)
   allocations StatementPaymentAllocation[]
   @@unique([bankEntryId, accountId, userId])
+}
+
+model BankEntryConfirmation {
+  bankEntryId String @id
+  accountId String
+  userId String
+  direction String @db.VarChar(7)
+  originalCents BigInt
+  confirmedCents BigInt
+  evidence Json
+  bankEntry BankEntry @relation(fields: [bankEntryId, accountId, userId], references: [id, accountId, userId], onDelete: Restrict)
+  paymentSources StatementPaymentSource[]
+  incomeSettlements IncomeSettlement[]
+  @@unique([bankEntryId, accountId, userId])
+  @@unique([bankEntryId, accountId, userId, direction])
+}
+
+model IncomeSettlement {
+  id String @id @default(uuid())
+  incomeId String
+  userId String
+  income Income @relation(fields: [incomeId, userId], references: [id, userId], onDelete: Restrict)
+  bankEntryId String
+  accountId String
+  direction String @default("inflow") @db.VarChar(7)
+  source BankEntryConfirmation @relation(fields: [bankEntryId, accountId, userId, direction], references: [bankEntryId, accountId, userId, direction], onDelete: Restrict)
+  cents BigInt
+  evidence Json
+  createdAt DateTime @default(now())
+  reversedAt DateTime?
+  reversalId String?
+  @@index([incomeId, userId])
+  @@index([bankEntryId, userId])
 }
 
 model StatementPaymentAllocation {

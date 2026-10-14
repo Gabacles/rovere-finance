@@ -27,4 +27,4 @@ O roadmap é macro. Detalhar apenas a fase atual e a próxima entrega próxima. 
 
 RF-026 (OpenAPI/Swagger) foi solicitada para depois do ciclo de cartão e antes da fase 3; critérios na fase 2. [Documentação da API](api-documentation.md) descreve acesso, contratos e manutenção incremental.
 
-A fase 3 tem entregas pequenas propostas, com apenas RF-027 detalhada para execução. Fases 4/5 serão decompostas ao se aproximarem. Não marcar fases inteiras como prontas por existir scaffolding.
+A fase 3 tem RF-027 integrada e RF-028 implementada/validada dentro das fatias detalhadas. RF-029 a RF-036 continuam propostas, a refinar imediatamente antes da execução; decisões dependentes permanecem pendentes, exceto P3-03 aprovada. Fases 4/5 serão decompostas ao se aproximarem. Não marcar fases inteiras como prontas por existir scaffolding.

@@ -4,6 +4,8 @@ Não há questões BIZ ativas que bloqueiem a v0 dentro dos limites adotados. BI
 
 Em 14/10/2026, o [plano da fase 3](../tasks/phase-3.md#recomendações-para-decisões-ainda-abertas) registra propostas P3-01 a P3-07: geração e alterações de recorrências, diferenças de receitas, confirmação de despesas recorrentes, cronogramas de terceiros, revisão/devolução após estorno e sugestões de conciliação. Não são políticas aprovadas nem reabrem BIZ-01 a BIZ-05. Não bloqueiam RF-027; devem ser resolvidas antes de implementar os comportamentos dependentes indicados no plano. Ao decidir, atualizar a fonte canônica aplicável e registrar ADR quando relevante.
 
+P3-03 resolvida por aprovação explícita do usuário em 14/10/2026: [liquidações de receitas](../income-settlements.md) e [ADR-0015](0015-explicit-income-settlements.md). Sai da lista ativa; somente P3-01/P3-02/P3-04 a P3-07 permanecem pendentes. Não repetir a aprovação.
+
 BIZ-01 foi resolvida pela escolha de orçamento bruto registrada no ADR-0002: recebimentos aparecem no caixa/custo líquido, sem recompor o orçamento bruto. O ID não será reutilizado.
 
 BIZ-03 resolvida em 08/10/2026: exigir competência confirmada antes de gravar cobranças; manter incompletas na revisão. [ADR-0005](0005-missing-statement-period.md).
