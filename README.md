@@ -6,7 +6,7 @@ Plataforma de gestão financeira pessoal para o mercado brasileiro. Projeto gree
 
 RF-015 integrada pelo PR #2 e RF-016 pelo PR #4. Parsers CSV/OFX em `packages/importers`: [catálogo](docs/import-formats.md). A revisão nunca cria movimentações automaticamente.
 
-Documentação da API: [contratos](docs/contracts.md) e páginas dos módulos em `docs/`. Swagger/OpenAPI ainda não disponível; RF-026 planejada após RF-025, antes da fase 3, nos [checklists](docs/tasks/phase-2.md).
+Documentação da API: Swagger UI em `/api/docs`, JSON em `/api/openapi.json` e [snapshot versionado](docs/api/openapi.json). Abra pela origem do frontend: [Vite](http://localhost:5173/api/docs) ou [Docker](http://127.0.0.1:18080/api/docs). Faça login na aplicação para reutilizar a sessão e testar rotas privadas. [Uso, manutenção e acesso em produção](docs/api-documentation.md); [contratos](docs/contracts.md).
 
 ## Retomar o trabalho
 
@@ -38,6 +38,8 @@ Frontend em `http://localhost:5173` (mesma origem de `APP_ORIGIN` no `.env`). AP
 | Comando | Escopo |
 |---|---|
 | `npm run docs:check` | Links, estrutura das tasks e integridade do histórico |
+| `npm run api:docs:generate` | Build e atualização do snapshot OpenAPI; revisar diff após alterar contrato |
+| `npm run api:docs:check` | Valida OpenAPI, inventário e snapshot após build, sem conexão com banco |
 | `npm run typecheck` | Tipos dos workspaces |
 | `npm test` | Primitivas do domínio e configuração segura |
 | `npm run db:migrate` | Aplica migrations versionadas sem reset do banco |
@@ -45,7 +47,7 @@ Frontend em `http://localhost:5173` (mesma origem de `APP_ORIGIN` no `.env`). AP
 | `npm run test:e2e` | Jornada no Chromium; antes, `npx playwright install chromium` |
 | `npm run build` | Compilação do domínio, API e frontend |
 | `npm run smoke:web` | HTTP do frontend compilado e assets; executar após build, não substitui E2E |
-| `npm run check` | Documentação, tipos, unitários, builds e smoke; integração/E2E são separados |
+| `npm run check` | Documentação, tipos, unitários, builds, OpenAPI e smoke; integração/E2E são separados |
 
 ## Docker Compose — ambiente local
 
@@ -65,6 +67,8 @@ Mailpit recebe SMTP em `127.0.0.1:11025` e mostra mensagens em `http://127.0.0.1
 Integração e E2E requerem `db` e `mailpit` ativos. Criam `rovere_test` se necessário, aplicam migrations em schema aleatório e removem somente o schema da própria execução. `TEST_DATABASE_URL` deve apontar especificamente para `rovere_test`; `SMTP_URL` e `MAILPIT_URL` podem configurar o receptor local. Não execute testes com SMTP real. Artefatos e traces ficam em `test-results`, ignorado pelo Git.
 
 Este Compose é de desenvolvimento (`NODE_ENV=development`, HTTP e segredos fictícios). Produção exige HTTPS, segredo próprio com pelo menos 32 caracteres, PostgreSQL e SMTP configurados; a API recusa configuração inadequada. Leia o [contrato de identidade e limitações](docs/identity.md) antes de disponibilizar o serviço.
+
+`API_DOCS_ENABLED` habilita/desabilita UI, JSON e assets. Local habilitado por padrão; produção desabilitada por padrão e exige sessão válida quando habilitada explicitamente. Try it out preserva Origin/CSRF/guardas/limites e realiza escritas reais; use dados fictícios.
 
 ## Estrutura
 

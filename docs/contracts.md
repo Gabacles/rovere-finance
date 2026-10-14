@@ -101,4 +101,4 @@ Campos de parcela, fatura e total usam estado de conhecimento e proveniência. U
 | `POST /api/receivables` | Despesa, terceiro e cronograma | Origem autorizada e limite de reembolso |
 | `POST /api/settlements` | Movimento, destinos tipados, alocações | INV-06; transação e concorrência |
 
-Contratos HTTP reais estão nos documentos de cada módulo; Swagger/OpenAPI executável ainda não existe. RF-026 foi solicitada para consolidar schema e UI interativa após RF-025 e antes da fase 3, com critérios em [tasks](tasks/phase-2.md). Não gerar SDK de endpoints ainda inexistentes. Rotas de identidade em [identidade](identity.md); liveness e readiness de banco são distintas.
+Contratos HTTP reais estão nos documentos de cada módulo e no [OpenAPI versionado](api/openapi.json), servido junto à Swagger UI. [Uso e manutenção](api-documentation.md); critérios RF-026 em [tasks](tasks/phase-2.md). Não gerar SDK de endpoints ainda inexistentes: receitas/terceiros acima são esboço futuro. Rotas de identidade em [identidade](identity.md); liveness e readiness de banco são distintas.

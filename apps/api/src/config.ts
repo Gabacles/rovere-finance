@@ -5,6 +5,7 @@ export interface AppConfig {
   smtpUrl: string;
   mailFrom: string;
   production: boolean;
+  apiDocsEnabled?: boolean;
   importsWorkerEnabled?: boolean;
 }
 
@@ -22,11 +23,12 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
   }
   const authSecret = required('BETTER_AUTH_SECRET');
   const production = env['NODE_ENV'] === 'production';
+  if (env['API_DOCS_ENABLED'] !== undefined && !['true', 'false'].includes(env['API_DOCS_ENABLED'])) throw new Error('API_DOCS_ENABLED must be true or false.');
   if (authSecret.length < 32) throw new Error('BETTER_AUTH_SECRET must contain at least 32 characters.');
   if (production && (publicOrigin.protocol !== 'https:' || authSecret.includes('development'))) {
     throw new Error('Production requires HTTPS and a non-development auth secret.');
   }
   const smtpUrl = required('SMTP_URL');
   if (!['smtp:', 'smtps:'].includes(new URL(smtpUrl).protocol)) throw new Error('Invalid SMTP protocol.');
-  return { databaseUrl, authSecret, publicOrigin: publicOrigin.origin, smtpUrl, mailFrom: required('MAIL_FROM'), production };
+  return { databaseUrl, authSecret, publicOrigin: publicOrigin.origin, smtpUrl, mailFrom: required('MAIL_FROM'), production, apiDocsEnabled: env['API_DOCS_ENABLED'] === undefined ? !production : env['API_DOCS_ENABLED'] === 'true' };
 }

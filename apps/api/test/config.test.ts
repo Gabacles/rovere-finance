@@ -14,4 +14,12 @@ describe('startup configuration', () => {
     expect(() => readConfig({ ...valid, SMTP_URL: 'https://example.test' })).toThrow();
   });
   it('accepts the isolated local environment', () => { expect(readConfig(valid).publicOrigin).toBe(valid.APP_ORIGIN); });
+  it('defaults docs to local only and requires explicit valid production opt-in', () => {
+    const production = { ...valid, NODE_ENV: 'production', APP_ORIGIN: 'https://rovere.test', BETTER_AUTH_SECRET: 'production-test-only-fictitious-secret-01234567' };
+    expect(readConfig(valid).apiDocsEnabled).toBe(true);
+    expect(readConfig(production).apiDocsEnabled).toBe(false);
+    expect(readConfig({ ...production, API_DOCS_ENABLED: 'true' }).apiDocsEnabled).toBe(true);
+    expect(readConfig({ ...valid, API_DOCS_ENABLED: 'false' }).apiDocsEnabled).toBe(false);
+    expect(() => readConfig({ ...valid, API_DOCS_ENABLED: 'yes' })).toThrow('API_DOCS_ENABLED');
+  });
 });

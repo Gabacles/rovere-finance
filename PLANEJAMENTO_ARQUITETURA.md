@@ -12,6 +12,7 @@ Leia primeiro [AGENTS.md](AGENTS.md), depois o [estado atual](docs/progress.md) 
 | Arquitetura, stack e módulos | [Arquitetura](docs/architecture.md) |
 | Entidades e regras financeiras | [Domínio](docs/domain.md) |
 | Contratos e invariantes | [Contratos](docs/contracts.md) |
+| Swagger/OpenAPI, acesso e manutenção | [Documentação da API](docs/api-documentation.md) |
 | Importações e conciliação | [Importação](docs/imports.md) |
 | Formatos implementados e limites | [Catálogo de formatos](docs/import-formats.md) |
 | Upload privado e revisão executáveis | [Revisão de importação](docs/import-review.md) |

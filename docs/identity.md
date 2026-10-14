@@ -10,6 +10,8 @@ Emails locais são capturados por Mailpit, sem envio externo. Nenhum token/senha
 
 ## Rotas
 
+[Swagger/OpenAPI](api-documentation.md) reúne os contratos financeiros e o handler de identidade, declarando sessão por cookie da configuração efetiva. Login ocorre pela aplicação na mesma origem; UI não desabilita Origin/CSRF/limites. Rotas da biblioteca dependentes de funcionalidades não configuradas não representam entregas do produto.
+
 | Rota | Acesso e comportamento |
 |---|---|
 | `/api/auth/*` | Handler oficial Better Auth; cadastro, login, logout, sessão, email e recuperação |
