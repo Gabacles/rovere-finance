@@ -6,7 +6,7 @@ Atualizado em 14/10/2026. Estados, critérios e evidências nas [tasks](tasks/RE
 
 RF-025 integrada pelo usuário via [PR #12](https://github.com/Gabacles/rovere-finance/pull/12) na main `fe318b2`; CI final aprovada em `9cc6643`. Código/merge/evidências conferidos, mantendo as entregas anteriores e CSV/OFX obrigatórios. Ciclo básico de cartão validado dentro dos limites da v0; a V1 inteira ainda não está concluída.
 
-RF-026 concluída localmente na branch `feat/rf-026-api-documentation`, criada dessa main: Swagger UI `/api/docs`, JSON `/api/openapi.json`, [snapshot](api/openapi.json) com 85 operações reais, contratos HTTP/identidade e checagem de inventário/atualização na CI. UI na mesma origem da aplicação, sessões/Origin/CSRF/limites preservados. Produção desabilitada por padrão e acesso autenticado quando habilitada. [Uso/manutenção](api-documentation.md), [fase 2](tasks/phase-2.md). Sem migration ou alteração das regras financeiras.
+RF-026 concluída localmente na branch `feat/rf-026-api-documentation`, criada dessa main: Swagger UI `/api/docs`, JSON `/api/openapi.json`, [snapshot](api/openapi.json) com 85 operações reais, contratos HTTP/identidade e checagem de inventário/atualização na CI. UI na mesma origem da aplicação, sessões/Origin/CSRF/limites preservados. Produção desabilitada por padrão e acesso autenticado quando habilitada. [Uso/manutenção](api-documentation.md), [fase 2](tasks/phase-2.md). Sem migration ou alteração das regras financeiras. Implementação `224c81a` no [PR #13](https://github.com/Gabacles/rovere-finance/pull/13), aguardando revisão/CI remota e integração; registro posterior somente documental.
 
 ## Validação executada
 
@@ -14,7 +14,7 @@ RF-026 concluída localmente na branch `feat/rf-026-api-documentation`, criada d
 
 ## Próxima ação concreta
 
-1. Publicar/revisar PR da RF-026 para main; conferir head/CI e autorização específica antes de integrar.
+1. Revisar [PR #13](https://github.com/Gabacles/rovere-finance/pull/13) da RF-026 para main; conferir head/CI e autorização específica antes de integrar.
 2. Após integração da RF-026, detalhar e executar primeira fatia da fase 3 (planejamento/recorrências/receitas/terceiros), mantendo entregas pequenas e as políticas já aprovadas.
 3. Saldo anterior, financiamento e obrigações consolidadas continuam fora do ciclo básico desta v0, sem inferências automáticas.
 
