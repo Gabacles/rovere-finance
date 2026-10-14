@@ -5,6 +5,7 @@ import './styles.css';
 import { Destinations } from './destinations';
 import { Imports } from './imports';
 import { Expenses } from './expenses';
+import { Incomes } from './incomes';
 
 function App() {
   const [user, setUser] = useState<{ name: string; email: string } | null>(null);
@@ -27,6 +28,10 @@ function App() {
     if (!response.ok) {
       if (response.status === 401 && !path.startsWith('/auth/')) { setUser(null); setAccounts([]); }
       const errors: Record<string, string> = {
+        INVALID_INCOME: 'Confira descrição, data prevista e valor esperado não negativo em BRL.',
+        INCOME_VERSION_CONFLICT: 'A previsão mudou. Recarregue os dados antes de confirmar.',
+        INCOME_CANCELLED: 'A previsão foi cancelada. Cadastre uma nova previsão para planejar outra receita.',
+        INCOME_NOT_FOUND: 'Previsão de receita não encontrada.',
         EMAIL_NOT_VERIFIED: 'Confirme seu email antes de entrar.',
         INVALID_EMAIL_OR_PASSWORD: 'Email ou senha inválidos.',
         INVALID_TOKEN: 'O link é inválido ou expirou. Solicite outro.',
@@ -83,7 +88,7 @@ function App() {
         REFUND_LINK_NOT_FOUND: 'Associação de estorno não encontrada.',
         INVALID_REFUND: 'Confirme o crédito, sua magnitude positiva em BRL e a associação à compra.',
       };
-      throw new Error(response.status === 429 ? 'Muitas tentativas. Aguarde um minuto.' : errors[data.code as string] ?? 'Não foi possível concluir. Confira os dados e tente novamente.');
+      throw Object.assign(new Error(response.status === 429 ? 'Muitas tentativas. Aguarde um minuto.' : errors[data.code as string] ?? 'Não foi possível concluir. Confira os dados e tente novamente.'), { status: response.status, code: data.code });
     }
     if (method !== 'GET' && (path.includes('/adjustments') || path.includes('/refunds'))) setFinancialVersion(value => value + 1);
     return data;
@@ -165,6 +170,7 @@ function App() {
       {user && <Destinations key={`destinations:${user.email}`} accounts={accounts} api={api} onChanged={() => setCatalogVersion(value => value + 1)} financialVersion={financialVersion} />}
       {user && <Imports key={`imports:${user.email}`} accounts={accounts} catalogVersion={catalogVersion} onFinancialChanged={() => setFinancialVersion(value => value + 1)} onExpired={() => { setUser(null); setAccounts([]); }} />}
       {user && <Expenses key={`expenses:${user.email}`} api={api} catalogVersion={catalogVersion} financialVersion={financialVersion} />}
+      {user && <Incomes key={`incomes:${user.email}`} api={api} />}
       <footer>Organização hoje. Tranquilidade amanhã.</footer>
     </main>
   );

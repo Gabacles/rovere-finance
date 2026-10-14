@@ -32,11 +32,14 @@ export const history = (withVersion = false): Schema => array(obj({ id, ...(with
 export const factsInput = obj({ closingOn: nullable(date), dueOn: nullable(date), declaredTotal: nullable(money), cycle: nullable(enumeration('open', 'closed')), coverage: nullable(enumeration('complete', 'partial')) }, [], { minProperties: 1 });
 export const expenseFactsInput = obj({ purchasedOn: nullable(date), total: nullable(magnitude) }, []);
 export const expenseInput = { description: text, notes, facts: expenseFactsInput };
+export const incomeInput = { description: text, notes, facts: obj({ expectedOn: nullable(date), expectedAmount: nullable(magnitude) }, []) };
 export const classificationInput = obj({ nature: enumeration('purchase', 'fee', 'interest', 'refund', 'other_credit', 'other_debit', 'previous_balance', 'payment', 'informational'), amount: magnitude });
 export const adjustmentInput = { expectedStatementVersion: version, postedOn: date, description: text, amount: obj({ currency: enumeration('BRL'), cents: { ...cents, pattern: '^-?[1-9][0-9]*$' } }), classification: obj({ nature: enumeration('fee', 'interest', 'other_debit', 'other_credit', 'refund'), amount: positiveMoney }), reason, informedConfirmed: yes };
 export const refundVersions = { expectedExpenseVersion: version, expectedChargeVersion: version, expectedStatementVersion: version, reason };
 export const schemas: Record<string, Schema> = {
   Money: money,
+  Income: obj({ id, version: integer(0, 2147483647), description: text, notes, state: enumeration('planned', 'cancelled'), origin: obj({ kind: enumeration('manual'), decisionId: id }), knowledge: enumeration('partial', 'complete'), facts: obj({ expectedOn: known(date), expectedAmount: known(magnitude) }) }),
+  IncomeHistory: array(obj({ id, version: integer(0, 2147483647), changes: obj({ action: enumeration('create', 'edit', 'cancel'), patch: obj(incomeInput, []), previous: nullable(ref('Income')), current: ref('Income') }), createdAt: instant }), { maxItems: 20, description: 'Últimas 20 versões, mais recente primeiro. Journal integral permanece no banco.' }),
   Evidence: { oneOf: [obj({ kind: enumeration('user'), decisionId: id }), obj({ kind: enumeration('source'), sourceRecordId: id, field: str() })] },
   ApiError: obj({ code: str(), message: str(), requestId: str({ format: 'uuid' }), violations: array(jsonObject) }, ['code', 'message'], { description: 'requestId está presente nos filtros financeiros; bloqueio de origem retorna apenas code/message.' }),
   NestError: obj({ statusCode: integer(400, 599), message: str(), error: str() }, ['statusCode', 'message'], { additionalProperties: true }),

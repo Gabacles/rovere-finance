@@ -1,4 +1,4 @@
-import { adjustmentInput, array, bool, classificationInput, commandId, enumeration, expenseInput, factsInput, history, id, integer, money, nullable, obj, page, period, positiveMoney, ref, refundVersions, str, version, yes } from './schemas.js';
+import { adjustmentInput, array, bool, classificationInput, commandId, enumeration, expenseInput, factsInput, history, id, incomeInput, integer, money, nullable, obj, page, period, positiveMoney, ref, refundVersions, str, version, yes } from './schemas.js';
 import type { Schema } from './schemas.js';
 import { configuration, csvExample, reviewInput } from './import-schemas.js';
 
@@ -13,6 +13,12 @@ const cardRow = obj({ id, kind: enumeration('card'), accountId: id, statementId:
 
 // IDs follow controller + method names. Generation refuses missing or obsolete entries.
 export const operations: Record<string, Operation> = {
+  IncomesController_list: operation('Receitas previstas', 'Listar previsões próprias, incluindo canceladas', page(ref('Income')), { query: paginatedQuery, description: 'Total é contagem de registros, sem total de caixa ou orçamento.' }),
+  IncomesController_create: operation('Receitas previstas', 'Cadastrar previsão avulsa manual', ref('Income'), { body: obj(incomeInput, ['description']), example: { description: 'Salário fictício previsto', facts: { expectedOn: '2026-11-30', expectedAmount: null }, notes: 'Valor ainda não informado' }, description: 'Campos ausentes/null permanecem unknown. Zero confirmado continua previsão. Não cria movimento ou recebimento.' }),
+  IncomesController_get: operation('Receitas previstas', 'Consultar previsão e evidências manuais', ref('Income')),
+  IncomesController_update: operation('Receitas previstas', 'Corrigir previsão ativa', ref('Income'), { body: obj({ expectedVersion: version, ...incomeInput }, ['expectedVersion'], { description: 'Ao menos uma alteração. Campo omitido preserva fato/evidência; null limpa explicitamente. Cancelada retorna INCOME_CANCELLED; versão antiga retorna INCOME_VERSION_CONFLICT.' }) }),
+  IncomesController_cancel: operation('Receitas previstas', 'Cancelar previsão explicitamente', ref('Income'), { body: obj({ expectedVersion: version }), description: 'Terminal; preserva dados e histórico. Nova chave em cancelada conflita. Mesma chave/payload recupera resposta original, inclusive após reinício. Nenhum efeito de caixa.' }),
+  IncomesController_history: operation('Receitas previstas', 'Consultar últimas 20 versões da previsão', ref('IncomeHistory')),
   HealthController_getHealth: operation('Operação', 'Verificar processo vivo', obj({ status: enumeration('ok'), service: enumeration('rovere-api'), check: enumeration('liveness') }), { public: true }),
   IdentityController_ready: operation('Operação', 'Verificar conexão com PostgreSQL', obj({ status: enumeration('ok') }), { public: true }),
   IdentityController_me: operation('Identidade', 'Consultar usuário da sessão', obj({ id, name: str(), email: str({ format: 'email' }), emailVerified: bool })),

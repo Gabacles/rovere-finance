@@ -11,3 +11,4 @@ export * from './import-review.js';
 export * from './import-confirmation.js';
 export type * from './import-contracts.js';
 export type * from './destinations.js';
+export * from './incomes.js';
