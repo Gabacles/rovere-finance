@@ -10,7 +10,7 @@ RF-028 concluída e validada na branch `feat/rf-028-income-settlements`, criada 
 
 Implementados domínio puro, confirmação bancária comum de direção/magnitude, migration aditiva/backfill, IncomeSettlement tipada, disponibilidade conjunta com faturas, API/UI, histórico unificado, idempotência/versões e OpenAPI com 95 operações. Previsão não movimenta caixa; recebimento vincula somente movimento existente CSV/OFX. Reversão libera reserva preservando movimento/histórico. Guardas impedem cancelar ou limpar/reduzir previsto abaixo do recebido sem revisar explicitamente os vínculos. [Task/evidências](tasks/phase-3.md).
 
-RF-029 a RF-036 e P3-01/P3-02/P3-04 a P3-07 permanecem pendentes. Nenhuma recorrência, terceiro, orçamento, baixa automática ou novo provedor nesta entrega. Abertura do PR para main autorizada ao concluir; merge/push direto na main não autorizado. Commit/push e PR RF-028 são a próxima ação desta entrega, já autorizados.
+RF-029 a RF-036 e P3-01/P3-02/P3-04 a P3-07 permanecem pendentes. Nenhuma recorrência, terceiro, orçamento, baixa automática ou novo provedor nesta entrega. Implementação validada `3de1cd2` publicada na branch da task e [PR #15 aberto para main](https://github.com/Gabacles/rovere-finance/pull/15), conforme autorização; CI remota a conferir. Registro posterior somente documental. Merge/push direto na main não realizado/não autorizado.
 
 ## Conferência e validação
 
@@ -20,8 +20,8 @@ RF-027 histórica: check (146 unitários), integração (118 testes/12 suites), 
 
 ## Próxima ação concreta
 
-1. Commit/push da versão validada e abertura do PR RF-028 para main conforme autorização; conferir CI remota.
-2. Revisar PR/CI antes de integração com autorização específica; não fazer merge ou push direto na main.
+1. Revisar PR #15 e conferir CI remota do head final; resultados locais são aprovados e a CI não foi declarada aprovada.
+2. Integrar somente com autorização específica; não fazer merge ou push direto na main automaticamente.
 3. Após revisão/integração autorizada, detalhar próxima fatia e resolver somente as decisões dependentes antes de implementar. Não avançar outras tasks nesta entrega.
 
 ## Políticas e ambiente
