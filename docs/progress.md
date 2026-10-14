@@ -10,6 +10,8 @@ Swagger UI `/api/docs`, JSON `/api/openapi.json` e snapshot agora com 91 operaç
 
 Planejamento local da [fase 3](tasks/phase-3.md), originalmente em `docs/phase-3-planning` sem commit/push, preservado ao criar `feat/rf-027-planned-incomes` de `origin/main` conferida por fetch em `a5b0b62`. **RF-027 concluída e validada:** domínio, migration aditiva, API, UI, histórico, idempotência/versões e OpenAPI. Receitas previstas não movimentam caixa. RF-028 a RF-036 continuam pendentes; P3-01 a P3-07 não implementadas. Nenhum merge/push direto na main.
 
+Implementação `e5df0b3` publicada em `origin/feat/rf-027-planned-incomes`, com identidade Git configurada, commit semântico e sem assinatura/coautoria do agente. [Abrir revisão da branch](https://github.com/Gabacles/rovere-finance/compare/main...feat/rf-027-planned-incomes?expand=1). Registro posterior somente documental; CI remota e integração ainda a conferir/autorizar.
+
 ## Conferência e validação
 
 Inspeção inicial confirmou ausência de receitas persistidas; RF-027 acrescenta somente Income manual previsto/cancelado e journal próprio, sem caixa. Recorrências/terceiros/liquidações de receitas continuam ausentes. Disponibilidade bancária atual considera apenas faturas; RF-028 precisará de consulta conjunta. Estorno de cartão não é reembolso de terceiro.
@@ -18,7 +20,7 @@ RF-027: `npm run check` aprovado (146 unitários, tipos, builds, 91 operações 
 
 ## Próxima ação concreta
 
-1. Commit/push da RF-027 na branch própria para revisão; conferir CI antes de integração com autorização específica.
+1. Abrir/revisar PR da branch RF-027 e conferir CI remota; integrar somente com autorização específica. Nenhum PR/merge automático realizado nesta entrega.
 2. Após revisão/integração autorizada, detalhar RF-028 e resolver P3-03 antes de liquidações. Não copiar disponibilidade exclusiva de faturas.
 3. Resolver as demais propostas antes dos comportamentos dependentes. RF-032 permanece alternativa independente futura; nenhuma outra task iniciada nesta entrega.
 
