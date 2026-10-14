@@ -1,27 +1,25 @@
 # Progresso e ponto de retomada
 
-Atualizado em 09/10/2026. Estados, critérios e evidências nas [tasks](tasks/README.md).
+Atualizado em 14/10/2026. Estados, critérios e evidências nas [tasks](tasks/README.md).
 
 ## Entrega atual
 
-RF-024 integrada pelo usuário via [PR #11](https://github.com/Gabacles/rovere-finance/pull/11) na main `168c682`; CI final aprovada em `56c047a`. Código/merge/evidências conferidos, mantendo as entregas anteriores e CSV/OFX obrigatórios.
+RF-025 integrada pelo usuário via [PR #12](https://github.com/Gabacles/rovere-finance/pull/12) na main `fe318b2`; CI final aprovada em `9cc6643`. Código/merge/evidências conferidos, mantendo as entregas anteriores e CSV/OFX obrigatórios. Ciclo básico de cartão validado dentro dos limites da v0; a V1 inteira ainda não está concluída.
 
-RF-025 concluída localmente na branch `feat/rf-025-card-adjustments`, criada dessa main: ajustes informados imutáveis, reversão compensatória tipada, estorno efetivo associado à compra, custo elegível separado do total/plano e revisão de excedente preservando pagamentos reais. Sem dinheiro livre, refund bancário ou ajustes em terceiros presumidos. [Contrato](card-adjustments.md), [ADR-0013](decisions/0013-traceable-card-adjustments-and-refunds.md), [fase 2](tasks/phase-2.md). Ciclo básico validado dentro dos limites da v0; a V1 inteira ainda não está concluída.
+RF-026 concluída localmente na branch `feat/rf-026-api-documentation`, criada dessa main: Swagger UI `/api/docs`, JSON `/api/openapi.json`, [snapshot](api/openapi.json) com 85 operações reais, contratos HTTP/identidade e checagem de inventário/atualização na CI. UI na mesma origem da aplicação, sessões/Origin/CSRF/limites preservados. Produção desabilitada por padrão e acesso autenticado quando habilitada. [Uso/manutenção](api-documentation.md), [fase 2](tasks/phase-2.md). Sem migration ou alteração das regras financeiras.
 
 ## Validação executada
 
-`npm run check`: 46 documentos/18 tasks e hash histórico, tipos, 113 unitários, builds e smoke aprovados. Integração: 105 aprovados (10 RF-025). Chromium: 11 jornadas, incluindo compra/correções → plano → CSV/OFX → fatura → pagamento → estorno/associação com resposta perdida → excedente 20 preservando pagamento 50 e reserva → unlink/compensatória/reconfirmação, além das regressões de 500 registros por formato. Duas capturas móveis inspecionadas. Evidências, limites e falhas resolvidas na RF-025. Aviso de deprecação do driver pg registrado, sem falha nos testes; revisar antes de upgrade futuro.
-
-Docker atualizado, quatro serviços saudáveis, décima migration aplicada sem reset; schema/banco sem diferenças; proxy público 200 e histórico de estorno 401 sem sessão. Implementação `9c9edf3` publicada no [PR #12](https://github.com/Gabacles/rovere-finance/pull/12); CI remota ainda a conferir antes de integrar. Registro posterior somente de documentação preserva código validado.
+`npm run check` aprovado: 47 documentos/18 tasks e hash histórico, tipos, 117 unitários, builds, OpenAPI/schema/inventário/snapshot (85 operações) sem conexão com banco e smoke. Integração: 109 aprovados, incluindo quatro RF-026 com contratos HTTP e política de documentação em produção/opt-in/revogação. Chromium: 12 jornadas aprovadas, incluindo Swagger autenticado/leitura/escrita, além das regressões de 500 CSV/500 OFX e ciclo de cartão. Docker atualizado, quatro serviços saudáveis, volume preservado, sem migrations novas. UI/JSON/assets pelo proxy público 200/no-store; `/api/me` 401 sem sessão. Evidências/falhas/limites detalhados na task.
 
 ## Próxima ação concreta
 
-1. Revisar [PR #12](https://github.com/Gabacles/rovere-finance/pull/12) da RF-025 para main; conferir head/CI e autorização específica antes de integrar.
-2. Após integração, RF-026: documentação interativa OpenAPI/Swagger dos contratos reais, antes da fase 3. Atualmente somente contratos Markdown.
-3. Depois de RF-026, detalhar próxima fatia da fase 3: recorrências/receitas/terceiros, respeitando os módulos e limites já definidos. Saldo anterior, financiamento e obrigações consolidadas continuam fora do ciclo básico desta v0, sem inferências automáticas.
+1. Publicar/revisar PR da RF-026 para main; conferir head/CI e autorização específica antes de integrar.
+2. Após integração da RF-026, detalhar e executar primeira fatia da fase 3 (planejamento/recorrências/receitas/terceiros), mantendo entregas pequenas e as políticas já aprovadas.
+3. Saldo anterior, financiamento e obrigações consolidadas continuam fora do ciclo básico desta v0, sem inferências automáticas.
 
 ## Políticas e ambiente
 
 BIZ-02/BIZ-04/BIZ-05 resolvidas por delegação: encargos informados sem juros presumidos, CSV/OFX genéricos até layouts comprovados, revisão explícita de excedentes de reembolso. [Políticas](v0-policies.md). BIZ-01/BIZ-03 preservadas. Retenção continua proposta técnica/de privacidade; não há decisão BIZ bloqueante nesses limites.
 
-Serviços ativos: PostgreSQL 15432, API 3100, frontend `http://127.0.0.1:18080`, SMTP 11025 e Mailpit 18025. Volume preservado; testes somente em schemas próprios de `rovere_test`. Sem usuários predefinidos ou envio externo. [README](../README.md).
+Serviços ativos: PostgreSQL 15432, API 3100, frontend `http://127.0.0.1:18080`, SMTP 11025 e Mailpit 18025. Volume preservado; testes somente em schemas próprios de `rovere_test`. Sem usuários predefinidos ou envio externo. Aviso pg sobre consultas concorrentes permanece registrado para revisão antes de upgrade, sem falha financeira observada. [README](../README.md).

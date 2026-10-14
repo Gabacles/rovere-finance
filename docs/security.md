@@ -6,6 +6,8 @@ A autorização será aplicada a todas as consultas e comandos, incluindo downlo
 
 RF-013 implementa sessões persistidas e revogáveis, cookies `HttpOnly`/`SameSite=Lax` (`Secure` quando HTTPS), proteção CSRF, expiração e recuperação de acesso com tokens de uso único via Better Auth. HTTP é permitido exclusivamente para desenvolvimento. Contrato, isolamento e limitações em [identidade](identity.md). [Documentação de sessões](https://better-auth.com/docs/concepts/session-management)
 
+RF-026 serve [Swagger/OpenAPI](api-documentation.md) localmente, com assets próprios, CSP e sem validador externo. Produção desabilitada por padrão; habilitação explícita exige sessão válida para UI, JSON e assets. Try it out preserva a mesma origem e todas as proteções das rotas financeiras/identidade.
+
 Os arquivos importados terão armazenamento privado, nomes internos aleatórios, prazo de retenção e limites de tamanho, linhas, tempo e memória. O parsing XML deverá desabilitar entidades externas e acesso à rede. Conteúdo importado será tratado como texto; exportações para planilhas deverão neutralizar fórmulas maliciosas.
 
 RF-017 implementa bytes privados no PostgreSQL, download autorizado, limites de upload/parsing, quota, remoção explícita e logs de erro redigidos. A retenção automática permanece pendente de política; não foi presumido prazo de trinta dias. [Contrato e limitações](import-review.md). Sem alegar criptografia/backup ou preparação pública ainda não executados.

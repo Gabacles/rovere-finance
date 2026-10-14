@@ -1,0 +1,69 @@
+import { adjustmentInput, array, bool, classificationInput, commandId, enumeration, expenseInput, factsInput, history, id, integer, money, nullable, obj, page, period, positiveMoney, ref, refundVersions, str, version, yes } from './schemas.js';
+import type { Schema } from './schemas.js';
+import { configuration, csvExample, reviewInput } from './import-schemas.js';
+
+export interface Operation { tag: string; summary: string; response: Schema; body?: Schema; example?: unknown; query?: Record<string, Schema>; requiredQuery?: string[]; description?: string; public?: boolean; multipart?: boolean; binary?: boolean }
+const operation = (tag: string, summary: string, response: Schema, options: Omit<Operation, 'tag' | 'summary' | 'response'> = {}): Operation => ({ tag, summary, response, ...options });
+const nameInput = obj({ name: str({ minLength: 1, maxLength: 100, example: 'Conta fictícia' }) });
+const paginatedQuery = { page: { ...integer(1, 99999), default: 1, description: '25 registros por página.' } };
+const changed = obj({ id, version });
+const expensePatch = obj({ expectedVersion: version, ...expenseInput, association: obj({ action: enumeration('link', 'unlink'), chargeId: commandId }) }, ['expectedVersion'], { description: 'Informe ao menos uma alteração. total/data null tornam o fato desconhecido, sujeito às dependências já confirmadas.' });
+const bankRow = obj({ id, kind: enumeration('bank'), accountId: id, postedOn: ref('CivilDate'), description: str(), amount: money, notes: nullable(str()), version });
+const cardRow = obj({ id, kind: enumeration('card'), accountId: id, statementId: id, cardId: nullable(id), postedOn: ref('CivilDate'), description: str(), amount: money, notes: nullable(str()), version, installment: ref('Installment'), expenseId: nullable(id), classification: ref('Classification') });
+
+// IDs follow controller + method names. Generation refuses missing or obsolete entries.
+export const operations: Record<string, Operation> = {
+  HealthController_getHealth: operation('Operação', 'Verificar processo vivo', obj({ status: enumeration('ok'), service: enumeration('rovere-api'), check: enumeration('liveness') }), { public: true }),
+  IdentityController_ready: operation('Operação', 'Verificar conexão com PostgreSQL', obj({ status: enumeration('ok') }), { public: true }),
+  IdentityController_me: operation('Identidade', 'Consultar usuário da sessão', obj({ id, name: str(), email: str({ format: 'email' }), emailVerified: bool })),
+  AccountsController_list: operation('Contas bancárias', 'Listar contas próprias', array(ref('Account'))),
+  AccountsController_create: operation('Contas bancárias', 'Criar cadastro mínimo de conta', ref('Account'), { body: nameInput }),
+  AccountsController_get: operation('Contas bancárias', 'Consultar conta própria', ref('Account')),
+  AccountsController_rename: operation('Contas bancárias', 'Renomear conta própria', ref('Account'), { body: nameInput }),
+  CreditController_list: operation('Crédito e cartões', 'Listar contas de crédito', array(ref('CreditAccount'))),
+  CreditController_create: operation('Crédito e cartões', 'Criar conta de crédito', ref('CreditAccount'), { body: nameInput }),
+  CreditController_get: operation('Crédito e cartões', 'Consultar conta de crédito', ref('CreditAccount')),
+  CreditController_cards: operation('Crédito e cartões', 'Listar cartões do crédito', array(ref('Card'))),
+  CreditController_createCard: operation('Crédito e cartões', 'Criar cartão compartilhando o crédito', ref('Card'), { body: obj({ name: str({ minLength: 1, maxLength: 100 }), kind: enumeration('physical', 'virtual', 'additional') }), example: { name: 'Cartão fictício', kind: 'virtual' } }),
+  CreditController_statements: operation('Faturas', 'Listar competências cadastradas', array(ref('Statement'))),
+  CreditController_createStatement: operation('Faturas', 'Cadastrar competência explícita', ref('Statement'), { body: obj({ period }) }),
+  StatementsController_get: operation('Faturas', 'Consultar fatos/versionamento', ref('StatementDetails')),
+  StatementsController_history: operation('Faturas', 'Consultar histórico de fatos', history(true)),
+  StatementsController_summary: operation('Faturas', 'Calcular fatura com cobertura explícita', ref('StatementSummary'), { description: 'Não soma compra/plano/caixa. Classificar todas as linhas não comprova cobertura completa. Diferença só é conhecida com cobertura atual e total declarado.' }),
+  StatementsController_update: operation('Faturas', 'Confirmar/corrigir fatos da fatura', ref('StatementDetails'), { body: obj({ expectedVersion: version, facts: factsInput }), example: { expectedVersion: 0, facts: { dueOn: '2026-11-05', declaredTotal: { currency: 'BRL', cents: '10000' }, cycle: 'closed' } } }),
+  CardChargesController_get: operation('Cobranças', 'Consultar cobrança e origem manual quando existente', ref('CardCharge')),
+  CardChargesController_history: operation('Cobranças', 'Consultar histórico de classificação', history(true)),
+  CardChargesController_update: operation('Cobranças', 'Confirmar natureza e magnitude explícitas', ref('CardCharge'), { body: obj({ expectedVersion: version, classification: nullable(classificationInput) }), description: 'Magnitude deve ser igual ao valor absoluto da origem. null limpa classificação. Ajustes manuais são imutáveis; parcelas e estornos vinculados protegem a natureza.' }),
+  ExpensesController_list: operation('Compras', 'Listar compras completas ou parciais', page(obj({ id, version, description: str(), knowledge: enumeration('partial', 'complete') })), { query: paginatedQuery }),
+  ExpensesController_create: operation('Compras', 'Criar compra preservando lacunas', ref('Expense'), { body: obj(expenseInput, ['description']), example: { description: 'Compra fictícia', facts: { purchasedOn: '2026-10-14', total: { currency: 'BRL', cents: '10000' } }, notes: 'Exemplo fictício' } }),
+  ExpensesController_get: operation('Compras', 'Consultar compra, plano e estornos', ref('Expense')),
+  ExpensesController_history: operation('Compras', 'Consultar histórico de comandos', history(true)),
+  ExpensesController_update: operation('Compras', 'Corrigir compra ou associar/desassociar cobrança', ref('Expense'), { body: expensePatch }),
+  ExpensesController_plan: operation('Parcelas', 'Confirmar plano mensal imutável', ref('Expense'), { body: obj({ expectedVersion: version, total: ref('Magnitude'), count: integer(1, 10000), creditAccountId: commandId, firstPeriod: period, cadence: enumeration('monthly') }), description: 'Exige total/data original conhecidos. Não cria cobranças nem faturas. Distribuição inteira determinística.' }),
+  ExpensesController_match: operation('Parcelas', 'Conciliar previsão com cobrança real', ref('Expense'), { body: obj({ expectedVersion: version, number: integer(1, 10000), chargeId: commandId, confirmedAmount: ref('Magnitude') }), description: 'Mesmo crédito/competência; magnitude correspondente à origem. Diferenças não redistribuem o plano.' }),
+  ExpensesController_remove: operation('Parcelas', 'Desconciliar parcela preservando cobrança', ref('Expense'), { body: obj({ expectedVersion: version }) }),
+  EntriesController_list: operation('Movimentos', 'Consultar registros efetivos importados', page({ oneOf: [bankRow, cardRow] }), { query: { kind: enumeration('bank', 'card'), accountId: id, statementId: id, ...paginatedQuery }, requiredQuery: ['kind', 'accountId'], description: 'statementId somente para kind=card. Página fixa de 25. Nunca gera registros de previsão.' }),
+  PaymentSourcesController_source: operation('Pagamentos', 'Consultar disponibilidade de saída bancária', ref('PaymentSource')),
+  PaymentsController_get: operation('Pagamentos', 'Consultar base, saldo e alocações', ref('StatementPayments'), { query: paginatedQuery }),
+  PaymentsController_history: operation('Pagamentos', 'Consultar histórico de pagamentos', history()),
+  PaymentsController_basis: operation('Pagamentos', 'Confirmar base anterior aos pagamentos', ref('PaymentResult'), { body: obj({ expectedStatementVersion: version, kind: enumeration('declared', 'calculated'), referenceHash: str({ pattern: '^[a-f0-9]{64}$' }), beforePaymentsConfirmed: yes, independentObligationConfirmed: yes, preserveOverpaymentConfirmed: bool }, ['expectedStatementVersion', 'kind', 'referenceHash', 'beforePaymentsConfirmed', 'independentObligationConfirmed']), description: 'referenceHash vem do candidato atual em GET payments. preserveOverpaymentConfirmed é opcional e true exige revisão explícita de excedente; pagamentos reais continuam reservados. Saldo anterior positivo identificado exige revisão.' }),
+  PaymentsController_allocate: operation('Pagamentos', 'Alocar saída real em fatura', ref('PaymentResult'), { body: obj({ expectedStatementVersion: version, bankEntryId: id, expectedBankVersion: version, confirmedOutflow: positiveMoney, outflowConfirmed: yes, amount: positiveMoney }), description: 'Revalida magnitude e limites da fonte/fatura atomicamente. Não cria outra despesa de consumo.' }),
+  PaymentsController_reverse: operation('Pagamentos', 'Reverter alocação sem refund bancário', ref('PaymentResult'), { body: obj({ expectedStatementVersion: version, expectedBankVersion: version }) }),
+  AdjustmentsController_create: operation('Ajustes e estornos', 'Registrar ajuste efetivo informado', ref('AdjustmentResult'), { body: obj(adjustmentInput), example: { expectedStatementVersion: 0, postedOn: '2026-10-14', description: 'Tarifa fictícia informada', amount: { currency: 'BRL', cents: '-500' }, classification: { nature: 'fee', amount: { currency: 'BRL', cents: '500' } }, reason: 'Confirmada no documento fictício', informedConfirmed: true } }),
+  AdjustmentsController_reverse: operation('Ajustes e estornos', 'Registrar compensatória de ajuste manual', ref('AdjustmentResult'), { body: obj({ ...adjustmentInput, expectedChargeVersion: version, expectedOriginalStatementVersion: version }), description: 'Nova linha explícita: mesma magnitude, efeito contrário. Destino pode ser outra competência do mesmo crédito. Sem apagar origem, repetir reversão ou gerar cadeia. Estorno associado exige desassociação anterior.' }),
+  AdjustmentsController_history: operation('Ajustes e estornos', 'Consultar journal de ajustes da fatura', history()),
+  RefundsController_link: operation('Ajustes e estornos', 'Associar crédito integral de estorno à compra', ref('AdjustmentResult'), { body: obj({ ...refundVersions, chargeId: commandId, amount: positiveMoney, associationConfirmed: yes }), description: 'Classificação refund atual, magnitude integral correspondente, uma compra por crédito. Custo elegível separado do total/plano; limite revalidado se total original conhecido.' }),
+  RefundsController_remove: operation('Ajustes e estornos', 'Desassociar estorno preservando crédito real', ref('AdjustmentResult'), { body: obj(refundVersions) }),
+  RefundsController_history: operation('Ajustes e estornos', 'Consultar journal de estornos da compra', history()),
+  ImportsController_list: operation('Importação CSV e OFX', 'Listar últimos 20 lotes', array(ref('ImportBatch'), { maxItems: 20 })),
+  ImportsController_upload: operation('Importação CSV e OFX', 'Enviar arquivo privado para parsing/revisão', ref('ImportBatch'), { multipart: true, body: obj({ file: str({ format: 'binary', description: 'Um arquivo .csv ou .ofx, até 10 MiB; bytes privados.' }), format: enumeration('csv', 'ofx'), configuration: str({ maxLength: 16000, example: JSON.stringify(csvExample), description: 'Texto JSON (não objeto multipart). CSV: ParserConfiguration.profile; OFX: {} ou encoding. Não definir Content-Type manualmente: navegador inclui boundary.' }) }), description: 'Campos multipart file, format, configuration. Parsing assíncrono; nenhuma movimentação criada. Limites: 20 arquivos/50 MiB por usuário; até 10.000 linhas por arquivo. Dados sempre fictícios ao exercitar docs.' }),
+  ImportsController_get: operation('Importação CSV e OFX', 'Consultar lote e destinos por bloco', ref('ImportDetails')),
+  ImportsController_file: operation('Importação CSV e OFX', 'Baixar bytes privados da origem', str({ format: 'binary' }), { binary: true }),
+  ImportsController_rows: operation('Importação CSV e OFX', 'Paginar candidatos, origem e correções', ref('ImportRows'), { query: { page: { ...integer(1, 10000), default: 1 }, pageSize: { ...integer(1, 100), default: 25 }, selected: enumeration('true', 'false') }, description: 'Somente lotes review/confirmed. Prévia não equivale à confirmação.' }),
+  ImportsController_review: operation('Importação CSV e OFX', 'Salvar revisão explícita versionada', changed, { body: reviewInput }),
+  ImportsController_retry: operation('Importação CSV e OFX', 'Repetir parsing falho na versão atual', ref('ImportDetails'), { body: obj({ expectedVersion: version, configuration }, ['expectedVersion']), description: 'Configuração opcional; quando omitida conserva a anterior.' }),
+  ImportsController_preview: operation('Importação CSV e OFX', 'Prévia de confirmação sem gravação financeira', ref('ImportPreview')),
+  ImportsController_confirm: operation('Importação CSV e OFX', 'Confirmar revisão atomicamente', ref('ImportResult'), { body: obj({ expectedVersion: version }), description: 'Mesma chave/versão recupera resposta mesmo após commit. Conflitos de origem/duplicidade bloqueiam; fonte e correções preservadas.' }),
+  ImportsController_cancel: operation('Importação CSV e OFX', 'Cancelar lote não confirmado', obj({ id, status: enumeration('cancelled'), version }), { body: obj({ expectedVersion: version }) }),
+  ImportsController_purgeFile: operation('Importação CSV e OFX', 'Remover bytes privados preservando rastreabilidade', changed, { body: obj({ expectedVersion: version }) }),
+};

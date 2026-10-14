@@ -37,6 +37,7 @@ services:
     environment:
       PORT: 3000
       NODE_ENV: development
+      API_DOCS_ENABLED: ${API_DOCS_ENABLED:-true}
       DATABASE_URL: postgresql://${POSTGRES_USER:-rovere}:${POSTGRES_PASSWORD:-rovere_local_only}@db:5432/${POSTGRES_DB:-rovere}
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-development-only-secret-change-before-deploy-0123456789}
       APP_ORIGIN: http://127.0.0.1:${WEB_PORT:-18080}

@@ -26,18 +26,28 @@
     "test": "npm run build --workspace=@rovere/api && vitest run",
     "docs:check": "node scripts/check-docs.mjs",
     "smoke:web": "node scripts/smoke-web.mjs",
-    "check": "npm run docs:check && npm run typecheck && npm run test && npm run build && npm run smoke:web"
+    "check": "npm run docs:check && npm run typecheck && npm run test && npm run build && npm run api:docs:check && npm run smoke:web",
+    "api:docs:check": "node scripts/check-openapi.mjs",
+    "api:docs:generate": "npm run build && node scripts/check-openapi.mjs --write"
   },
   "overrides": {
-    "@prisma/config": { "deepmerge-ts": "8.0.2" },
-    "prisma": { "mysql2": "3.24.5" }
+    "@prisma/config": {
+      "deepmerge-ts": "8.0.2"
+    },
+    "prisma": {
+      "mysql2": "3.24.5"
+    }
   },
   "devDependencies": {
+    "@apidevtools/swagger-parser": "13.1.0",
     "@playwright/test": "1.64.0",
     "@types/express": "5.0.6",
     "@types/node": "^24.0.0",
     "@types/nodemailer": "8.0.2",
     "@types/pg": "8.23.1",
+    "@types/swagger-ui-dist": "3.30.6",
+    "ajv": "8.20.0",
+    "ajv-formats": "3.0.1",
     "prisma": "7.10.0",
     "typescript": "7.0.2",
     "vitest": "5.0.3"
