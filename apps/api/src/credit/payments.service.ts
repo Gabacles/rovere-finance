@@ -6,7 +6,7 @@ import { DATABASE } from '../accounts/accounts.controller.js';
 import type { Database } from '../database.js';
 import { fail, json, key, object, version } from '../imports/validation.js';
 import { bankPaymentSource, money, paymentContext, statementPayments } from './payment-projection.js';
-type Decision = { operation: 'basis'; kind: PaymentBasisKind; referenceHash: string; beforePaymentsConfirmed: true; independentObligationConfirmed: true }
+type Decision = { operation: 'basis'; kind: PaymentBasisKind; referenceHash: string; beforePaymentsConfirmed: true; independentObligationConfirmed: true; preserveOverpaymentConfirmed?: true }
   | { operation: 'allocate'; bankEntryId: string; expectedBankVersion: number; confirmedOutflow: MoneyDTO; outflowConfirmed: true; amount: MoneyDTO }
   | { operation: 'reverse'; allocationId: string; expectedBankVersion: number };
 const expected = (value: unknown) => { const result = version(value); if (result >= 2147483647) fail(400, 'INVALID_VERSION', 'Versão inválida.'); return result; };
@@ -19,9 +19,10 @@ export class PaymentsService {
   source(userId: string, id: string) { return this.db.$transaction(tx => bankPaymentSource(tx, userId, id), { isolationLevel: 'RepeatableRead' }); }
   async history(userId: string, creditId: string, statementId: string) { await this.get(userId, creditId, statementId); return this.db.statementPaymentCommand.findMany({ where: { userId, creditAccountId: creditId, statementId }, select: { id: true, changes: true, createdAt: true }, orderBy: [{ createdAt: 'desc' }, { id: 'asc' }], take: 20 }); }
   basis(userId: string, creditId: string, statementId: string, body: unknown, token: unknown) {
-    const data = object(body, ['expectedStatementVersion', 'kind', 'referenceHash', 'beforePaymentsConfirmed', 'independentObligationConfirmed']);
+    const data = object(body, ['expectedStatementVersion', 'kind', 'referenceHash', 'beforePaymentsConfirmed', 'independentObligationConfirmed', 'preserveOverpaymentConfirmed']);
+    if (data.preserveOverpaymentConfirmed !== undefined && typeof data.preserveOverpaymentConfirmed !== 'boolean') fail(400, 'PAYMENT_CONFIRMATION_REQUIRED', 'Confirme explicitamente a preservação dos pagamentos.');
     if (!['declared', 'calculated'].includes(data.kind as string) || typeof data.referenceHash !== 'string' || !/^[a-f0-9]{64}$/.test(data.referenceHash) || data.beforePaymentsConfirmed !== true || data.independentObligationConfirmed !== true) fail(400, 'PAYMENT_CONFIRMATION_REQUIRED', 'Confirme a base antes de pagamentos e sua obrigação independente.');
-    return this.command(userId, creditId, statementId, expected(data.expectedStatementVersion), key(token), { operation: 'basis', kind: data.kind as PaymentBasisKind, referenceHash: data.referenceHash, beforePaymentsConfirmed: true, independentObligationConfirmed: true });
+    return this.command(userId, creditId, statementId, expected(data.expectedStatementVersion), key(token), { operation: 'basis', kind: data.kind as PaymentBasisKind, referenceHash: data.referenceHash, beforePaymentsConfirmed: true, independentObligationConfirmed: true, ...(data.preserveOverpaymentConfirmed === true ? { preserveOverpaymentConfirmed: true } : {}) });
   }
   allocate(userId: string, creditId: string, statementId: string, body: unknown, token: unknown) {
     const data = object(body, ['expectedStatementVersion', 'bankEntryId', 'expectedBankVersion', 'confirmedOutflow', 'outflowConfirmed', 'amount']);
@@ -39,8 +40,9 @@ export class PaymentsService {
       const previous = await statementPayments(tx, userId, creditAccountId, statementId); const decisionId = randomUUID(); const evidence = json({ kind: 'user', decisionId }); let bankEntryId: string | null = null; let accountId: string | null = null; let sourceBefore: unknown = null;
       if (decision.operation === 'basis') {
         const candidate = context.candidates[decision.kind]; if (!candidate || candidate.referenceHash !== decision.referenceHash) fail(409, 'PAYMENT_BASIS_UNAVAILABLE', 'A base mudou ou não está disponível. Confira saldo anterior, total e cobertura.');
-        if (BigInt(candidate.total.cents) < BigInt(previous.progress.allocated.cents)) fail(409, 'PAYMENT_TOTAL_BELOW_ALLOCATED', 'Reverta as alocações afetadas antes de reduzir a base abaixo do valor já alocado.');
-        const data = { kind: decision.kind, total: BigInt(candidate.total.cents), referenceHash: candidate.referenceHash, evidence, snapshot: json(context.snapshot) };
+        const excess = BigInt(candidate.total.cents) < BigInt(previous.progress.allocated.cents);
+        if (excess && !decision.preserveOverpaymentConfirmed) fail(409, 'PAYMENT_TOTAL_BELOW_ALLOCATED', 'Confirme preservar os pagamentos reais e revisar o excedente, ou corrija explicitamente as alocações.');
+        const data = { kind: decision.kind, total: BigInt(candidate.total.cents), referenceHash: candidate.referenceHash, evidence, snapshot: json(context.snapshot), excessReviewConfirmed: excess && decision.preserveOverpaymentConfirmed === true };
         await tx.statementPaymentBasis.upsert({ where: { statementId }, create: { statementId, userId, creditAccountId, ...data }, update: data });
       } else {
         if (decision.operation === 'reverse') {

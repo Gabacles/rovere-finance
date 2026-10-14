@@ -24,12 +24,13 @@ export function assertPaymentLimits(outflow: MoneyDTO, sourceAllocations: readon
   if (value > sourceAvailable) throw new PaymentRuleError('PAYMENT_SOURCE_EXCEEDED');
   if (value > due) throw new PaymentRuleError('PAYMENT_BALANCE_EXCEEDED');
 }
-export type PaymentState = 'unknown' | 'unpaid' | 'partial' | 'paid' | 'no_obligation' | 'review_required';
-export interface PaymentProgress { state: PaymentState; allocated: MoneyDTO; remaining: { state: 'unknown' } | { state: 'available'; amount: MoneyDTO } }
-export function paymentProgress(base: MoneyDTO | null, current: boolean, amounts: readonly MoneyDTO[]): PaymentProgress {
+export type PaymentState = 'unknown' | 'unpaid' | 'partial' | 'paid' | 'no_obligation' | 'review_required' | 'credit_review_required';
+export interface PaymentProgress { state: PaymentState; allocated: MoneyDTO; remaining: { state: 'unknown' } | { state: 'available'; amount: MoneyDTO }; creditExcess?: { state: 'unknown' } | { state: 'available'; amount: MoneyDTO } }
+export function paymentProgress(base: MoneyDTO | null, current: boolean, amounts: readonly MoneyDTO[], excessReviewed = false): PaymentProgress {
   const allocated = allocatedTotal(amounts); const paid = parseCents(allocated.cents);
   if (!base) return { state: 'unknown', allocated, remaining: { state: 'unknown' } };
   const total = parseCents(paymentMoney(base, false).cents);
+  if (current && paid > total && excessReviewed) return { state: 'credit_review_required', allocated, remaining: { state: 'available', amount: toMoneyDTO(parseCents('0')) }, creditExcess: { state: 'available', amount: toMoneyDTO(subtractCents(paid, total)) } };
   if (!current || paid > total) return { state: 'review_required', allocated, remaining: { state: 'unknown' } };
   const remaining = toMoneyDTO(subtractCents(total, paid));
   return { state: total === 0n ? 'no_obligation' : paid === 0n ? 'unpaid' : paid === total ? 'paid' : 'partial', allocated, remaining: { state: 'available', amount: remaining } };

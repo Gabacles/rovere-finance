@@ -1,6 +1,6 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { Inject, Injectable } from '@nestjs/common';
-import { changeExpenseFacts, ExpenseError, expenseKnowledge, normalizeExpensePatch, parseCivilDate, parseCents, toMoneyDTO, unknownExpenseFacts } from '@rovere/domain';
+import { changeExpenseFacts, ExpenseError, expenseKnowledge, normalizeExpensePatch, parseCivilDate, parseCents, refundCost, toMoneyDTO, unknownExpenseFacts } from '@rovere/domain';
 import type { Evidence, ExpenseDTO, ExpenseFacts, ExpensePatch, KnownValue } from '@rovere/domain';
 import type { Expense, Prisma } from '../generated/prisma/client.js';
 import { DATABASE } from '../accounts/accounts.controller.js';
@@ -31,8 +31,10 @@ function normalize(body: unknown, creating: boolean): ExpensePatch {
 export async function expenseDetails(tx: Tx | Database, userId: string, id: string): Promise<ExpenseDTO> {
   const row = await tx.expense.findUnique({ where: { id_userId: { id, userId } }, include: { charges: { include: { charge: true }, orderBy: { chargeId: 'asc' } } } });
   if (!row) fail(404, 'EXPENSE_NOT_FOUND', 'Compra não encontrada.');
-  const value = facts(row);
+  const value = facts(row); const links = await tx.expenseRefund.findMany({ where: { expenseId: id, userId }, include: { charge: true }, orderBy: { chargeId: 'asc' } });
+  const refundValues = links.map(link => toMoneyDTO(parseCents(link.cents.toString())));
   return { id: row.id, version: row.version, description: row.description, notes: row.notes, facts: value, knowledge: expenseKnowledge(value),
+    refunds: { ...refundCost(value.total.state === 'confirmed' ? value.total.value : null, refundValues), rows: links.map((link, index) => ({ chargeId: link.chargeId, amount: refundValues[index]!, reason: link.reason, description: link.charge.description })) },
     installmentPlan: await readInstallmentPlan(tx, userId, id), charges: row.charges.map(({ charge }) => ({ id: charge.id, creditAccountId: charge.creditAccountId, statementId: charge.statementId,
       postedOn: charge.postedOn.toISOString().slice(0, 10), description: charge.description, amount: toMoneyDTO(parseCents(charge.cents.toString())), installment: charge.installment, notes: charge.notes })) };
 }
@@ -78,6 +80,7 @@ export class ExpensesService {
         previous = await expenseDetails(tx, userId, expenseId);
         if (previous.version !== expectedVersion) fail(409, 'EXPENSE_VERSION_CONFLICT', 'A compra mudou. Recarregue os dados antes de salvar.');
         if (previous.installmentPlan && patch.facts?.total !== undefined && patch.facts.total?.cents !== previous.installmentPlan.total.cents) fail(409, 'PLAN_TOTAL_LOCKED', 'O total tem um plano confirmado. Revise o plano antes de alterar o total.');
+        if (previous.refunds?.rows.length && patch.facts?.total !== undefined && (patch.facts.total === null || BigInt(patch.facts.total.cents) < BigInt(previous.refunds.refunded.cents))) fail(409, 'REFUND_EXCEEDS_TOTAL', 'Revise os estornos antes de limpar ou reduzir o total abaixo do valor associado.');
         const updated = await tx.expense.updateMany({ where: { id: expenseId, userId, version: expectedVersion! },
           data: { ...(patch.description === undefined ? {} : { description: patch.description }), ...(patch.notes === undefined ? {} : { notes: patch.notes }),
             ...storage(changeExpenseFacts(previous.facts, patch.facts, decisionId)), version: { increment: 1 } } });

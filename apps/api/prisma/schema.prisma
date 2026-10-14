@@ -145,6 +145,7 @@ model Statement {
   factChanges     StatementFactChange[]
   paymentBasis    StatementPaymentBasis?
   paymentCommands StatementPaymentCommand[]
+  adjustmentCommands CardAdjustmentCommand[]
   createdAt       DateTime @default(now())
   importBlocks    ImportBlock[]
   charges         CardCharge[]
@@ -294,6 +295,8 @@ model Expense {
   charges ExpenseCharge[]
   commands ExpenseCommand[]
   installmentPlan InstallmentPlan?
+  refunds ExpenseRefund[]
+  adjustmentCommands CardAdjustmentCommand[]
   @@unique([id, userId])
   @@index([userId, createdAt])
 }
@@ -411,6 +414,7 @@ model StatementPaymentBasis {
   referenceHash String @db.VarChar(64)
   evidence Json
   snapshot Json
+  excessReviewConfirmed Boolean @default(false)
   allocations StatementPaymentAllocation[]
   @@unique([statementId, creditAccountId, userId])
 }
@@ -490,10 +494,74 @@ model CardCharge {
   classifiedCents BigInt?
   classificationEvidence Json @default("{}")
   commands CardChargeCommand[]
+  manualAdjustment ManualCardAdjustment?
+  reversalOf CardAdjustmentReversal? @relation("ReversalCharge")
+  refundLink ExpenseRefund?
+  adjustmentCommands CardAdjustmentCommand[]
   @@unique([id, userId])
   @@unique([id, creditAccountId, userId])
   @@index([userId, fingerprint])
   @@index([creditAccountId, userId, postedOn])
+}
+
+model ManualCardAdjustment {
+  chargeId String @id
+  creditAccountId String
+  userId String
+  charge CardCharge @relation(fields: [chargeId, creditAccountId, userId], references: [id, creditAccountId, userId], onDelete: Restrict)
+  reason String @db.VarChar(1000)
+  evidence Json
+  createdAt DateTime @default(now())
+  reversal CardAdjustmentReversal? @relation("OriginalAdjustment")
+  @@unique([chargeId, creditAccountId, userId])
+}
+
+model CardAdjustmentReversal {
+  originalChargeId String @id
+  creditAccountId String
+  userId String
+  original ManualCardAdjustment @relation("OriginalAdjustment", fields: [originalChargeId, creditAccountId, userId], references: [chargeId, creditAccountId, userId], onDelete: Restrict)
+  reversalChargeId String @unique
+  reversal CardCharge @relation("ReversalCharge", fields: [reversalChargeId, creditAccountId, userId], references: [id, creditAccountId, userId], onDelete: Restrict)
+  evidence Json
+  createdAt DateTime @default(now())
+  @@unique([originalChargeId, creditAccountId, userId])
+  @@unique([reversalChargeId, creditAccountId, userId])
+}
+
+model ExpenseRefund {
+  chargeId String @id
+  creditAccountId String
+  userId String
+  charge CardCharge @relation(fields: [chargeId, creditAccountId, userId], references: [id, creditAccountId, userId], onDelete: Restrict)
+  expenseId String
+  expense Expense @relation(fields: [expenseId, userId], references: [id, userId], onDelete: Restrict)
+  cents BigInt
+  reason String @db.VarChar(1000)
+  evidence Json
+  createdAt DateTime @default(now())
+  @@unique([chargeId, creditAccountId, userId])
+  @@index([expenseId, userId])
+}
+
+model CardAdjustmentCommand {
+  id String @id @default(uuid())
+  userId String
+  creditAccountId String
+  statementId String
+  statement Statement @relation(fields: [statementId, creditAccountId, userId], references: [id, creditAccountId, userId], onDelete: Restrict)
+  chargeId String?
+  charge CardCharge? @relation(fields: [chargeId, creditAccountId, userId], references: [id, creditAccountId, userId], onDelete: Restrict)
+  expenseId String?
+  expense Expense? @relation(fields: [expenseId, userId], references: [id, userId], onDelete: Restrict)
+  key String @db.VarChar(100)
+  requestHash String @db.VarChar(64)
+  changes Json
+  result Json
+  createdAt DateTime @default(now())
+  @@unique([userId, key])
+  @@index([statementId, userId])
+  @@index([expenseId, userId])
 }
 
 model CardChargeCommand {

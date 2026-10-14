@@ -14,6 +14,7 @@ export interface ExpenseDTO {
   id: string; version: number; description: string; notes: string | null; facts: ExpenseFacts;
   knowledge: 'partial' | 'complete'; charges: ExpenseChargeDTO[];
   installmentPlan?: InstallmentPlanDTO | null;
+  refunds?: { refunded: MoneyDTO; eligibleCost: { state: 'unknown' } | { state: 'available'; amount: MoneyDTO }; reviewRequired: boolean; rows: { chargeId: string; amount: MoneyDTO; reason: string; description: string }[] };
 }
 export interface ExpensePatch {
   description?: string; notes?: string | null;

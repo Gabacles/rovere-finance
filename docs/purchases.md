@@ -8,6 +8,8 @@ Não multiplicar parcela pelo número de parcelas, somar cobranças para preench
 
 RF-022 acrescenta [planos confirmados](installment-plans.md) por comando separado: total da compra deve estar conhecido e coincidir; com plano existente, limpar/mudar total é recusado até revisão explícita do plano (evolução futura). Cobrança conciliada exige desconciliação antes de desassociar; descrição/notas/data original continuam editáveis. Leitura da compra inclui plano ou null; respostas idempotentes/histórico antigos permanecem preservados.
 
+RF-025 acrescenta [estornos associados](card-adjustments.md): soma e custo elegível derivados, mantendo total original/plano/correções. Total desconhecido não vira zero; mudanças posteriores devem respeitar estornos já associados. Vínculos têm comandos/histórico próprios e não implicam recebimento bancário ou ajuste automático de terceiros.
+
 ## HTTP executável
 
 Todas as rotas exigem sessão própria. Escritas exigem JSON, origem confiável e `Idempotency-Key` (1–100 caracteres alfanuméricos, `_`/`-`). Mesmo proprietário/chave/payload normalizado recupera a resposta original, inclusive após edição posterior; dados diferentes retornam 409. Chave abrange todos os comandos de compra do usuário.
