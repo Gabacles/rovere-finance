@@ -14,3 +14,4 @@ export type * from './destinations.js';
 export * from './incomes.js';
 export * from './bank-availability.js';
 export * from './income-settlements.js';
+export * from './income-recurrences.js';

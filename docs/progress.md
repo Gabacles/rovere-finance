@@ -1,33 +1,31 @@
 # Progresso e ponto de retomada
 
-Atualizado em 14/10/2026. Estados, critérios e evidências nas [tasks](tasks/README.md).
+Atualizado em 15/10/2026. Estados, critérios e evidências nas [tasks](tasks/README.md).
 
 ## Entrega atual
 
-RF-027 integrada pelo [PR #14](https://github.com/Gabacles/rovere-finance/pull/14), merge `a46b9f2` na main conferido por fetch; código igual ao head validado `546e205`. RF-026/PR #13 permanece integrada em `a5b0b62`. Evidências anteriores nas fases 2/3, sem reatribuir testes históricos à RF-028.
+RF-028 integrada pelo [PR #15](https://github.com/Gabacles/rovere-finance/pull/15), main `9612bcb` confirmada por fetch; comparação com `8b4ba58` sem diferenças de código. RF-027/PR #14 e RF-026/PR #13 permanecem integradas. Resultados históricos dessas entregas pertencem às fases 2/3 e não comprovam RF-029. O usuário informou merge em produção; esta execução verificou o repositório, sem homologação remota.
 
-RF-028 concluída e validada na branch `feat/rf-028-income-settlements`, criada da main em `a46b9f2`. P3-03 aprovada expressamente pelo usuário: parcial/múltiplos movimentos, excedente sem alocação até revisão e nenhuma quitação automática abaixo do previsto. [Contrato canônico](income-settlements.md) e [ADR-0015](decisions/0015-explicit-income-settlements.md).
+RF-029 concluída e validada na branch `feat/rf-029-recurring-incomes`, criada da main atualizada com árvore inicial limpa. P3-01 aprovada expressamente: regras mensais fixas, uma âncora, vigência inclusiva e geração em intervalo finito com prévia/confirmação, limite técnico inicial de 120 meses por comando. [Contrato canônico](recurring-incomes.md), [ADR-0016](decisions/0016-confirmed-monthly-income-generation.md) e [task/evidências](tasks/phase-3.md).
 
-Implementados domínio puro, confirmação bancária comum de direção/magnitude, migration aditiva/backfill, IncomeSettlement tipada, disponibilidade conjunta com faturas, API/UI, histórico unificado, idempotência/versões e OpenAPI com 95 operações. Previsão não movimenta caixa; recebimento vincula somente movimento existente CSV/OFX. Reversão libera reserva preservando movimento/histórico. Guardas impedem cancelar ou limpar/reduzir previsto abaixo do recebido sem revisar explicitamente os vínculos. [Task/evidências](tasks/phase-3.md).
-
-RF-029 a RF-036 e P3-01/P3-02/P3-04 a P3-07 permanecem pendentes. Nenhuma recorrência, terceiro, orçamento, baixa automática ou novo provedor nesta entrega. Implementação validada `3de1cd2` publicada na branch da task e [PR #15 aberto para main](https://github.com/Gabacles/rovere-finance/pull/15), conforme autorização; CI remota a conferir. Registro posterior somente documental. Merge/push direto na main não realizado/não autorizado.
+Domínio puro, migration aditiva, origem tipada, journals, API e UI implementados e validados. Previsões não movimentam caixa. Edição, pausa, cancelamento e retomada de séries ficam para RF-030/P3-02; recebimentos RF-028 permanecem disponíveis. RF-030 a RF-036 e P3-02/P3-04 a P3-07 não implementadas nesta entrega.
 
 ## Conferência e validação
 
-RF-028 final: npm run check aprovado (52 documentos/28 tasks, tipos, 159 unitários/17 suites, builds, 95 operações OpenAPI e smoke); integração completa com 135 testes/15 suites e E2E completo com 14 jornadas aprovados. Incluem CSV/OFX, ciclo de cartão e Swagger, upgrade preservando dados antigos fictícios, concorrência entre módulos, rollback/replay e recebimentos/reversões pela UI. Capturas móveis inspecionadas. Docker atualizado saudável, migration aplicada sem reset do volume e rotas protegidas; diff check aprovado. Evidências/falhas corrigidas na task.
+`npm run check` aprovado: 54 documentos/28 tasks, tipos, 194 unitários/18 suites, builds, 101 operações OpenAPI e smoke. Integração final: 146 testes/17 suites. E2E: 15 jornadas. Docker saudável, migration RF-029 aplicada sem reset; novas rotas protegidas e diff check aprovados. Incluem regressões CSV/OFX, recebimentos e ciclo de cartão, upgrade, replay/restart, concorrência, rollback e mobile. Falha de massa duplicada corrigida e registrada na task. Prévia + geração de 120 meses: 442 ms no PostgreSQL local; calendário existente 120.000 datas em 20 ms. Não comprova capacidade de produção. Staged diff e arquivos sensíveis revisados. Implementação `fc38e03` publicada na branch da task e [PR #16 aberto para main](https://github.com/Gabacles/rovere-finance/pull/16); CI remota em andamento na abertura, a conferir no head final. Registro posterior exclusivamente documental, sem alterar o código validado. Nenhum merge/push direto para main.
 
-RF-027 histórica: check (146 unitários), integração (118 testes/12 suites), E2E (13 jornadas), Docker e diff check aprovados na entrega correspondente. Esses resultados não comprovam a RF-028. O código integrado foi comparado, sem refazer trabalho validado desnecessariamente.
+RF-028 histórica: check (159 unitários/17 suites), integração (135 testes/15 suites), E2E (14 jornadas) e Docker aprovados na versão correspondente. O código integrado foi comparado, sem refazer trabalho validado desnecessariamente; regressões foram executadas na RF-029.
 
 ## Próxima ação concreta
 
-1. Revisar PR #15 e conferir CI remota do head final; resultados locais são aprovados e a CI não foi declarada aprovada.
-2. Integrar somente com autorização específica; não fazer merge ou push direto na main automaticamente.
-3. Após revisão/integração autorizada, detalhar próxima fatia e resolver somente as decisões dependentes antes de implementar. Não avançar outras tasks nesta entrega.
+1. Revisar [PR #16](https://github.com/Gabacles/rovere-finance/pull/16) e conferir CI remota do head final; validações locais aprovadas.
+2. Integrar somente após revisão/autorização específica; não fazer merge/push direto para main automaticamente.
+3. Após integração autorizada, detalhar RF-030 e apresentar recomendação P3-02 antes de comportamentos dependentes. RF-030 permanece pendente nesta entrega.
 
 ## Políticas e ambiente
 
-BIZ-01 a BIZ-05 preservadas; P3-03 aprovada em [recebimentos](income-settlements.md). [Políticas da v0](v0-policies.md) e [pendências](decisions/pending.md). Sem saldo/limite presumido, financiamento, transferência própria ou imposto inferido.
+BIZ-01 a BIZ-05 preservadas; P3-03 em [recebimentos](income-settlements.md), P3-01 em [recorrências](recurring-incomes.md). [Políticas da v0](v0-policies.md) e [pendências](decisions/pending.md). Sem saldo/limite presumido, financiamento, transferência própria ou imposto inferido.
 
-Node 24.14.0/npm 11.9.0 via `C:/nvm4w/nodejs` requerem execução autorizada fora do sandbox. Docker db/Mailpit iniciados, volume preservado. Testes somente em schemas próprios de `rovere_test`, dados fictícios e email local; migration RF-028 aplicada no ambiente Docker local sem reset do volume. Portas usuais: banco 15432, API 3100, frontend `http://127.0.0.1:18080`, SMTP 11025, Mailpit 18025. Aviso pg de consultas concorrentes permanece para revisão antes de upgrade. [Comandos](../README.md).
+Node 24.14.0/npm 11.9.0 via C:/nvm4w/nodejs requerem execução autorizada fora do sandbox. Docker db/Mailpit iniciados, volume preservado. Testes em schemas próprios de rovere_test, dados fictícios e email local; migration RF-029 aplicada também no Docker local sem reset do volume. Avisos pg e NO_COLOR/FORCE_COLOR preexistentes registrados na task. Portas: banco 15432, API 3100, frontend http://127.0.0.1:18080, SMTP 11025, Mailpit 18025. [Comandos](../README.md). Produção/TLS não homologados.
 
-Histórico HTTP mostra últimas 20 versões, journal integral no banco. Recuperação conserva dados/chave enquanto tela montada, sem persistir rascunho financeiro após reload. Direção confirmada é permanente nesta fatia, inclusive após reversão; revisão de direção fica para fluxo futuro explícito. TLS/implantação pública não homologados.
+Histórico HTTP limitado às últimas 20 versões, journal integral no banco. Recuperação conserva dados/chave enquanto tela montada, sem persistir rascunho financeiro após reload. Direção bancária confirmada permanece após reversão; revisão futura explícita. Limite de geração por comando não equivale a benchmark de produção.

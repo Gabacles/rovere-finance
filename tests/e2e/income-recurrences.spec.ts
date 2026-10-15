@@ -1,0 +1,37 @@
+import { test, expect } from './fixtures';
+import { randomUUID } from 'node:crypto';
+import { mailLink } from '../../scripts/test-mail.mjs';
+
+test('RF-029 previews finite months, recovers lost responses and stale decisions with history on mobile', async ({ page }) => {
+  const origin = 'http://127.0.0.1:15173'; const email = `recurrence-${randomUUID()}@rovere.test`; const password = 'Fictitious-browser-123!';
+  expect((await page.request.post('/api/auth/sign-up/email', { headers: { Origin: origin }, data: { name: 'Pessoa fictícia', email, password } })).status()).toBe(200);
+  await page.goto(await mailLink(email, 'Confirme')); await page.getByLabel('Email', { exact: true }).fill(email); await page.getByLabel('Senha', { exact: true }).fill(password); await page.getByRole('button', { name: 'Entrar', exact: true }).click();
+  const section = page.getByRole('region', { name: 'Recorrências de receitas', exact: true });
+  await section.getByLabel('Descrição da regra mensal', { exact: true }).fill('Salário mensal fictício');
+  await section.getByLabel('Descrição da regra mensal', { exact: true }).press('Tab'); await expect(section.getByLabel('Valor mensal em reais', { exact: true })).toBeFocused();
+  await section.getByLabel('Valor mensal em reais').fill('5000,01'); await section.getByLabel('Dia âncora').fill('31'); await section.getByLabel('Início da vigência').fill('2024-02-29'); await section.getByLabel('Fim da vigência (opcional)', { exact: true }).fill('2024-03-31');
+  await section.getByLabel('Confirmo esta regra mensal, sem gerar receitas agora.').check(); let createKey = '';
+  await page.route('**/api/income-recurrences', async route => { createKey = route.request().headers()['idempotency-key']!; expect((await route.fetch()).status()).toBe(201); await route.abort('failed'); }, { times: 1 });
+  await section.getByRole('button', { name: 'Cadastrar regra mensal', exact: true }).click(); await expect(section.getByRole('button', { name: 'Recuperar resultado da recorrência' })).toBeVisible();
+  await expect(section.getByLabel('Valor mensal em reais')).toHaveValue('5000,01'); await expect(section.getByRole('button', { name: 'Nova regra mensal', exact: true })).toBeDisabled();
+  await page.route('**/api/income-recurrences', async route => { expect(route.request().headers()['idempotency-key']).toBe(createKey); await route.continue(); }, { times: 1 });
+  await section.getByRole('button', { name: 'Recuperar resultado da recorrência' }).click(); await expect(page.getByTestId('recurrence-summary')).toContainText('Versão 0'); expect((await (await page.request.get('/api/incomes')).json()).total).toBe(0);
+  await section.getByLabel('Primeiro mês da geração').fill('2024-01'); await section.getByLabel('Último mês da geração').fill('2024-03'); await section.getByRole('button', { name: 'Consultar prévia da geração', exact: true }).click();
+  const table = section.getByRole('table', { name: 'Prévia das ocorrências mensais' }); await expect(table).toContainText('2024-02-29'); await expect(table).toContainText('2024-03-31'); await expect(table).toContainText('Fora da vigência'); expect((await (await page.request.get('/api/incomes')).json()).total).toBe(0);
+  const rule = (await (await page.request.get('/api/income-recurrences')).json()).rows[0];
+  const preview = await (await page.request.post(`/api/income-recurrences/${rule.id}/preview`, { headers: { Origin: origin }, data: { fromPeriod: '2024-02', toPeriod: '2024-02' } })).json();
+  expect((await page.request.post(`/api/income-recurrences/${rule.id}/generate`, { headers: { Origin: origin, 'Idempotency-Key': randomUUID() }, data: { ...preview.range, expectedVersion: 0, previewHash: preview.previewHash, generationConfirmed: true } })).status()).toBe(201);
+  const confirmation = section.getByLabel('Revisei a prévia e confirmo a geração somente destas previsões, sem movimentar caixa.');
+  await confirmation.check(); await section.getByRole('button', { name: 'Gerar previsões mensais', exact: true }).click(); await expect(section.getByRole('status')).toContainText('A regra mudou'); await expect(table).toHaveCount(0);
+  await section.getByRole('button', { name: 'Consultar prévia da geração', exact: true }).click(); await expect(table).toContainText('Já existente'); await confirmation.check(); let generationKey = '';
+  await page.route(`**/api/income-recurrences/${rule.id}/generate`, async route => { generationKey = route.request().headers()['idempotency-key']!; expect((await route.fetch()).status()).toBe(201); await route.abort('failed'); }, { times: 1 });
+  await section.getByRole('button', { name: 'Gerar previsões mensais', exact: true }).click(); await expect(section.getByRole('button', { name: 'Recuperar resultado da recorrência' })).toBeVisible(); await expect(section.getByLabel('Primeiro mês da geração')).toHaveValue('2024-01');
+  await page.route(`**/api/income-recurrences/${rule.id}/generate`, async route => { expect(route.request().headers()['idempotency-key']).toBe(generationKey); await route.continue(); }, { times: 1 });
+  await section.getByRole('button', { name: 'Recuperar resultado da recorrência' }).click(); await expect(page.getByTestId('recurrence-summary')).toContainText('2 ocorrência(s)'); await expect(page.getByTestId('recurrence-summary')).toContainText('Versão 2');
+  const incomes = page.getByRole('region', { name: 'Receitas previstas', exact: true }); await expect(incomes.getByRole('button', { name: 'Abrir previsão: Salário mensal fictício · Prevista', exact: true })).toHaveCount(2);
+  await incomes.getByRole('button', { name: 'Abrir previsão: Salário mensal fictício · Prevista', exact: true }).first().click(); await expect(page.getByTestId('income-summary')).toContainText('Gerada por recorrência'); await expect(incomes.getByRole('button', { name: 'Salvar previsão', exact: true })).toHaveCount(0); await expect(incomes.getByRole('button', { name: 'Cancelar previsão', exact: true })).toHaveCount(0);
+  await section.getByRole('button', { name: 'Consultar histórico da regra', exact: true }).click(); await expect(section.getByText(/Versão 2 ·/)).toContainText('1 nova(s)'); await expect(section.getByText(/Versão 0 ·/)).toContainText('Regra criada');
+  await section.getByRole('button', { name: 'Consultar prévia da geração', exact: true }).click(); await expect(table).toContainText('Já existente'); await section.getByLabel('Último mês da geração').fill('2024-04'); await expect(table).toHaveCount(0);
+  await section.getByRole('button', { name: 'Consultar prévia da geração', exact: true }).click(); await page.setViewportSize({ width: 390, height: 844 }); await section.getByRole('heading', { name: 'Recorrências de receitas', exact: true }).scrollIntoViewIfNeeded(); expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true); await page.screenshot({ path: 'test-results/recurrences-mobile.png' }); await table.scrollIntoViewIfNeeded(); await page.screenshot({ path: 'test-results/recurrences-preview-mobile.png' });
+  await page.reload(); await section.getByRole('button', { name: 'Abrir regra: Salário mensal fictício · Dia 31', exact: true }).click(); await expect(page.getByTestId('recurrence-summary')).toContainText('2 ocorrência(s)'); expect((await (await page.request.get('/api/incomes')).json()).total).toBe(2);
+});

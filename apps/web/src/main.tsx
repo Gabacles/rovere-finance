@@ -6,6 +6,7 @@ import { Destinations } from './destinations';
 import { Imports } from './imports';
 import { Expenses } from './expenses';
 import { Incomes } from './incomes';
+import { IncomeRecurrences } from './income-recurrences';
 
 function App() {
   const [user, setUser] = useState<{ name: string; email: string } | null>(null);
@@ -28,6 +29,10 @@ function App() {
     if (!response.ok) {
       if (response.status === 401 && !path.startsWith('/auth/')) { setUser(null); setAccounts([]); }
       const errors: Record<string, string> = {
+        RECURRENCE_VERSION_CONFLICT: 'A regra mudou. Consulte e revise uma nova prévia.',
+        RECURRENCE_PREVIEW_CHANGED: 'As ocorrências mudaram. Consulte e revise uma nova prévia.',
+        INVALID_GENERATION_RANGE: 'Informe intervalo mensal ordenado de até 120 meses.',
+        INVALID_INCOME_RECURRENCE: 'Confira descrição, valor fixo BRL, dia âncora e vigência.',
         INVALID_INCOME: 'Confira descrição, data prevista e valor esperado não negativo em BRL.',
         INCOME_VERSION_CONFLICT: 'A previsão mudou. Recarregue os dados antes de confirmar.',
         INCOME_CANCELLED: 'A previsão foi cancelada. Cadastre uma nova previsão para planejar outra receita.',
@@ -102,7 +107,7 @@ function App() {
       };
       throw Object.assign(new Error(response.status === 429 ? 'Muitas tentativas. Aguarde um minuto.' : errors[data.code as string] ?? 'Não foi possível concluir. Confira os dados e tente novamente.'), { status: response.status, code: data.code });
     }
-    if (method !== 'GET' && (path.includes('/adjustments') || path.includes('/refunds') || path.includes('/settlements') || path.includes('/payments'))) setFinancialVersion(value => value + 1);
+    if (method !== 'GET' && ((path.startsWith('/income-recurrences') && !path.endsWith('/preview')) || path.includes('/adjustments') || path.includes('/refunds') || path.includes('/settlements') || path.includes('/payments'))) setFinancialVersion(value => value + 1);
     return data;
   }
   useEffect(() => {
@@ -182,6 +187,7 @@ function App() {
       {user && <Destinations key={`destinations:${user.email}`} accounts={accounts} api={api} onChanged={() => setCatalogVersion(value => value + 1)} financialVersion={financialVersion} />}
       {user && <Imports key={`imports:${user.email}`} accounts={accounts} catalogVersion={catalogVersion} onFinancialChanged={() => setFinancialVersion(value => value + 1)} onExpired={() => { setUser(null); setAccounts([]); }} />}
       {user && <Expenses key={`expenses:${user.email}`} api={api} catalogVersion={catalogVersion} financialVersion={financialVersion} />}
+      {user && <IncomeRecurrences key={`recurrences:${user.email}`} api={api} />}
       {user && <Incomes key={`incomes:${user.email}`} api={api} financialVersion={financialVersion} />}
       <footer>Organização hoje. Tranquilidade amanhã.</footer>
     </main>

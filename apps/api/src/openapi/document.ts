@@ -17,7 +17,7 @@ Escritas exigem Origin igual a APP_ORIGIN e application/json, exceto upload mult
 
 Idempotency-Key quando indicado: 1–100 caracteres A–Z/a–z/0–9/_/-. Para recuperar resposta perdida, repita chave e corpo/versões originais; outro payload gera 409. Conflito de versão: releia o recurso, revise a decisão e use nova chave. Fatos de fatura e revisão de importação usam versões sem chave; cadastro/rename bancário não promete idempotência.
 
-Conhecimento completo, conciliação, pagamento e cobertura são dimensões distintas. Receitas previstas avulsas não movimentam caixa; recebimentos vinculam movimentos existentes explicitamente, sem duplicar caixa. Recorrências de receitas continuam futuras. Excedente credit_review_required preserva pagamentos reais, não é dinheiro disponível. Rotas futuras de terceiros/orçamento não estão nesta especificação.`;
+Conhecimento completo, conciliação, pagamento e cobertura são dimensões distintas. Receitas previstas avulsas não movimentam caixa; recebimentos vinculam movimentos existentes explicitamente, sem duplicar caixa. Recorrências mensais geram somente previsões, mediante prévia e confirmação em intervalo finito de até 120 meses. Revisão de séries continua futura. Excedente credit_review_required preserva pagamentos reais, não é dinheiro disponível. Rotas futuras de terceiros/orçamento não estão nesta especificação.`;
 
 function errorResponse(description: string, schema: Schema) { return { description, content: { 'application/json': { schema } } }; }
 const errorSchema: Schema = { anyOf: [ref('ApiError'), ref('NestError')] };

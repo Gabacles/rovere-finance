@@ -18,5 +18,6 @@
 | [Pendências](pending.md) | Por decisão | Questões que exigem definição antes do comportamento dependente |
 | [ADR-0014](0014-manual-planned-incomes.md) | Aceita | Receitas previstas manuais sem efeito de caixa |
 | [ADR-0015](0015-explicit-income-settlements.md) | Aceita | Liquidações explícitas de receitas e disponibilidade bancária conjunta |
+| [ADR-0016](0016-confirmed-monthly-income-generation.md) | Aceita | Geração mensal limitada e confirmada de receitas |
 
 ADRs registram por que uma decisão foi tomada. Regras atuais ficam nos documentos de domínio, contratos e importação. Alterações futuras devem indicar o ADR substituído, preservando o histórico.
