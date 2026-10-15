@@ -2,19 +2,21 @@ import { useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import type { IncomeDTO, KnownValue } from '@rovere/domain';
 import { amountInput, centsInput } from './money-input';
+import { IncomeSettlements } from './income-settlements';
 
 type Api = (path: string, body?: unknown, key?: string, method?: 'GET' | 'POST' | 'PATCH') => Promise<any>;
-interface History { id: string; version: number; changes: { action: string; current: IncomeDTO }; createdAt: string }
+interface History { id: string; version: number; changes: { action: string; current: IncomeDTO; settlement?: { current: { progress: { received: { cents: string } } } } }; createdAt: string }
 interface Command { path: string; body: unknown; method: 'POST' | 'PATCH'; key: string; success: string }
 const known = <T,>(value: KnownValue<T>): T | undefined => value.state === 'confirmed' ? value.value : undefined;
 const amount = (value: IncomeDTO) => value.facts.expectedAmount.state === 'confirmed' ? `BRL ${amountInput(value.facts.expectedAmount.value.cents)}` : 'Não informado';
 const stateText = (value: IncomeDTO) => value.state === 'cancelled' ? 'Cancelada' : 'Prevista';
 
-export function Incomes({ api }: { api: Api }) {
+export function Incomes({ api, financialVersion }: { api: Api; financialVersion: number }) {
   const [list, setList] = useState<{ rows: IncomeDTO[]; total: number }>({ rows: [], total: 0 }); const [page, setPage] = useState(1);
   const [value, setValue] = useState<IncomeDTO | null>(null); const [busy, setBusy] = useState(false);
   const [refresh, setRefresh] = useState(0); const [message, setMessage] = useState(''); const [history, setHistory] = useState<History[] | null>(null);
   const [editorRefresh, setEditorRefresh] = useState(0); const pending = useRef<Command | null>(null);
+  const [receiptBusy, setReceiptBusy] = useState(false);
   const showError = (error: unknown) => setMessage(error instanceof Error ? error.message : 'Falha de conexão. Tente novamente.');
   useEffect(() => {
     let active = true;
@@ -63,7 +65,7 @@ export function Incomes({ api }: { api: Api }) {
     if (!value) return; setBusy(true);
     try { setHistory(await api(`/incomes/${value.id}/history`)); } catch (error) { showError(error); } finally { setBusy(false); }
   }
-  const uncertain = Boolean(pending.current) && !busy; const locked = busy || uncertain;
+  const uncertain = Boolean(pending.current) && !busy; const locked = busy || uncertain || receiptBusy;
   return <section className="planned-incomes" aria-labelledby="incomes-title" aria-busy={busy}>
     <h2 id="incomes-title">Receitas previstas</h2>
     <p>Planeje uma receita avulsa. Data e valor em branco ficam não informados. Previsões não movimentam caixa e não comprovam recebimento.</p>
@@ -87,7 +89,8 @@ export function Incomes({ api }: { api: Api }) {
       {value.state === 'planned' ? <form key={`cancel:${value.id}:${value.version}`} onSubmit={event => { event.preventDefault(); void write(`/incomes/${value.id}/cancel`, { expectedVersion: value.version }, 'POST', 'Previsão cancelada. Histórico preservado.'); }}>
         <label className="check"><input type="checkbox" required disabled={locked} />Confirmo o cancelamento definitivo desta previsão.</label><button className="secondary" disabled={locked}>Cancelar previsão</button>
       </form> : <p>Cancelamento definitivo. Para planejar outra receita, cadastre uma nova previsão.</p>}
-      {history && <div className="statement-history"><h3>Histórico da previsão — últimas 20 alterações</h3>{history.map(item => <p key={item.id}>Versão {item.version} · {item.createdAt} · {stateText(item.changes.current)} · {item.changes.current.description} · Data prevista: {known(item.changes.current.facts.expectedOn) ?? 'Não informada'} · Valor esperado: {amount(item.changes.current)} · Notas: {item.changes.current.notes ?? 'Não informadas'} · Origem manual</p>)}</div>}
+      {history && <div className="statement-history"><h3>Histórico da previsão — últimas 20 alterações</h3>{history.map(item => <p key={item.id}>Versão {item.version} · {item.createdAt} · {item.changes.action === 'allocate' ? 'Recebimento vinculado' : item.changes.action === 'reverse' ? 'Vínculo revertido' : stateText(item.changes.current)} · {item.changes.current.description} · Data prevista: {known(item.changes.current.facts.expectedOn) ?? 'Não informada'} · Valor esperado: {amount(item.changes.current)} · Notas: {item.changes.current.notes ?? 'Não informadas'} · Origem manual{item.changes.settlement && ` · Recebido nessa versão: BRL ${amountInput(item.changes.settlement.current.progress.received.cents)}`}</p>)}</div>}
+      <IncomeSettlements key={value.id} income={value} api={api} financialVersion={financialVersion} parentBusy={busy || uncertain} setParentBusy={setReceiptBusy} onChanged={current => { setValue(current); setHistory(null); setRefresh(count => count + 1); }} />
     </>}
   </section>;
 }

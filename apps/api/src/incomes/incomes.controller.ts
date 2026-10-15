@@ -7,7 +7,7 @@ import type { AuthenticatedRequest } from '../identity/guard.js';
 import { IncomesService } from './incomes.service.js';
 
 @Catch()
-class IncomeErrors implements ExceptionFilter {
+export class IncomeErrors implements ExceptionFilter {
   catch(error: unknown, host: ArgumentsHost) {
     const status = error instanceof HttpException ? error.getStatus() : 500;
     const payload = error instanceof HttpException ? error.getResponse() : {};

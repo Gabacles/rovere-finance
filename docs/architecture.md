@@ -76,6 +76,8 @@ Valores financeiros serão calculados no backend. O frontend formatará os resul
 
 Cada módulo terá suas regras de escrita. Relatórios poderão consultar dados de vários módulos, mas não alterar seus registros diretamente.
 
+RF-028 centraliza confirmação de direção e consulta de reservas bancárias entre recebimentos de receitas e pagamentos de fatura, preservando tabelas/vínculos tipados e trava transacional por proprietário. [Contrato](income-settlements.md) e [ADR-0015](decisions/0015-explicit-income-settlements.md). Novos consumidores ampliam a mesma disponibilidade, sem somar dinheiro por consultas isoladas.
+
 Open Finance entrará posteriormente como outra origem de dados, utilizando os mecanismos existentes de normalização, identidade externa e conciliação.
 
 RF-017 implementa fila PostgreSQL coordenada na API, parsing em thread isolada e bytes privados em `BYTEA`, com limites, lease e revisão versionada. Um job por instância, sem fila/provedor externo; processos separados poderão ser adotados mediante medição. [Contrato executável](import-review.md) e [ADR-0006](decisions/0006-private-import-review.md).

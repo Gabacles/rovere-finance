@@ -32,6 +32,18 @@ function App() {
         INCOME_VERSION_CONFLICT: 'A previsão mudou. Recarregue os dados antes de confirmar.',
         INCOME_CANCELLED: 'A previsão foi cancelada. Cadastre uma nova previsão para planejar outra receita.',
         INCOME_NOT_FOUND: 'Previsão de receita não encontrada.',
+        INCOME_AMOUNT_REQUIRED: 'Informe o valor previsto antes de vincular recebimentos.',
+        INCOME_EXPECTED_EXCEEDED: 'O valor supera o pendente da receita. Corrija explicitamente a previsão ou escolha outro destino; o excedente fica sem alocação.',
+        INCOME_HAS_RECEIPTS: 'Há recebimentos ativos. Revise os vínculos antes de cancelar a previsão.',
+        INCOME_RECEIPTS_REVIEW_REQUIRED: 'Revise os recebimentos vinculados antes de limpar ou reduzir o previsto abaixo do recebido. Histórico e movimentos foram preservados.',
+        INCOME_CONFIRMATION_REQUIRED: 'Confirme explicitamente a entrada ou a reversão do vínculo escolhido.',
+        INVALID_SETTLEMENT_AMOUNT: 'Informe valor positivo e exato em BRL.',
+        INCOME_SETTLEMENT_NOT_FOUND: 'Recebimento vinculado não encontrado.',
+        INCOME_SETTLEMENT_REVERSED: 'Este vínculo já foi revertido.',
+        BANK_DIRECTION_CONFLICT: 'O movimento já tem direção diferente confirmada. Revise a origem antes de reutilizá-lo.',
+        BANK_SOURCE_CHANGED: 'O movimento original mudou. Revise os vínculos antes de alocar.',
+        BANK_AMOUNT_MISMATCH: 'Confirme a magnitude integral do movimento bancário original.',
+        BANK_SOURCE_EXCEEDED: 'O valor supera o disponível do movimento, incluindo reservas de outros destinos.',
         EMAIL_NOT_VERIFIED: 'Confirme seu email antes de entrar.',
         INVALID_EMAIL_OR_PASSWORD: 'Email ou senha inválidos.',
         INVALID_TOKEN: 'O link é inválido ou expirou. Solicite outro.',
@@ -90,7 +102,7 @@ function App() {
       };
       throw Object.assign(new Error(response.status === 429 ? 'Muitas tentativas. Aguarde um minuto.' : errors[data.code as string] ?? 'Não foi possível concluir. Confira os dados e tente novamente.'), { status: response.status, code: data.code });
     }
-    if (method !== 'GET' && (path.includes('/adjustments') || path.includes('/refunds'))) setFinancialVersion(value => value + 1);
+    if (method !== 'GET' && (path.includes('/adjustments') || path.includes('/refunds') || path.includes('/settlements') || path.includes('/payments'))) setFinancialVersion(value => value + 1);
     return data;
   }
   useEffect(() => {
@@ -170,7 +182,7 @@ function App() {
       {user && <Destinations key={`destinations:${user.email}`} accounts={accounts} api={api} onChanged={() => setCatalogVersion(value => value + 1)} financialVersion={financialVersion} />}
       {user && <Imports key={`imports:${user.email}`} accounts={accounts} catalogVersion={catalogVersion} onFinancialChanged={() => setFinancialVersion(value => value + 1)} onExpired={() => { setUser(null); setAccounts([]); }} />}
       {user && <Expenses key={`expenses:${user.email}`} api={api} catalogVersion={catalogVersion} financialVersion={financialVersion} />}
-      {user && <Incomes key={`incomes:${user.email}`} api={api} />}
+      {user && <Incomes key={`incomes:${user.email}`} api={api} financialVersion={financialVersion} />}
       <footer>Organização hoje. Tranquilidade amanhã.</footer>
     </main>
   );

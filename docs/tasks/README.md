@@ -7,7 +7,7 @@ Estado individual, critérios, implementação e evidências são mantidos nos a
 - [Fase 2 — compras e ciclo de cartão](phase-2.md)
 - [Fase 3 — planejamento e terceiros](phase-3.md)
 
-Fase 3: RF-027 implementada e validada; RF-028 a RF-036 permanecem pendentes. Recomendações ainda abertas estão na própria fase, com indicação das tasks dependentes. Fases 4/5 permanecem macro. [Roadmap](../roadmap.md) e [ponto de retomada](../progress.md).
+Fase 3: RF-027 integrada e RF-028 implementada/validada; RF-029 a RF-036 permanecem pendentes. P3-03 aprovada explicitamente; demais recomendações abertas estão na própria fase, com indicação das tasks dependentes. Fases 4/5 permanecem macro. [Roadmap](../roadmap.md) e [ponto de retomada](../progress.md).
 
 ## Convenção
 

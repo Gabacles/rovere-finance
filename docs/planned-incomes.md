@@ -29,4 +29,6 @@ UI exige confirmação de dados/cancelamento e permite limpar data/valor mantend
 
 ## Limites da entrega
 
+RF-028 complementa esta base com [recebimentos explícitos](income-settlements.md), sob P3-03 aprovada. Ações de previsão continuam sem caixa; IncomeCommand/histórico incluem agora vínculos e reversões. Enquanto houver recebimentos ativos, cancelamento e limpeza/redução do previsto abaixo do recebido são recusados até revisão explícita, preservando histórico e movimentos. Os limites abaixo descrevem a fatia original RF-027.
+
 Sem recorrências, liquidações, associação de importação, classificação automática, categorias ou orçamento. P3-01 a P3-07 continuam propostas pendentes. Antes de RF-028/RF-029 habilitar vínculos, adicionar guardas de correção/cancelamento conforme dependências reais, sem apagar histórico ou recebimentos. OpenAPI acompanha somente estas operações; [acesso e políticas de documentação](api-documentation.md) preservados.

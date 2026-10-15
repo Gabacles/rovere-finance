@@ -12,6 +12,8 @@ Saldo anterior não zero explicitamente classificado `previous_balance` bloqueia
 
 ## Dinheiro disponível e comandos
 
+RF-028: BankEntryConfirmation centraliza direção/magnitude/evidência, com backfill das saídas já confirmadas e compatibilidade com StatementPaymentSource. Pagamentos e [receitas](income-settlements.md) consultam a mesma soma das reservas ativas de ambos os módulos. API de pagamentos mantém o formato anterior; fonte confirmada como entrada não pode ser reinterpretada como saída. Migration aditiva preserva IDs/evidências/alocações/journal existentes. Evidências na [fase 3](tasks/phase-3.md).
+
 O usuário confirma que o movimento é saída e sua magnitude BRL integral, numericamente igual ao valor original, sem inferir direção por sinal/descrição. Magnitude positiva no intervalo BIGINT; MIN_CENTS não tem magnitude positiva representável. Disponível do movimento = magnitude confirmada − alocações ativas, não saldo de conta bancária. Um movimento pode pagar várias faturas, uma fatura pode receber vários movimentos; soma nunca supera disponível da origem nem saldo do destino.
 
 Decisões do proprietário são serializadas na mesma transação usada pelos demais comandos financeiros. Versões de BankEntry e Statement, base atual e todas as reservas são revalidadas antes de criar/reverter alocação. FKs tipadas por conta/crédito/usuário impedem cruzamento de proprietários. Módulos futuros de liquidação/transferência devem incluir estas reservas na disponibilidade e compartilhar a disciplina de trava; não usar o mesmo dinheiro por consultas isoladas de cada módulo.

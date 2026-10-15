@@ -6,6 +6,8 @@ Estado: primitivas, identidade, destinos, [importação RF-018](import-confirmat
 
 RF-027: [contrato executável de receitas previstas](planned-incomes.md), com seis rotas autenticadas, versões, idempotência e histórico. Sem liquidação ou inferência de caixa.
 
+RF-028: [contrato de recebimentos](income-settlements.md), quatro operações adicionais autenticadas, journal de Income unificado, versões da origem/destino e disponibilidade conjunta com faturas. Não duplica movimento/receita nem baixa diferenças automaticamente.
+
 - IDs opacos. A API resolve o proprietário pela sessão; nunca aceita proprietário arbitrário no corpo.
 - Dinheiro trafega como `{ currency: 'BRL', cents: '10000' }`. A string é inteira decimal canônica, sem separador, expoente ou sinal `+`; `-0` é inválido. Banco: inteiro de 64 bits. Cálculos usam `bigint` e verificam overflow.
 - Datas civis: `YYYY-MM-DD`, calendário gregoriano, anos 0001 a 9999. Instantes: ISO 8601 UTC com timezone original preservado na origem. Não transformar data civil em instante para determinar competência.

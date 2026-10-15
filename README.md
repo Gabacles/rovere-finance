@@ -6,7 +6,9 @@ Plataforma de gestão financeira pessoal para o mercado brasileiro. Projeto gree
 
 RF-015 integrada pelo PR #2 e RF-016 pelo PR #4. Parsers CSV/OFX em `packages/importers`: [catálogo](docs/import-formats.md). A revisão nunca cria movimentações automaticamente.
 
-RF-027 acrescenta [receitas previstas avulsas](docs/planned-incomes.md): criação, correção e cancelamento com dados desconhecidos/confirmados, histórico, versões e idempotência. A previsão não movimenta caixa nem comprova recebimento; liquidações e recorrências continuam futuras.
+RF-027 acrescenta [receitas previstas avulsas](docs/planned-incomes.md): criação, correção e cancelamento com dados desconhecidos/confirmados, histórico, versões e idempotência. A previsão não movimenta caixa nem comprova recebimento; recorrências continuam futuras.
+
+RF-028 acrescenta [recebimentos explícitos](docs/income-settlements.md) vinculados a movimentos CSV/OFX existentes: parcial/múltiplos movimentos, reversão do vínculo e disponibilidade conjunta com faturas. Excedentes ficam sem alocação até revisão; não cria caixa, nova receita ou baixa automática. Recorrências/terceiros continuam futuros.
 
 Documentação da API: Swagger UI em `/api/docs`, JSON em `/api/openapi.json` e [snapshot versionado](docs/api/openapi.json). Abra pela origem do frontend: [Vite](http://localhost:5173/api/docs) ou [Docker](http://127.0.0.1:18080/api/docs). Faça login na aplicação para reutilizar a sessão e testar rotas privadas. [Uso, manutenção e acesso em produção](docs/api-documentation.md); [contratos](docs/contracts.md).
 
