@@ -25,6 +25,7 @@ model User {
   importBatches ImportBatch[]
   expenses      Expense[]
   incomes       Income[]
+  incomeRecurrences RecurrenceRule[]
 }
 
 model Income {
@@ -44,8 +45,62 @@ model Income {
   updatedAt DateTime @updatedAt
   commands IncomeCommand[]
   settlements IncomeSettlement[]
+  scheduledOccurrence ScheduledOccurrence?
   @@unique([id, userId])
   @@index([userId, createdAt, id])
+}
+
+model RecurrenceRule {
+  id String @id @default(uuid())
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Restrict)
+  description String @db.VarChar(500)
+  notes String? @db.VarChar(1000)
+  cents BigInt
+  currency String @default("BRL") @db.VarChar(3)
+  anchorDay Int
+  startsOn DateTime @db.Date
+  endsOn DateTime? @db.Date
+  version Int @default(0)
+  evidence Json
+  createdAt DateTime @default(now())
+  occurrences ScheduledOccurrence[]
+  commands RecurrenceCommand[]
+  @@unique([id, userId])
+  @@index([userId, createdAt, id])
+}
+
+model ScheduledOccurrence {
+  id String @id @default(uuid())
+  userId String
+  ruleId String
+  rule RecurrenceRule @relation(fields: [ruleId, userId], references: [id, userId], onDelete: Restrict)
+  period String @db.VarChar(7)
+  expectedOn DateTime @db.Date
+  cents BigInt
+  ruleVersion Int
+  incomeId String @unique
+  income Income @relation(fields: [incomeId, userId], references: [id, userId], onDelete: Restrict)
+  evidence Json
+  createdAt DateTime @default(now())
+  @@unique([incomeId, userId])
+  @@unique([ruleId, period])
+  @@index([ruleId, userId])
+}
+
+model RecurrenceCommand {
+  id String @id @default(uuid())
+  userId String
+  ruleId String
+  rule RecurrenceRule @relation(fields: [ruleId, userId], references: [id, userId], onDelete: Restrict)
+  key String @db.VarChar(100)
+  requestHash String @db.VarChar(64)
+  version Int
+  changes Json
+  result Json
+  createdAt DateTime @default(now())
+  @@unique([userId, key])
+  @@unique([ruleId, version])
 }
 
 model IncomeCommand {

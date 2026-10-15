@@ -2,6 +2,8 @@
 
 Estado: primitivas, identidade, destinos, [importação RF-018](import-confirmation.md), [faturas RF-020/RF-023](statement-calculation.md), [compras RF-021](purchases.md), [planos RF-022](installment-plans.md), [pagamentos RF-024](statement-payments.md) e [ajustes RF-025](card-adjustments.md) implementados dentro dos limites de cada contrato. Terceiros, orçamento e invariantes futuras não concluídos. [Políticas da v0](v0-policies.md) adotadas por delegação; pendências operacionais em [pending.md](decisions/pending.md).
 
+RF-029: [contrato de recorrências mensais](recurring-incomes.md), P3-01 aprovada; geração de até 120 meses exige prévia atual e confirmação, com origem tipada, unicidade e journal atômico. Não cria caixa.
+
 ## Convenções
 
 RF-027: [contrato executável de receitas previstas](planned-incomes.md), com seis rotas autenticadas, versões, idempotência e histórico. Sem liquidação ou inferência de caixa.

@@ -85,3 +85,5 @@ RF-017 implementa fila PostgreSQL coordenada na API, parsing em thread isolada e
 ## Decisões e contratos
 
 Consulte os [ADRs](decisions/README.md), os [contratos](contracts.md), a [importação](imports.md) e a [segurança](security.md). As versões efetivamente instaladas são definidas pelos manifests e pelo package-lock.json; as versões mencionadas no planejamento são referências datadas.
+
+RF-029: o módulo de receitas incorpora [recorrências mensais](recurring-incomes.md), com calendário puro em domain e persistência tipada RecurrenceRule/ScheduledOccurrence/RecurrenceCommand. A geração é um comando explícito transacional sob a trava User existente, sem job automático nem escrita de caixa; revisão de séries pertence à RF-030.

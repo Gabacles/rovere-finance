@@ -7,7 +7,7 @@ import type { KnownValue } from './import-contracts.js';
 export interface IncomeFacts { expectedOn: KnownValue<CivilDate>; expectedAmount: KnownValue<MoneyDTO> }
 export interface IncomeDTO {
   id: string; version: number; description: string; notes: string | null;
-  state: 'planned' | 'cancelled'; origin: { kind: 'manual'; decisionId: string };
+  state: 'planned' | 'cancelled'; origin: { kind: 'manual'; decisionId: string } | { kind: 'recurrence'; decisionId: string; ruleId: string; occurrenceId: string };
   facts: IncomeFacts; knowledge: 'partial' | 'complete';
 }
 export interface IncomePatch { description?: string; notes?: string | null; facts?: { expectedOn?: CivilDate | null; expectedAmount?: MoneyDTO | null } }

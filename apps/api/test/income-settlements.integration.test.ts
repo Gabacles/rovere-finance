@@ -36,13 +36,13 @@ async function stmt() {
   expect((await request(`${route}/payments/basis`, { expectedStatementVersion: state.statementVersion, kind: 'declared', referenceHash: candidate.referenceHash, beforePaymentsConfirmed: true, independentObligationConfirmed: true })).status).toBe(201);
   const current = await (await request(`${route}/payments`)).json(); return { route: `${route}/payments`, version: current.statementVersion };
 }
-async function importBank(format: 'csv' | 'ofx', id: string) {
+async function importBank(format: 'csv' | 'ofx', id: string, target = account) {
   const configuration = format === 'ofx' ? {} : { profile: { id: 'income-fixture', encoding: 'utf-8', delimiter: ';', headerLine: 1, dateFormat: 'YMD', decimal: '.', grouping: null, sign: 'as-is', currency: 'BRL', kind: 'bank', columns: { date: 'Date', description: 'Description', amount: 'Amount', externalId: 'ID' } } };
   const content = format === 'csv' ? `Date;Description;Amount;ID\n2026-11-08;Recebimento fictício;100.01;${id}` : (await readFile('packages/importers/test/fixtures/bank-102.ofx', 'utf8')).replace('<TRNAMT>-120.00', '<TRNAMT>100.01').replace('<FITID>0001', `<FITID>${id}`);
   const form = new FormData(); form.append('format', format); form.append('configuration', JSON.stringify(configuration)); form.append('file', new Blob([content]), `income.${format}`);
   const upload = await fetch(`${base}/api/imports`, { method: 'POST', headers: { Origin: origin, Cookie: alice.cookie, 'Idempotency-Key': randomUUID() }, body: form }); expect(upload.status).toBe(201);
   const batch = await upload.json(); await app.get(ImportWorker).runOnce(); const current = await (await request(`/imports/${batch.id}`)).json();
-  const saved = await (await request(`/imports/${batch.id}/review`, { expectedVersion: current.version, blocks: [{ id: current.blocks[0].id, financialAccountId: account.id }] }, 'PATCH')).json();
+  const saved = await (await request(`/imports/${batch.id}/review`, { expectedVersion: current.version, blocks: [{ id: current.blocks[0].id, financialAccountId: target.id }] }, 'PATCH')).json();
   expect((await request(`/imports/${batch.id}/confirm`, { expectedVersion: saved.version })).status).toBe(201);
   return db.bankEntry.findFirstOrThrow({ where: { identities: { some: { externalId: id } } } });
 }
@@ -168,5 +168,17 @@ describe('RF-028 explicit income settlements and shared bank reservations', () =
     await db.bankEntry.update({ where: { id: large.id }, data: { cents: 1n } }); expect((await summary(item.id)).progress.state).toBe('review_required'); expect((await source(large.id)).available.state).toBe('unknown');
     const normal = await income('100'); const movement = await bank('100'); for (let i = 0; i < 26; i++) await allocate(normal.id, movement.id, '1');
     expect((await summary(normal.id)).allocations.rows).toHaveLength(25); const second = await (await request(`${path(normal.id)}?page=2`)).json(); expect(second.allocations.rows).toHaveLength(1); expect(second.allocations.total).toBe(26);
+  });
+  it('settles and reverses an RF-029 occurrence without changing its schedule or duplicating imported CSV/OFX cash', async () => {
+    const created = await (await request('/income-recurrences', { description: 'Recorrência fictícia liquidável', amount: money('20002'), anchorDay: 15, startsOn: '2026-11-01', endsOn: null })).json();
+    const preview = await (await request(`/income-recurrences/${created.id}/preview`, { fromPeriod: '2026-11', toPeriod: '2026-11' })).json();
+    const generated = await (await request(`/income-recurrences/${created.id}/generate`, { ...preview.range, expectedVersion: 0, previewHash: preview.previewHash, generationConfirmed: true })).json(); const id = generated.created[0].incomeId;
+    const original = await (await request(`/incomes/${id}`)).json();
+    const target = await (await request('/accounts', { name: 'Banco fictício da recorrência' })).json();
+    const csv = await importBank('csv', `recurrence-csv-${randomUUID()}`, target); const ofx = await importBank('ofx', `recurrence-ofx-${randomUUID()}`, target); const count = await db.bankEntry.count();
+    await allocate(id, csv.id); const received = await allocate(id, ofx.id); expect(received.progress.state).toBe('received'); expect(received.income.origin).toEqual(original.origin); expect(received.income.facts).toEqual(original.facts);
+    const allocation = received.allocations.rows[0]; const bankVersion = (await source(allocation.bankEntryId)).version;
+    const reversed = await request(`${path(id)}/${allocation.id}/reverse`, { expectedVersion: received.income.version, expectedBankVersion: bankVersion, reversalConfirmed: true }); expect(reversed.status).toBe(201); expect((await reversed.json()).progress.received.cents).toBe('10001');
+    expect(await db.bankEntry.count()).toBe(count); const nextPreview = await (await request(`/income-recurrences/${created.id}/preview`, preview.range)).json(); expect(nextPreview.counts).toEqual({ create: 0, existing: 1, outsideRule: 0 });
   });
 });

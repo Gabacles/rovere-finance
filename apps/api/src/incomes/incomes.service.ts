@@ -84,6 +84,7 @@ export class IncomesService {
       } else {
         previous = await incomeDetails(tx, userId, incomeId);
         if (previous.version !== expectedVersion) fail(409, 'INCOME_VERSION_CONFLICT', 'A previsão mudou. Recarregue os dados antes de confirmar.');
+        if (previous.origin.kind === 'recurrence') fail(409, 'RECURRENCE_OCCURRENCE_LOCKED', 'Esta previsão veio de uma regra. Revisão de ocorrência e de série estará disponível na RF-030; origem e recebimentos foram preservados.');
         let state: IncomeDTO['state'];
         try { state = incomeTransition(previous.state, action === 'cancel' ? 'cancel' : 'edit'); }
         catch { fail(409, 'INCOME_CANCELLED', 'A previsão foi cancelada. Cadastre uma nova previsão para planejar outra receita.'); }

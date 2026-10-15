@@ -26,6 +26,8 @@ import { ExpensesController } from './expenses/expenses.controller.js';
 import { ExpensesService } from './expenses/expenses.service.js';
 import { IncomesController } from './incomes/incomes.controller.js';
 import { IncomesService } from './incomes/incomes.service.js';
+import { IncomeRecurrencesService } from './incomes/recurrences.service.js';
+import { IncomeRecurrencesController } from './incomes/recurrences.controller.js';
 import { IncomeSettlementsController, BankSettlementSourcesController } from './incomes/settlements.controller.js';
 import { IncomeSettlementsService } from './incomes/settlements.service.js';
 import { InstallmentsService } from './expenses/installments.service.js';
@@ -73,7 +75,7 @@ export async function createApp(config: AppConfig, db = createDatabase(config.da
   @Module({
     controllers: apiControllers,
     providers: [{ provide: DATABASE, useValue: db }, { provide: IDENTITY, useValue: identity },
-      { provide: IMPORT_WORKER_ENABLED, useValue: config.importsWorkerEnabled !== false }, SessionGuard, Resources, DestinationsService, ImportsService, ImportWorker, ConfirmationService, StatementsService, ExpensesService, IncomesService, IncomeSettlementsService, InstallmentsService, CardChargesService, PaymentsService, AdjustmentsService],
+      { provide: IMPORT_WORKER_ENABLED, useValue: config.importsWorkerEnabled !== false }, SessionGuard, Resources, DestinationsService, ImportsService, ImportWorker, ConfirmationService, StatementsService, ExpensesService, IncomesService, IncomeSettlementsService, IncomeRecurrencesService, InstallmentsService, CardChargesService, PaymentsService, AdjustmentsService],
   })
   class AppModule {}
   const app = await NestFactory.create(AppModule, { logger: ['error', 'warn'], bodyParser: false });
@@ -100,7 +102,7 @@ export async function createApp(config: AppConfig, db = createDatabase(config.da
   server.use('/api/imports', express.json({ limit: '64kb' }));
   server.use(express.json({ limit: '16kb' }));
   server.use((error: unknown, req: express.Request, res: express.Response, next: express.NextFunction) => {
-    if ((req.path.startsWith('/api/imports') || req.path.startsWith('/api/credit-accounts') || req.path.startsWith('/api/expenses') || req.path.startsWith('/api/incomes') || req.path.startsWith('/api/bank-entries') || req.path.startsWith('/api/card-charges')) && error && typeof error === 'object' && 'status' in error && [400, 413].includes(error.status as number)) {
+    if ((req.path.startsWith('/api/imports') || req.path.startsWith('/api/credit-accounts') || req.path.startsWith('/api/expenses') || req.path.startsWith('/api/incomes') || req.path.startsWith('/api/income-recurrences') || req.path.startsWith('/api/bank-entries') || req.path.startsWith('/api/card-charges')) && error && typeof error === 'object' && 'status' in error && [400, 413].includes(error.status as number)) {
       res.status(error.status as number).json({ code: 'INVALID_REQUEST', message: 'Os dados enviados são inválidos ou excedem o limite.', requestId: randomUUID() });
       return;
     }
@@ -110,4 +112,4 @@ export async function createApp(config: AppConfig, db = createDatabase(config.da
   return app;
 }
 
-export const apiControllers = [HealthController, IdentityController, AccountsController, CreditController, ImportsController, EntriesController, StatementsController, ExpensesController, IncomesController, CardChargesController, PaymentsController, PaymentSourcesController, AdjustmentsController, RefundsController, IncomeSettlementsController, BankSettlementSourcesController];
+export const apiControllers = [HealthController, IdentityController, AccountsController, CreditController, ImportsController, EntriesController, StatementsController, ExpensesController, IncomesController, CardChargesController, PaymentsController, PaymentSourcesController, AdjustmentsController, RefundsController, IncomeSettlementsController, BankSettlementSourcesController, IncomeRecurrencesController];
