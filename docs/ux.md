@@ -4,6 +4,16 @@
 
 A navegação principal terá: **Visão geral, Movimentações, Contas e cartões, A receber e a pagar, Orçamento e Importações**.
 
+## Situação e aceite da interface em 15/10/2026
+
+O usuário testou a interface incremental e rejeitou sua apresentação/usabilidade como experiência final da V1: módulos reunidos numa página longa, formulários excessivos e interação parecida com documentação técnica. Essas telas exercitam fluxos, mas não satisfazem o aceite de produto. O usuário autorizou continuar as tasks funcionais; não aprovou a interface atual como entrega final.
+
+A preparação da V1 deve incluir reformulação visual e de navegação, organização por áreas/tarefas, seleção compreensível de registros e feedback de estado/erro. Campos monetários precisam de formato orientado, validação perceptível e mensagens junto ao campo, distinguindo obrigatório, desconhecido e zero; validação de envio/backend não substitui boa interação. Preservar testes e precisão monetária, sem trocar bibliotecas ou reescrever domínio automaticamente.
+
+Esse trabalho é requisito de fechamento da V1 e deve receber entrega/aceite concretos ao detalhar experiência e preparação. A [revisão da V1](v1-review.md) descreve a interface atual. Não há redesign implementado nesta continuidade funcional.
+
+## Experiência planejada
+
 A ação global “Nova movimentação” adaptará os campos para receita, despesa, transferência, compra, compromisso ou liquidação. O usuário poderá lançar uma despesa sem conta bancária cadastrada, deixando explícito quando não há informação suficiente para calcular o caixa.
 
 A tela de importação terá revisão em tabela, edição em lote, filtros por pendência, comparação com possíveis correspondências e um resumo final. Uma fatura válida com centenas de compras poderá ser confirmada em conjunto.

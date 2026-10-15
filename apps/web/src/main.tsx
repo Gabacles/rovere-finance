@@ -33,6 +33,11 @@ function App() {
         RECURRENCE_PREVIEW_CHANGED: 'As ocorrências mudaram. Consulte e revise uma nova prévia.',
         INVALID_GENERATION_RANGE: 'Informe intervalo mensal ordenado de até 120 meses.',
         INVALID_INCOME_RECURRENCE: 'Confira descrição, valor fixo BRL, dia âncora e vigência.',
+        RECURRENCE_STATE_CONFLICT: 'A ação não é permitida no estado atual da regra. Recarregue os dados.',
+        RECURRENCE_INACTIVE: 'A regra está pausada ou cancelada. Nenhuma previsão foi criada.',
+        RECURRENCE_FUTURE_REQUIRED: 'Escolha o mês atual ou um mês futuro para a programação.',
+        INVALID_RECURRENCE_CHANGE: 'Confira os dados e a vigência da alteração.',
+        RECURRENCE_OCCURRENCE_REVIEW_REQUIRED: 'Revise os recebimentos: não é possível cancelar, limpar ou reduzir abaixo do recebido; cancelamento é definitivo.',
         INVALID_INCOME: 'Confira descrição, data prevista e valor esperado não negativo em BRL.',
         INCOME_VERSION_CONFLICT: 'A previsão mudou. Recarregue os dados antes de confirmar.',
         INCOME_CANCELLED: 'A previsão foi cancelada. Cadastre uma nova previsão para planejar outra receita.',
@@ -107,7 +112,7 @@ function App() {
       };
       throw Object.assign(new Error(response.status === 429 ? 'Muitas tentativas. Aguarde um minuto.' : errors[data.code as string] ?? 'Não foi possível concluir. Confira os dados e tente novamente.'), { status: response.status, code: data.code });
     }
-    if (method !== 'GET' && ((path.startsWith('/income-recurrences') && !path.endsWith('/preview')) || path.includes('/adjustments') || path.includes('/refunds') || path.includes('/settlements') || path.includes('/payments'))) setFinancialVersion(value => value + 1);
+    if (method !== 'GET' && ((path.startsWith('/income-recurrences') && !path.endsWith('preview')) || path.includes('/adjustments') || path.includes('/refunds') || path.includes('/settlements') || path.includes('/payments'))) setFinancialVersion(value => value + 1);
     return data;
   }
   useEffect(() => {

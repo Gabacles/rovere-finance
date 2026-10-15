@@ -179,6 +179,6 @@ describe('RF-028 explicit income settlements and shared bank reservations', () =
     await allocate(id, csv.id); const received = await allocate(id, ofx.id); expect(received.progress.state).toBe('received'); expect(received.income.origin).toEqual(original.origin); expect(received.income.facts).toEqual(original.facts);
     const allocation = received.allocations.rows[0]; const bankVersion = (await source(allocation.bankEntryId)).version;
     const reversed = await request(`${path(id)}/${allocation.id}/reverse`, { expectedVersion: received.income.version, expectedBankVersion: bankVersion, reversalConfirmed: true }); expect(reversed.status).toBe(201); expect((await reversed.json()).progress.received.cents).toBe('10001');
-    expect(await db.bankEntry.count()).toBe(count); const nextPreview = await (await request(`/income-recurrences/${created.id}/preview`, preview.range)).json(); expect(nextPreview.counts).toEqual({ create: 0, existing: 1, outsideRule: 0 });
+    expect(await db.bankEntry.count()).toBe(count); const nextPreview = await (await request(`/income-recurrences/${created.id}/preview`, preview.range)).json(); expect(nextPreview.counts).toEqual({ create: 0, existing: 1, outsideRule: 0, blocked: 0 });
   });
 });

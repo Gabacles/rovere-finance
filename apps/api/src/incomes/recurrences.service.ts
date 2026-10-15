@@ -1,39 +1,15 @@
-import { createHash, randomUUID } from 'node:crypto';
+import { randomUUID } from 'node:crypto';
 import { Inject, Injectable } from '@nestjs/common';
-import { monthlyIncomeCandidates, normalizeGenerationRange, normalizeIncomeRecurrence, parseCivilDate, parseCents, toMoneyDTO } from '@rovere/domain';
-import type { GenerationRange, IncomeRecurrenceDTO, IncomeRecurrenceInput, Evidence } from '@rovere/domain';
-import type { Prisma } from '../generated/prisma/client.js';
+import { normalizeGenerationRange, normalizeIncomeRecurrence } from '@rovere/domain';
+import type { GenerationRange, IncomeRecurrenceInput } from '@rovere/domain';
 import type { Database } from '../database.js';
 import { DATABASE } from '../accounts/accounts.controller.js';
 import { fail, json, key, object, version } from '../imports/validation.js';
 import { incomeDetails } from './incomes.service.js';
 
-type Tx = Prisma.TransactionClient;
-const digest = (value: unknown) => createHash('sha256').update(JSON.stringify(value)).digest('hex');
-const civil = (value: Date) => parseCivilDate(value.toISOString().slice(0, 10));
-type RuleRow = Prisma.RecurrenceRuleGetPayload<{ include: { _count: { select: { occurrences: true } } } }>;
-function ruleDTO(row: RuleRow): IncomeRecurrenceDTO {
-  return { id: row.id, version: row.version, cadence: 'monthly', description: row.description, notes: row.notes, amount: toMoneyDTO(parseCents(row.cents.toString())),
-    anchorDay: row.anchorDay, startsOn: civil(row.startsOn), endsOn: row.endsOn ? civil(row.endsOn) : null, evidence: row.evidence as unknown as Evidence, occurrenceCount: row._count.occurrences };
-}
-async function ruleDetails(tx: Tx | Database, userId: string, id: string): Promise<IncomeRecurrenceDTO> {
-  const row = await tx.recurrenceRule.findUnique({ where: { id_userId: { id, userId } }, include: { _count: { select: { occurrences: true } } } });
-  if (!row) fail(404, 'RECURRENCE_NOT_FOUND', 'Regra de receita não encontrada.');
-  return ruleDTO(row);
-}
+import { digest, generationPreview as preview, ruleDetails, ruleDTO, ruleInclude } from './recurrence-projection.js';
+
 function rangeInput(value: unknown): GenerationRange { try { return normalizeGenerationRange(value); } catch { fail(400, 'INVALID_GENERATION_RANGE', 'Informe intervalo mensal válido, ordenado e de até 120 meses.'); } }
-async function preview(tx: Tx, userId: string, ruleId: string, range: GenerationRange) {
-  const rule = await ruleDetails(tx, userId, ruleId); const candidates = monthlyIncomeCandidates(rule, range);
-  const existing = await tx.scheduledOccurrence.findMany({ where: { userId, ruleId, period: { in: candidates.map(row => row.period) } }, include: { income: { select: { state: true } } } });
-  const byPeriod = new Map(existing.map(row => [row.period, row]));
-  const rows = candidates.map(candidate => {
-    const row = byPeriod.get(candidate.period);
-    return { period: candidate.period, expectedOn: candidate.expectedOn, amount: candidate.amount, state: row ? 'existing' as const : candidate.eligible ? 'create' as const : 'outside_rule' as const,
-      incomeId: row?.incomeId ?? null, incomeState: row ? row.income.state as 'planned' | 'cancelled' : null };
-  });
-  const counts = { create: rows.filter(row => row.state === 'create').length, existing: rows.filter(row => row.state === 'existing').length, outsideRule: rows.filter(row => row.state === 'outside_rule').length };
-  return { rule, range, counts, rows, previewHash: digest({ rule, range, rows }) };
-}
 type Decision = { action: 'create'; input: IncomeRecurrenceInput } | { action: 'generate'; ruleId: string; expectedVersion: number; range: GenerationRange; previewHash: string; generationConfirmed: true };
 @Injectable()
 export class IncomeRecurrencesService {
@@ -44,7 +20,7 @@ export class IncomeRecurrencesService {
     if (data.page !== undefined && (typeof data.page !== 'string' || !/^[1-9]\d{0,4}$/.test(data.page))) fail(400, 'INVALID_QUERY', 'Página inválida.');
     const page = data.page ? Number(data.page) : 1;
     return this.db.$transaction(async tx => {
-      const rows = await tx.recurrenceRule.findMany({ where: { userId }, include: { _count: { select: { occurrences: true } } }, orderBy: [{ createdAt: 'desc' }, { id: 'asc' }], skip: (page - 1) * 25, take: 25 });
+      const rows = await tx.recurrenceRule.findMany({ where: { userId }, include: ruleInclude, orderBy: [{ createdAt: 'desc' }, { id: 'asc' }], skip: (page - 1) * 25, take: 25 });
       return { page, total: await tx.recurrenceRule.count({ where: { userId } }), rows: rows.map(ruleDTO) };
     }, { isolationLevel: 'RepeatableRead' });
   }
@@ -78,12 +54,14 @@ export class IncomeRecurrencesService {
         const input = decision.input;
         const row = await tx.recurrenceRule.create({ data: { userId, description: input.description, notes: input.notes, cents: BigInt(input.amount.cents), anchorDay: input.anchorDay,
           startsOn: new Date(`${input.startsOn}T00:00:00Z`), endsOn: input.endsOn ? new Date(`${input.endsOn}T00:00:00Z`) : null, evidence: json(evidence) } });
+        await tx.recurrenceRevision.create({ data: { userId, ruleId: row.id, version: 0, effectiveFrom: '0001-01', description: row.description, notes: row.notes, cents: row.cents, anchorDay: row.anchorDay, startsOn: row.startsOn, endsOn: row.endsOn, evidence: json(evidence) } });
         const result = await ruleDetails(tx, userId, row.id);
         await tx.recurrenceCommand.create({ data: { id: decisionId, userId, ruleId: row.id, key: token, requestHash, version: 0, changes: json({ action: 'create', previous: null, current: result }), result: json(result) } }); return result;
       }
       const before = await preview(tx, userId, decision.ruleId, decision.range);
       if (before.rule.version !== decision.expectedVersion) fail(409, 'RECURRENCE_VERSION_CONFLICT', 'A regra mudou. Atualize a prévia antes de gerar.');
       if (before.previewHash !== decision.previewHash) fail(409, 'RECURRENCE_PREVIEW_CHANGED', 'As ocorrências mudaram. Atualize e revise a prévia.');
+      if (before.rule.state !== 'active') fail(409, 'RECURRENCE_INACTIVE', 'A regra está pausada ou cancelada. Nenhuma previsão foi criada.');
       const created: { occurrenceId: string; incomeId: string; period: string }[] = [];
       for (const row of before.rows.filter(row => row.state === 'create')) {
         const occurrenceId = randomUUID(); const origin = { kind: 'recurrence', decisionId, ruleId: decision.ruleId, occurrenceId };

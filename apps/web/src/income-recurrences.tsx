@@ -2,18 +2,21 @@ import { useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import type { IncomeRecurrenceDTO, GenerationRange } from '@rovere/domain';
 import { amountInput, centsInput } from './money-input';
+import { RecurrenceLifecycle } from './recurrence-lifecycle';
+import { MoneyField } from './money-field';
 
 type Api = (path: string, body?: unknown, key?: string) => Promise<any>;
-interface Preview { rule: IncomeRecurrenceDTO; range: GenerationRange; previewHash: string; counts: { create: number; existing: number; outsideRule: number }; rows: { period: string; expectedOn: string; amount: { cents: string }; state: 'create' | 'existing' | 'outside_rule' }[] }
+interface Preview { rule: IncomeRecurrenceDTO; range: GenerationRange; previewHash: string; counts: { create: number; existing: number; outsideRule: number; blocked: number }; rows: { period: string; expectedOn: string; amount: { cents: string }; state: 'create' | 'existing' | 'outside_rule' | 'blocked'; income: import('@rovere/domain').IncomeDTO | null }[] }
 interface Command { path: string; body: unknown; key: string; ruleId?: string }
-interface History { id: string; version: number; createdAt: string; changes: { action: 'create' | 'generate'; result: { created: unknown[] }; request: { range: GenerationRange } } }
-const stateLabel = { create: 'Criar previsão', existing: 'Já existente', outside_rule: 'Fora da vigência' };
+interface History { id: string; version: number; createdAt: string; changes: { action: string; result?: { created: unknown[] }; request?: { range: GenerationRange } } }
+const stateLabel = { create: 'Criar previsão', existing: 'Já existente', outside_rule: 'Fora da vigência', blocked: 'Regra pausada ou cancelada' };
+const actionLabel: Record<string, string> = { create: 'Regra criada', edit: 'Programação futura alterada', pause: 'Gerações pausadas', resume: 'Gerações retomadas', cancel: 'Série cancelada', edit_occurrence: 'Ocorrência corrigida', cancel_occurrence: 'Ocorrência cancelada' };
 
 export function IncomeRecurrences({ api }: { api: Api }) {
   const [list, setList] = useState<{ rows: IncomeRecurrenceDTO[]; total: number }>({ rows: [], total: 0 }); const [page, setPage] = useState(1);
   const [rule, setRule] = useState<IncomeRecurrenceDTO | null>(null); const [preview, setPreview] = useState<Preview | null>(null);
   const [history, setHistory] = useState<History[] | null>(null); const [busy, setBusy] = useState(false); const [uncertain, setUncertain] = useState(false);
-  const [message, setMessage] = useState(''); const [refresh, setRefresh] = useState(0); const pending = useRef<Command | null>(null); const locked = busy || uncertain;
+  const [message, setMessage] = useState(''); const [refresh, setRefresh] = useState(0); const pending = useRef<Command | null>(null); const [lifecycleBusy, setLifecycleBusy] = useState(false); const locked = busy || uncertain || lifecycleBusy;
   const error = (value: unknown) => setMessage(value instanceof Error ? value.message : 'Falha de conexão. Tente novamente.');
   useEffect(() => { let active = true; void api(`/income-recurrences?page=${page}`).then(value => { if (active) setList(value); }).catch(value => { if (active) error(value); }); return () => { active = false; }; }, [page, refresh]);
   async function open(id: string) { setBusy(true); setMessage(''); try { setRule(await api(`/income-recurrences/${id}`)); setPreview(null); setHistory(null); } catch (value) { error(value); } finally { setBusy(false); } }
@@ -50,7 +53,7 @@ export function IncomeRecurrences({ api }: { api: Api }) {
     <button className="secondary" disabled={locked} onClick={() => { setRule(null); setPreview(null); setHistory(null); setMessage(''); }}>Nova regra mensal</button>
     {!rule ? <form onSubmit={create}>
       <label>Descrição da regra mensal<input name="description" required maxLength={500} disabled={locked} /></label>
-      <label>Valor mensal em reais<input name="amount" inputMode="decimal" required disabled={locked} /></label>
+      <MoneyField label="Valor mensal em reais" name="amount" required disabled={locked} />
       <label>Dia âncora<input name="anchorDay" type="number" min="1" max="31" step="1" required disabled={locked} /></label>
       <label>Início da vigência<input name="startsOn" type="date" min="0001-01-01" max="9999-12-31" required disabled={locked} /></label>
       <label>Fim da vigência (opcional)<input name="endsOn" type="date" min="0001-01-01" max="9999-12-31" disabled={locked} /></label>
@@ -58,20 +61,21 @@ export function IncomeRecurrences({ api }: { api: Api }) {
       <label className="check"><input type="checkbox" required disabled={locked} />Confirmo esta regra mensal, sem gerar receitas agora.</label><button disabled={locked}>Cadastrar regra mensal</button>
     </form> : <>
       <p data-testid="recurrence-summary">{rule.description} · BRL {amountInput(rule.amount.cents)} · Dia {rule.anchorDay} · {rule.startsOn} até {rule.endsOn ?? 'sem fim informado'} · {rule.occurrenceCount} ocorrência(s) · Versão {rule.version}</p>
-      {rule.notes && <p>Notas: {rule.notes}</p>}<p>Revisão, pausa e cancelamento de séries serão tratados em uma próxima entrega.</p>
-      <form key={rule.id} onSubmit={simulate} onChange={() => setPreview(null)}>
+      {rule.notes && <p>Notas: {rule.notes}</p>}<p>Estado: {rule.state === 'active' ? 'Ativa' : rule.state === 'paused' ? 'Pausada' : 'Cancelada definitivamente'}.</p>
+      <RecurrenceLifecycle key={`lifecycle:${rule.id}`} rule={rule} api={api} parentBusy={busy || uncertain} setParentBusy={setLifecycleBusy} onChanged={current => { setRule(current); setPreview(null); setHistory(null); setRefresh(value => value + 1); }} />
+      <form key={`generate:${rule.id}`} onSubmit={simulate} onChange={() => setPreview(null)}>
         <label>Primeiro mês da geração<input name="fromPeriod" type="month" min="0001-01" max="9999-12" required disabled={locked} /></label>
         <label>Último mês da geração<input name="toPeriod" type="month" min="0001-01" max="9999-12" required disabled={locked} /></label><button disabled={locked}>Consultar prévia da geração</button>
       </form>
-      {preview && <div><p>{preview.counts.create} nova(s) · {preview.counts.existing} existente(s) · {preview.counts.outsideRule} fora da vigência</p>
-        <div className="import-table" role="region" aria-label="Detalhes da prévia mensal" tabIndex={0}><table><caption>Prévia das ocorrências mensais</caption><thead><tr><th>Mês</th><th>Data prevista</th><th>Valor BRL</th><th>Resultado</th></tr></thead><tbody>{preview.rows.map(row => <tr key={row.period}><td>{row.period}</td><td>{row.expectedOn}</td><td>{amountInput(row.amount.cents)}</td><td>{stateLabel[row.state]}</td></tr>)}</tbody></table></div>
-        <form key={preview.previewHash} onSubmit={event => { event.preventDefault(); if (!locked) void execute({ path: `/income-recurrences/${rule.id}/generate`, ruleId: rule.id, key: crypto.randomUUID(), body: { ...preview.range, expectedVersion: preview.rule.version, previewHash: preview.previewHash, generationConfirmed: true } }); }}>
+      {preview && <div><p>{preview.counts.create} nova(s) · {preview.counts.existing} existente(s) · {preview.counts.outsideRule} fora da vigência · {preview.counts.blocked} bloqueada(s)</p>
+        <div className="import-table" role="region" aria-label="Detalhes da prévia mensal" tabIndex={0}><table><caption>Prévia das ocorrências mensais</caption><thead><tr><th>Mês</th><th>Data pela regra</th><th>Valor BRL pela regra</th><th>Resultado</th></tr></thead><tbody>{preview.rows.map(row => <tr key={row.period}><td>{row.period}</td><td>{row.expectedOn}</td><td>{amountInput(row.amount.cents)}</td><td>{stateLabel[row.state]}{row.income && <span> · Atual: {row.income.facts.expectedOn.state === 'confirmed' ? row.income.facts.expectedOn.value : 'Data não informada'} · {row.income.facts.expectedAmount.state === 'confirmed' ? `BRL ${amountInput(row.income.facts.expectedAmount.value.cents)}` : 'Valor não informado'}</span>}</td></tr>)}</tbody></table></div>
+        {rule.state === 'active' && <form key={preview.previewHash} onSubmit={event => { event.preventDefault(); if (!locked && !pending.current) void execute({ path: `/income-recurrences/${rule.id}/generate`, ruleId: rule.id, key: crypto.randomUUID(), body: { ...preview.range, expectedVersion: preview.rule.version, previewHash: preview.previewHash, generationConfirmed: true } }); }}>
           <label className="check"><input type="checkbox" required disabled={locked} />Revisei a prévia e confirmo a geração somente destas previsões, sem movimentar caixa.</label><button disabled={locked}>Gerar previsões mensais</button>
-        </form>
+        </form>}
       </div>}
       <button className="secondary" disabled={locked} onClick={() => void open(rule.id)}>Recarregar regra</button>
       <button className="secondary" disabled={locked} onClick={async () => { setBusy(true); try { setHistory(await api(`/income-recurrences/${rule.id}/history`)); } catch (value) { error(value); } finally { setBusy(false); } }}>Consultar histórico da regra</button>
-      {history && <div><h3>Histórico da regra — últimas 20 decisões</h3>{history.map(item => <p key={item.id}>Versão {item.version} · {item.createdAt} · {item.changes.action === 'create' ? 'Regra criada' : `Geração confirmada: ${item.changes.result.created.length} nova(s), ${item.changes.request.range.fromPeriod} até ${item.changes.request.range.toPeriod}`}</p>)}</div>}
+      {history && <div><h3>Histórico da regra — últimas 20 decisões</h3>{history.map(item => <p key={item.id}>Versão {item.version} · {item.createdAt} · {item.changes.action === 'generate' ? `Geração confirmada: ${item.changes.result?.created.length ?? 0} nova(s), ${item.changes.request?.range.fromPeriod} até ${item.changes.request?.range.toPeriod}` : actionLabel[item.changes.action] ?? item.changes.action}</p>)}</div>}
     </>}
   </section>;
 }
