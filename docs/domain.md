@@ -4,9 +4,9 @@
 
 ## Modelo conceitual
 
-RF-027 implementa [receitas previstas avulsas](planned-incomes.md) manuais, com fatos conhecidos/desconhecidos e cancelamento terminal. Ações de previsão não registram recebimento ou efeito de caixa; RF-029 acrescenta [recorrências mensais](recurring-incomes.md) com prévia e geração confirmada finita, sem caixa; ciclo de vida de séries permanece RF-030.
+RF-027 implementa [receitas previstas avulsas](planned-incomes.md) manuais, com fatos conhecidos/desconhecidos e cancelamento terminal. Ações de previsão não registram recebimento ou efeito de caixa; RF-029 acrescenta [recorrências mensais](recurring-incomes.md) com prévia e geração confirmada finita, sem caixa; RF-030 acrescenta [ciclo de vida de séries](recurrence-lifecycle.md), com programação futura e exceção individual explícitas.
 
-RF-028 acrescenta [liquidações explícitas de receitas](income-settlements.md) por movimentos existentes, com parcial/múltiplos destinos e reversão de vínculo. P3-03 aprovada; reservas bancárias e direção são compartilhadas com pagamentos de fatura. Recorrências e terceiros continuam futuros.
+RF-028 acrescenta [liquidações explícitas de receitas](income-settlements.md) por movimentos existentes, com parcial/múltiplos destinos e reversão de vínculo. P3-03 aprovada; reservas bancárias e direção são compartilhadas com pagamentos de fatura. RF-029 cobre geração mensal de receitas; despesas recorrentes e terceiros continuam futuros.
 
 A separação principal será entre **o fato econômico, sua programação, seu movimento de caixa e a evidência de origem**.
 

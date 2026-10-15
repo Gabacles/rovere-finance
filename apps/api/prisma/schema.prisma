@@ -62,10 +62,12 @@ model RecurrenceRule {
   startsOn DateTime @db.Date
   endsOn DateTime? @db.Date
   version Int @default(0)
+  state String @default("active") @db.VarChar(9)
   evidence Json
   createdAt DateTime @default(now())
   occurrences ScheduledOccurrence[]
   commands RecurrenceCommand[]
+  schedules RecurrenceRevision[]
   @@unique([id, userId])
   @@index([userId, createdAt, id])
 }
@@ -83,9 +85,40 @@ model ScheduledOccurrence {
   income Income @relation(fields: [incomeId, userId], references: [id, userId], onDelete: Restrict)
   evidence Json
   createdAt DateTime @default(now())
+  exception RecurrenceException?
   @@unique([incomeId, userId])
+  @@unique([incomeId, ruleId, userId])
   @@unique([ruleId, period])
   @@index([ruleId, userId])
+}
+
+model RecurrenceRevision {
+  id String @id @default(uuid())
+  userId String
+  ruleId String
+  rule RecurrenceRule @relation(fields: [ruleId, userId], references: [id, userId], onDelete: Restrict)
+  version Int
+  effectiveFrom String @db.VarChar(7)
+  description String @db.VarChar(500)
+  notes String? @db.VarChar(1000)
+  cents BigInt
+  anchorDay Int
+  startsOn DateTime @db.Date
+  endsOn DateTime? @db.Date
+  evidence Json
+  createdAt DateTime @default(now())
+  @@unique([ruleId, version])
+  @@index([ruleId, userId, effectiveFrom])
+}
+
+model RecurrenceException {
+  incomeId String @id
+  ruleId String
+  userId String
+  occurrence ScheduledOccurrence @relation(fields: [incomeId, ruleId, userId], references: [incomeId, ruleId, userId], onDelete: Restrict)
+  evidence Json
+  createdAt DateTime @default(now())
+  @@unique([incomeId, ruleId, userId])
 }
 
 model RecurrenceCommand {

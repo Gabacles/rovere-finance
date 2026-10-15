@@ -2,30 +2,34 @@
 
 Atualizado em 15/10/2026. Estados, critérios e evidências nas [tasks](tasks/README.md).
 
-## Entrega atual
+## Solicitação atual
 
-RF-028 integrada pelo [PR #15](https://github.com/Gabacles/rovere-finance/pull/15), main `9612bcb` confirmada por fetch; comparação com `8b4ba58` sem diferenças de código. RF-027/PR #14 e RF-026/PR #13 permanecem integradas. Resultados históricos dessas entregas pertencem às fases 2/3 e não comprovam RF-029. O usuário informou merge em produção; esta execução verificou o repositório, sem homologação remota.
+Após o [diagnóstico da V1](v1-review.md), o usuário testou a interface, rejeitou apresentação/usabilidade como V1 e autorizou continuar as tasks funcionais. Reformulação visual/navegação e validação perceptível obrigatórias no aceite conforme [UX](ux.md). RF-030 concluída e validada no PR #17; P3-02 aprovada expressamente em 15/10/2026.
 
-RF-029 concluída e validada na branch `feat/rf-029-recurring-incomes`, criada da main atualizada com árvore inicial limpa. P3-01 aprovada expressamente: regras mensais fixas, uma âncora, vigência inclusiva e geração em intervalo finito com prévia/confirmação, limite técnico inicial de 120 meses por comando. [Contrato canônico](recurring-incomes.md), [ADR-0016](decisions/0016-confirmed-monthly-income-generation.md) e [task/evidências](tasks/phase-3.md).
+## Estado conferido
 
-Domínio puro, migration aditiva, origem tipada, journals, API e UI implementados e validados. Previsões não movimentam caixa. Edição, pausa, cancelamento e retomada de séries ficam para RF-030/P3-02; recebimentos RF-028 permanecem disponíveis. RF-030 a RF-036 e P3-02/P3-04 a P3-07 não implementadas nesta entrega.
+RF-027 a RF-029 integradas. Fetch e GitHub confirmaram o [PR #16](https://github.com/Gabacles/rovere-finance/pull/16) na main `9fb9de3`. Comparação com `c24738c` sem diferenças em apps/packages/scripts/tests/CI/manifests/OpenAPI. [CI do head final aprovada](https://github.com/Gabacles/rovere-finance/actions/runs/38801137262/job/116650159190) e [CI do merge aprovada](https://github.com/Gabacles/rovere-finance/actions/runs/38805382190/job/116664764032). RF-026/PR #13, RF-027/PR #14 e RF-028/PR #15 permanecem integradas.
 
-## Conferência e validação
+Já há aplicação funcional com interface, API e banco para importação CSV/OFX, ciclo básico de cartão, receitas avulsas/recebimentos e geração mensal de receitas. A interface reúne os módulos numa página longa; não há ainda navegação principal ou dashboard anual. A V1 está incompleta. Fases 0/1/2 e RF-027 a RF-029 têm evidências; RF-030 concluída e validada no PR #17; RF-031 a RF-036 permanecem pendentes e fases 4/5 ainda são macro. Contagem de tasks não representa percentual da V1.
 
-`npm run check` aprovado: 54 documentos/28 tasks, tipos, 194 unitários/18 suites, builds, 101 operações OpenAPI e smoke. Integração final: 146 testes/17 suites. E2E: 15 jornadas. Docker saudável, migration RF-029 aplicada sem reset; novas rotas protegidas e diff check aprovados. Incluem regressões CSV/OFX, recebimentos e ciclo de cartão, upgrade, replay/restart, concorrência, rollback e mobile. Falha de massa duplicada corrigida e registrada na task. Prévia + geração de 120 meses: 442 ms no PostgreSQL local; calendário existente 120.000 datas em 20 ms. Não comprova capacidade de produção. Staged diff e arquivos sensíveis revisados. Implementação `fc38e03` publicada na branch da task e [PR #16 aberto para main](https://github.com/Gabacles/rovere-finance/pull/16); CI remota em andamento na abertura, a conferir no head final. Registro posterior exclusivamente documental, sem alterar o código validado. Nenhum merge/push direto para main.
+A revisão apontou cobertura ainda sem entregas concretas para lançamentos bancários manuais, transferências próprias, saldos de referência/limites e calendário/estimativas. São lacunas do plano a detalhar, não requisitos dispensados nem funcionalidades aprovadas por esta revisão. Terceiros, categorias/orçamento e visão anual continuam faltando. README/domínio e registros de merge/CI desatualizados foram corrigidos.
 
-RF-028 histórica: check (159 unitários/17 suites), integração (135 testes/15 suites), E2E (14 jornadas) e Docker aprovados na versão correspondente. O código integrado foi comparado, sem refazer trabalho validado desnecessariamente; regressões foram executadas na RF-029.
+## Validações e limites
+
+Última implementação validada `fc38e03`: check com 194 unitários/18 suites, 146 integrações/17 suites, 15 jornadas E2E, builds/OpenAPI com 101 operações, smoke e Docker aprovados; evidências completas na [RF-029](tasks/phase-3.md). Não foram reexecutados nesta revisão documental; o código integrado foi comparado e a CI do merge foi conferida.
+
+Na revisão V1 anterior, sem alterações funcionais: Docker ps confirmou db/API/web saudáveis; HTTP HTML/ready/OpenAPI 200. Chromium confirmou cadastro, email local, login/logout e os sete blocos principais com conta fictícia, sem criar registros financeiros. Capturas inspecionadas: página autenticada com 6.427 px na viewport 1280×900, sem estouro horizontal nem erro JavaScript. Artefatos locais ignorados em test-results/v1-review-*.png. `npm run docs:check` aprovado: 55 documentos/28 tasks, links e SHA-256 do histórico original verificados. `git diff --check` aprovado; a comparação naquele ponto confirmou código/contrato sem alterações.
+
+Branch `feat/rf-030-recurrence-lifecycle` criada de origin/main `9fb9de3`, levando intactos os ajustes documentais locais da revisão. [Contrato RF-030](recurrence-lifecycle.md)/[ADR-0017](decisions/0017-explicit-recurrence-lifecycle.md). Domínio, migration aditiva, API/UI funcional, histórico, idempotência/versões e OpenAPI 106 operações implementados. Validações locais finais aprovadas: check (57 documentos/28 tasks, 205 unitários/19 suites, tipos/builds/OpenAPI/smoke); integração (158 testes/19 suites); E2E (16 jornadas), Docker e diff check. Incluem upgrade/replay RF-029 preservado, concorrência, rollback, CSV/OFX/cartão, correções/recebimentos e validação monetária perceptível. Falhas corrigidas registradas na task. Prévia+alteração de 120 ocorrências: 530 ms no PostgreSQL local, sem promessa de produção. Staged diff e arquivos sensíveis revisados. Implementação `f04c00b` publicada na branch da task; [PR #17 aberto para main](https://github.com/Gabacles/rovere-finance/pull/17). CI remota queued na abertura, a conferir no head final; não declarada aprovada. Registro posterior exclusivamente documental, sem alterar o código validado. Nenhum merge/push direto para main. P3-01/P3-02/P3-03 aprovadas; P3-04 a P3-07 continuam pendentes. Previsões não movimentam caixa.
 
 ## Próxima ação concreta
 
-1. Revisar [PR #16](https://github.com/Gabacles/rovere-finance/pull/16) e conferir CI remota do head final; validações locais aprovadas.
+1. Revisar [PR #17](https://github.com/Gabacles/rovere-finance/pull/17) e conferir CI remota do head final; validações locais RF-030 aprovadas.
 2. Integrar somente após revisão/autorização específica; não fazer merge/push direto para main automaticamente.
-3. Após integração autorizada, detalhar RF-030 e apresentar recomendação P3-02 antes de comportamentos dependentes. RF-030 permanece pendente nesta entrega.
+3. RF-031 permanece pendente nesta entrega. Depois de revisão/integração, decidir P3-04 antes de implementar despesas recorrentes. As lacunas da V1 e o redesign obrigatório continuam no mapa; não considerar a V1 fechada ao terminar RF-036.
 
-## Políticas e ambiente
+## Ambiente e políticas
 
-BIZ-01 a BIZ-05 preservadas; P3-03 em [recebimentos](income-settlements.md), P3-01 em [recorrências](recurring-incomes.md). [Políticas da v0](v0-policies.md) e [pendências](decisions/pending.md). Sem saldo/limite presumido, financiamento, transferência própria ou imposto inferido.
+Node 24.14.0/npm 11.9.0 via C:/nvm4w/nodejs; execução autorizada fora do sandbox. Docker local com volume preservado e migrations RF-029/RF-030 aplicadas. Portas: banco 15432, API 3100, frontend 18080, SMTP 11025, Mailpit 18025. [Comandos](../README.md).
 
-Node 24.14.0/npm 11.9.0 via C:/nvm4w/nodejs requerem execução autorizada fora do sandbox. Docker db/Mailpit iniciados, volume preservado. Testes em schemas próprios de rovere_test, dados fictícios e email local; migration RF-029 aplicada também no Docker local sem reset do volume. Avisos pg e NO_COLOR/FORCE_COLOR preexistentes registrados na task. Portas: banco 15432, API 3100, frontend http://127.0.0.1:18080, SMTP 11025, Mailpit 18025. [Comandos](../README.md). Produção/TLS não homologados.
-
-Histórico HTTP limitado às últimas 20 versões, journal integral no banco. Recuperação conserva dados/chave enquanto tela montada, sem persistir rascunho financeiro após reload. Direção bancária confirmada permanece após reversão; revisão futura explícita. Limite de geração por comando não equivale a benchmark de produção.
+BIZ-01 a BIZ-05 preservadas. [Políticas da v0](v0-policies.md), [recorrências](recurring-incomes.md), [recebimentos](income-settlements.md) e [pendências](decisions/pending.md). Histórico HTTP limitado às últimas 20 decisões, journal integral no banco; recuperação conserva chave/dados enquanto a tela estiver montada. Avisos preexistentes pg e NO_COLOR/FORCE_COLOR registrados na task. Não há evidência nova de implantação pública, TLS, backup/restauração ou capacidade de produção.

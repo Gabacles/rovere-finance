@@ -4,6 +4,8 @@ Estado: primitivas, identidade, destinos, [importação RF-018](import-confirmat
 
 RF-029: [contrato de recorrências mensais](recurring-incomes.md), P3-01 aprovada; geração de até 120 meses exige prévia atual e confirmação, com origem tipada, unicidade e journal atômico. Não cria caixa.
 
+RF-030: [alterações de recorrências](recurrence-lifecycle.md), P3-02 aprovada; programação por competência, exceção individual, estados e prévia confirmada preservam origem e recebimentos. Histórico de geração não é reescrito.
+
 ## Convenções
 
 RF-027: [contrato executável de receitas previstas](planned-incomes.md), com seis rotas autenticadas, versões, idempotência e histórico. Sem liquidação ou inferência de caixa.

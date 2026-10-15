@@ -27,6 +27,7 @@ import { ExpensesService } from './expenses/expenses.service.js';
 import { IncomesController } from './incomes/incomes.controller.js';
 import { IncomesService } from './incomes/incomes.service.js';
 import { IncomeRecurrencesService } from './incomes/recurrences.service.js';
+import { RecurrenceLifecycleService } from './incomes/recurrence-lifecycle.service.js';
 import { IncomeRecurrencesController } from './incomes/recurrences.controller.js';
 import { IncomeSettlementsController, BankSettlementSourcesController } from './incomes/settlements.controller.js';
 import { IncomeSettlementsService } from './incomes/settlements.service.js';
@@ -75,7 +76,7 @@ export async function createApp(config: AppConfig, db = createDatabase(config.da
   @Module({
     controllers: apiControllers,
     providers: [{ provide: DATABASE, useValue: db }, { provide: IDENTITY, useValue: identity },
-      { provide: IMPORT_WORKER_ENABLED, useValue: config.importsWorkerEnabled !== false }, SessionGuard, Resources, DestinationsService, ImportsService, ImportWorker, ConfirmationService, StatementsService, ExpensesService, IncomesService, IncomeSettlementsService, IncomeRecurrencesService, InstallmentsService, CardChargesService, PaymentsService, AdjustmentsService],
+      { provide: IMPORT_WORKER_ENABLED, useValue: config.importsWorkerEnabled !== false }, SessionGuard, Resources, DestinationsService, ImportsService, ImportWorker, ConfirmationService, StatementsService, ExpensesService, IncomesService, IncomeSettlementsService, IncomeRecurrencesService, RecurrenceLifecycleService, InstallmentsService, CardChargesService, PaymentsService, AdjustmentsService],
   })
   class AppModule {}
   const app = await NestFactory.create(AppModule, { logger: ['error', 'warn'], bodyParser: false });

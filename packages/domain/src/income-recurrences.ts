@@ -6,7 +6,9 @@ import type { Evidence } from './import-contracts.js';
 
 export const MAX_GENERATION_MONTHS = 120;
 export interface IncomeRecurrenceInput { description: string; notes: string | null; amount: MoneyDTO; anchorDay: number; startsOn: CivilDate; endsOn: CivilDate | null }
-export interface IncomeRecurrenceDTO extends IncomeRecurrenceInput { id: string; version: number; cadence: 'monthly'; evidence: Evidence; occurrenceCount: number }
+export type RecurrenceState = 'active' | 'paused' | 'cancelled';
+export interface RecurrenceSchedule extends IncomeRecurrenceInput { effectiveFrom: string; version: number; evidence: Evidence }
+export interface IncomeRecurrenceDTO extends IncomeRecurrenceInput { id: string; version: number; cadence: 'monthly'; evidence: Evidence; occurrenceCount: number; state: RecurrenceState; schedules: RecurrenceSchedule[] }
 export interface GenerationRange { fromPeriod: string; toPeriod: string }
 export class RecurrenceError extends TypeError { constructor(public readonly field: string) { super('Invalid income recurrence.'); } }
 function object(value: unknown, fields: string[]): Record<string, unknown> {

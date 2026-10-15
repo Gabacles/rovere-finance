@@ -22,7 +22,7 @@ function details(row: Income): IncomeDTO {
   return { id: row.id, version: row.version, description: row.description, notes: row.notes, state: row.state as IncomeDTO['state'],
     origin: row.origin as unknown as IncomeDTO['origin'], facts: value, knowledge: incomeKnowledge(value) };
 }
-function storage(value: IncomeFacts) {
+export function incomeStorage(value: IncomeFacts) {
   return { expectedOn: value.expectedOn.state === 'confirmed' ? new Date(`${value.expectedOn.value}T00:00:00.000Z`) : null,
     expectedAmount: value.expectedAmount.state === 'confirmed' ? BigInt(value.expectedAmount.value.cents) : null,
     factEvidence: json(Object.fromEntries(Object.entries(value).filter(([, fact]) => fact.state === 'confirmed').map(([field, fact]) => [field, fact.state === 'confirmed' ? fact.evidence : undefined]))) };
@@ -80,11 +80,11 @@ export class IncomesService {
       const decisionId = randomUUID(); let previous: IncomeDTO | null = null;
       if (incomeId === null) {
         const row = await tx.income.create({ data: { userId, description: patch.description!, notes: patch.notes ?? null,
-          origin: json({ kind: 'manual', decisionId }), ...storage(changeIncomeFacts(unknownIncomeFacts(), patch.facts, decisionId)) } }); incomeId = row.id;
+          origin: json({ kind: 'manual', decisionId }), ...incomeStorage(changeIncomeFacts(unknownIncomeFacts(), patch.facts, decisionId)) } }); incomeId = row.id;
       } else {
         previous = await incomeDetails(tx, userId, incomeId);
         if (previous.version !== expectedVersion) fail(409, 'INCOME_VERSION_CONFLICT', 'A previsão mudou. Recarregue os dados antes de confirmar.');
-        if (previous.origin.kind === 'recurrence') fail(409, 'RECURRENCE_OCCURRENCE_LOCKED', 'Esta previsão veio de uma regra. Revisão de ocorrência e de série estará disponível na RF-030; origem e recebimentos foram preservados.');
+        if (previous.origin.kind === 'recurrence') fail(409, 'RECURRENCE_OCCURRENCE_LOCKED', 'Esta previsão veio de uma regra. Use a alteração de ocorrência com prévia de impacto em Recorrências de receitas; origem e recebimentos foram preservados.');
         let state: IncomeDTO['state'];
         try { state = incomeTransition(previous.state, action === 'cancel' ? 'cancel' : 'edit'); }
         catch { fail(409, 'INCOME_CANCELLED', 'A previsão foi cancelada. Cadastre uma nova previsão para planejar outra receita.'); }
@@ -93,7 +93,7 @@ export class IncomesService {
         catch (error) { fail(409, error instanceof IncomeSettlementError ? error.code : 'INCOME_RECEIPTS_REVIEW_REQUIRED', 'Revise explicitamente os recebimentos vinculados antes de cancelar, limpar ou reduzir o previsto abaixo do já recebido. Histórico e movimentos foram preservados.'); }
         const updated = await tx.income.updateMany({ where: { id: incomeId, userId, version: expectedVersion! }, data: {
           ...(patch.description === undefined ? {} : { description: patch.description }), ...(patch.notes === undefined ? {} : { notes: patch.notes }),
-          ...storage(changeIncomeFacts(previous.facts, patch.facts, decisionId)), state, version: { increment: 1 } } });
+          ...incomeStorage(changeIncomeFacts(previous.facts, patch.facts, decisionId)), state, version: { increment: 1 } } });
         if (updated.count !== 1) fail(409, 'INCOME_VERSION_CONFLICT', 'A previsão mudou. Recarregue os dados antes de confirmar.');
       }
       const result = await incomeDetails(tx, userId, incomeId);

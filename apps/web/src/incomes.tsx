@@ -23,6 +23,12 @@ export function Incomes({ api, financialVersion }: { api: Api; financialVersion:
     void api(`/incomes?page=${page}`).then(data => { if (active) setList(data); }).catch(error => { if (active) showError(error); });
     return () => { active = false; };
   }, [page, refresh, financialVersion]);
+  useEffect(() => {
+    if (!value || value.origin.kind !== 'recurrence') return;
+    let active = true; const id = value.id;
+    void api(`/incomes/${id}`).then(current => { if (active) { setValue(previous => previous?.id === id ? current : previous); setHistory(null); } }).catch(error => { if (active) showError(error); });
+    return () => { active = false; };
+  }, [financialVersion, value?.id]);
   async function execute(command: Command) {
     pending.current = command; setBusy(true); setMessage('');
     try {
@@ -86,7 +92,7 @@ export function Incomes({ api, financialVersion }: { api: Api; financialVersion:
     {value && <>
       {value.notes && <p>Notas: {value.notes}</p>}
       <nav><button className="secondary" disabled={locked} onClick={() => void open(value.id)}>Recarregar previsão</button><button className="secondary" disabled={locked} onClick={() => void showHistory()}>Consultar histórico da previsão</button></nav>
-      {value.origin.kind === 'recurrence' ? <p>Gerada por regra mensal. Revisão e cancelamento estarão disponíveis na entrega de séries.</p> : value.state === 'planned' ? <form key={`cancel:${value.id}:${value.version}`} onSubmit={event => { event.preventDefault(); void write(`/incomes/${value.id}/cancel`, { expectedVersion: value.version }, 'POST', 'Previsão cancelada. Histórico preservado.'); }}>
+      {value.origin.kind === 'recurrence' ? <p>Gerada por regra mensal. Para corrigir ou cancelar, abra a regra em Recorrências de receitas e confira o impacto na ocorrência.</p> : value.state === 'planned' ? <form key={`cancel:${value.id}:${value.version}`} onSubmit={event => { event.preventDefault(); void write(`/incomes/${value.id}/cancel`, { expectedVersion: value.version }, 'POST', 'Previsão cancelada. Histórico preservado.'); }}>
         <label className="check"><input type="checkbox" required disabled={locked} />Confirmo o cancelamento definitivo desta previsão.</label><button className="secondary" disabled={locked}>Cancelar previsão</button>
       </form> : <p>Cancelamento definitivo. Para planejar outra receita, cadastre uma nova previsão.</p>}
       {history && <div className="statement-history"><h3>Histórico da previsão — últimas 20 alterações</h3>{history.map(item => <p key={item.id}>Versão {item.version} · {item.createdAt} · {item.changes.action === 'allocate' ? 'Recebimento vinculado' : item.changes.action === 'reverse' ? 'Vínculo revertido' : stateText(item.changes.current)} · {item.changes.current.description} · Data prevista: {known(item.changes.current.facts.expectedOn) ?? 'Não informada'} · Valor esperado: {amount(item.changes.current)} · Notas: {item.changes.current.notes ?? 'Não informadas'} · {item.changes.current.origin.kind === 'manual' ? 'Origem manual' : 'Gerada por recorrência'}{item.changes.settlement && ` · Recebido nessa versão: BRL ${amountInput(item.changes.settlement.current.progress.received.cents)}`}</p>)}</div>}

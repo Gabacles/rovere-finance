@@ -19,6 +19,7 @@ Leia primeiro [AGENTS.md](AGENTS.md), depois o [estado atual](docs/progress.md) 
 | Confirmação e registros financeiros | [Confirmação de importação](docs/import-confirmation.md) |
 | Dados e ciclo informado de fatura | [Faturas](docs/card-statements.md) |
 | Compra manual e cobranças associadas | [Compras](docs/purchases.md) |
+| Alterações de séries e ocorrências | [Ciclo de vida de recorrências](docs/recurrence-lifecycle.md) |
 | Recorrências mensais e geração confirmada | [Receitas recorrentes](docs/recurring-incomes.md) |
 | Receitas previstas avulsas | [Receitas previstas](docs/planned-incomes.md) |
 | Recebimentos e reservas bancárias conjuntas | [Liquidações de receitas](docs/income-settlements.md) |
