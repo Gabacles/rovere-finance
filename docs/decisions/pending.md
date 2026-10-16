@@ -4,9 +4,9 @@ Não há questões BIZ ativas que bloqueiem a v0 dentro dos limites adotados. BI
 
 Em 14/10/2026, o [plano da fase 3](../tasks/phase-3.md#recomendações-para-decisões-ainda-abertas) registra propostas P3-01 a P3-07: geração e alterações de recorrências, diferenças de receitas, confirmação de despesas recorrentes, cronogramas de terceiros, revisão/devolução após estorno e sugestões de conciliação. No registro inicial eram propostas; as aprovações posteriores abaixo prevalecem, sem reabrir BIZ-01 a BIZ-05. Não bloqueiam RF-027; devem ser resolvidas antes de implementar os comportamentos dependentes indicados no plano. Ao decidir, atualizar a fonte canônica aplicável e registrar ADR quando relevante.
 
-P3-03 resolvida por aprovação explícita do usuário em 14/10/2026: [liquidações de receitas](../income-settlements.md) e [ADR-0015](0015-explicit-income-settlements.md). Sai da lista ativa; somente P3-04 a P3-07 permanecem pendentes. Não repetir a aprovação.
+P3-03 resolvida por aprovação explícita do usuário em 14/10/2026: [liquidações de receitas](../income-settlements.md) e [ADR-0015](0015-explicit-income-settlements.md). Sai da lista ativa; somente P3-05 a P3-07 permanecem pendentes. Não repetir a aprovação.
 
-P3-01 resolvida por aprovação explícita em 15/10/2026: [geração mensal](../recurring-incomes.md) e [ADR-0016](0016-confirmed-monthly-income-generation.md), inclusive vigência inclusiva e limite técnico inicial de 120 meses por comando. Pendentes somente P3-04 a P3-07; não repetir P3-01/P3-03.
+P3-01 resolvida por aprovação explícita em 15/10/2026: [geração mensal](../recurring-incomes.md) e [ADR-0016](0016-confirmed-monthly-income-generation.md), inclusive vigência inclusiva e limite técnico inicial de 120 meses por comando. Pendentes somente P3-05 a P3-07; não repetir P3-01/P3-03.
 
 BIZ-01 foi resolvida pela escolha de orçamento bruto registrada no ADR-0002: recebimentos aparecem no caixa/custo líquido, sem recompor o orçamento bruto. O ID não será reutilizado.
 
@@ -18,4 +18,6 @@ Guardas computacionais dos parsers RF-015: [catálogo](../import-formats.md). N�
 
 Quando resolvida, mover a decisão para seu documento canônico e registrar a aprovação/ADR, removendo-a desta lista ativa. Não repetir perguntas já respondidas.
 
-P3-02 aprovada expressamente em 15/10/2026: [ciclo de vida de recorrências](../recurrence-lifecycle.md), [ADR-0017](0017-explicit-recurrence-lifecycle.md). Não repetir a aprovação; permanecem P3-04 a P3-07.
+P3-02 aprovada expressamente em 15/10/2026: [ciclo de vida de recorrências](../recurrence-lifecycle.md), [ADR-0017](0017-explicit-recurrence-lifecycle.md). Não repetir a aprovação; permanecem P3-05 a P3-07.
+
+P3-04 aprovada expressamente em 15/10/2026: [despesas recorrentes](../recurring-expenses.md), [ADR-0018](0018-explicit-recurring-expenses.md). Não repetir a aprovação; somente P3-05/P3-06/P3-07 permanecem pendentes.

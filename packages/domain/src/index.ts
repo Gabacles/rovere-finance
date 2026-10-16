@@ -16,3 +16,4 @@ export * from './bank-availability.js';
 export * from './income-settlements.js';
 export * from './income-recurrences.js';
 export * from './income-recurrence-lifecycle.js';
+export * from './expense-recurrences.js';

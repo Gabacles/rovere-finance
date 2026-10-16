@@ -28,7 +28,7 @@ export function Expenses({ api, catalogVersion, financialVersion }: { api: Api; 
     let active = true;
     void api(`/expenses?page=${page}`).then(data => { if (active) setList(data); }).catch(error => { if (active) showError(error); });
     return () => { active = false; };
-  }, [page, refresh]);
+  }, [page, refresh, financialVersion]);
   useEffect(() => {
     let active = true;
     void api('/credit-accounts').then(data => { if (active) setCredits(data); }).catch(error => { if (active) showError(error); });

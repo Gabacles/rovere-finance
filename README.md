@@ -2,7 +2,7 @@
 
 Plataforma de gestão financeira pessoal para o mercado brasileiro. Projeto greenfield com importação CSV **e OFX obrigatória na V1**, independente de Open Finance.
 
-**Estado: importação, ciclo básico de cartão e receitas/recorrências RF-027 a RF-030 implementados; V1 ainda incompleta.** Já há interface funcional, API e persistência. Faltam despesas recorrentes, terceiros, categorias/orçamento, visão anual e preparação final, além de detalhar lançamentos bancários manuais, transferências e saldos/limites. [Diagnóstico da V1 em 15/10/2026](docs/v1-review.md), [escopo](docs/scope.md) e [progresso](docs/progress.md).
+**Estado: importação, ciclo básico de cartão, receitas/recorrências e despesas recorrentes RF-027 a RF-031 implementados; V1 ainda incompleta.** Já há interface funcional, API e persistência. Faltam terceiros, categorias/orçamento, visão anual e preparação final, além de detalhar lançamentos bancários manuais, transferências e saldos/limites. [Diagnóstico da V1 em 15/10/2026](docs/v1-review.md), [escopo](docs/scope.md) e [progresso](docs/progress.md).
 
 RF-015 integrada pelo PR #2 e RF-016 pelo PR #4. Parsers CSV/OFX em `packages/importers`: [catálogo](docs/import-formats.md). A revisão nunca cria movimentações automaticamente.
 
@@ -10,7 +10,7 @@ RF-027 acrescenta [receitas previstas avulsas](docs/planned-incomes.md): criaç�
 
 RF-028 acrescenta [recebimentos explícitos](docs/income-settlements.md) vinculados a movimentos CSV/OFX existentes: parcial/múltiplos movimentos, reversão do vínculo e disponibilidade conjunta com faturas. Excedentes ficam sem alocação até revisão; não cria caixa, nova receita ou baixa automática. Terceiros continuam futuros.
 
-RF-029 integrada pelo PR #16 na main `9fb9de3`: [receitas recorrentes mensais](docs/recurring-incomes.md), com valor fixo, âncora original e geração finita mediante prévia/confirmação. RF-030 acrescenta [ciclo de vida](docs/recurrence-lifecycle.md), com alteração futura, exceção individual, pausa/retomada/cancelamento, prévia e proteção de recebimentos; validada na branch da task, com [PR #17 para revisão](https://github.com/Gabacles/rovere-finance/pull/17). A interface atual reúne os módulos numa página; navegação principal e dashboard planejados ainda faltam.
+RF-029 integrada pelo PR #16 na main `9fb9de3`: [receitas recorrentes mensais](docs/recurring-incomes.md), com valor fixo, âncora original e geração finita mediante prévia/confirmação. RF-030 acrescenta [ciclo de vida](docs/recurrence-lifecycle.md), com alteração futura, exceção individual, pausa/retomada/cancelamento, prévia e proteção de recebimentos; [PR #17 integrado](https://github.com/Gabacles/rovere-finance/pull/17) na main `30db902`. RF-031 acrescenta [despesas/assinaturas recorrentes](docs/recurring-expenses.md): competência de planejamento explícita, confirmação cria/vincula uma despesa conhecida e preserva diferenças/revisões, sem caixa/cartão/fatura fictícios; validada na branch da task para revisão. A interface atual reúne os módulos numa página; navegação principal e dashboard planejados ainda faltam.
 
 Documentação da API: Swagger UI em `/api/docs`, JSON em `/api/openapi.json` e [snapshot versionado](docs/api/openapi.json). Abra pela origem do frontend: [Vite](http://localhost:5173/api/docs) ou [Docker](http://127.0.0.1:18080/api/docs). Faça login na aplicação para reutilizar a sessão e testar rotas privadas. [Uso, manutenção e acesso em produção](docs/api-documentation.md); [contratos](docs/contracts.md).
 

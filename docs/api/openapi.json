@@ -12,6 +12,9 @@
   ],
   "tags": [
     {
+      "name": "Despesas recorrentes"
+    },
+    {
       "name": "Ciclo de vida de recorrências"
     },
     {
@@ -12851,6 +12854,917 @@
         }
       }
     },
+    "/api/expense-recurrences": {
+      "get": {
+        "operationId": "ExpenseRecurrencesController_list",
+        "tags": [
+          "Despesas recorrentes"
+        ],
+        "summary": "Listar regras mensais de despesas",
+        "description": "",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 99999,
+              "default": 1,
+              "description": "25 registros por página."
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resultado confirmado (ou replay quando há chave).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "page": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 9007199254740991
+                    },
+                    "total": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "rows": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ExpenseRecurrence"
+                      }
+                    }
+                  },
+                  "required": [
+                    "page",
+                    "total",
+                    "rows"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Campos, formato ou confirmação inválidos.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ApiError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/NestError"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sessão ausente, expirada ou revogada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ApiError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/NestError"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Falha interna; não repetir alteração com nova chave sem conferir o resultado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ApiError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/NestError"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "ExpenseRecurrencesController_create",
+        "tags": [
+          "Despesas recorrentes"
+        ],
+        "summary": "Cadastrar regra sem criar despesas ou caixa",
+        "description": "",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{1,100}$",
+              "example": "decisao_ficticia_1"
+            },
+            "description": "Mesma chave e corpo recuperam resposta; outro comando gera 409. Preserve versões originais em retry."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExpenseRecurrenceInput"
+              },
+              "example": {
+                "description": "Assinatura fictícia",
+                "amount": {
+                  "currency": "BRL",
+                  "cents": "2990"
+                },
+                "anchorDay": 31,
+                "startsOn": "2026-10-01",
+                "endsOn": null
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Resultado confirmado (ou replay quando há chave).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExpenseRecurrence"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Campos, formato ou confirmação inválidos.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ApiError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/NestError"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sessão ausente, expirada ou revogada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ApiError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/NestError"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Origem ausente/desconhecida ou formato rejeitado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Versão/chave/estado/limites ou dependência em conflito; revalidar decisão.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ApiError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/NestError"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Corpo/arquivo excede limite.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ApiError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/NestError"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Falha interna; não repetir alteração com nova chave sem conferir o resultado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ApiError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/NestError"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/expense-recurrences/{id}": {
+      "get": {
+        "operationId": "ExpenseRecurrencesController_get",
+        "tags": [
+          "Despesas recorrentes"
+        ],
+        "summary": "Consultar regra, estado e programações preservadas",
+        "description": "",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 150,
+              "example": "id_ficticio",
+              "description": "Identificador opaco retornado pela API; não reconstruir ou presumir formato UUID."
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resultado confirmado (ou replay quando há chave).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExpenseRecurrence"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sessão ausente, expirada ou revogada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ApiError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/NestError"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso inexistente ou de outro proprietário.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ApiError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/NestError"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Falha interna; não repetir alteração com nova chave sem conferir o resultado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ApiError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/NestError"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/expense-recurrences/{id}/history": {
+      "get": {
+        "operationId": "ExpenseRecurrencesController_history",
+        "tags": [
+          "Despesas recorrentes"
+        ],
+        "summary": "Consultar últimas 20 decisões; journal integral preservado",
+        "description": "",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 150,
+              "example": "id_ficticio",
+              "description": "Identificador opaco retornado pela API; não reconstruir ou presumir formato UUID."
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resultado confirmado (ou replay quando há chave).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExpenseRecurrenceHistory"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sessão ausente, expirada ou revogada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ApiError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/NestError"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso inexistente ou de outro proprietário.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ApiError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/NestError"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Falha interna; não repetir alteração com nova chave sem conferir o resultado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ApiError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/NestError"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/expense-recurrences/{id}/occurrences": {
+      "get": {
+        "operationId": "ExpenseRecurrencesController_occurrences",
+        "tags": [
+          "Despesas recorrentes"
+        ],
+        "summary": "Consultar previsões e despesa confirmada sem dupla contagem",
+        "description": "Cada linha é uma ocorrência; expense é o mesmo fato vinculado, nunca outro consumo. settlement=not_supported não afirma pagamento. Correções da Expense preservam confirmação anterior e sinalizam reviewRequired.",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 150,
+              "example": "id_ficticio",
+              "description": "Identificador opaco retornado pela API; não reconstruir ou presumir formato UUID."
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 99999,
+              "default": 1,
+              "description": "25 registros por página."
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resultado confirmado (ou replay quando há chave).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExpenseOccurrences"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Campos, formato ou confirmação inválidos.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ApiError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/NestError"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sessão ausente, expirada ou revogada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ApiError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/NestError"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso inexistente ou de outro proprietário.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ApiError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/NestError"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Falha interna; não repetir alteração com nova chave sem conferir o resultado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ApiError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/NestError"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/expense-recurrences/{id}/preview": {
+      "post": {
+        "operationId": "ExpenseRecurrencesController_preview",
+        "tags": [
+          "Despesas recorrentes"
+        ],
+        "summary": "Revisar geração, ciclo de vida ou confirmação de despesa",
+        "description": "Sem gravação. Geração finita de até 120 competências mensais explicitamente selecionadas; competência de planejamento separada da data efetiva e fatura. Alteração futura preserva passadas, exceções e registradas. Vincular/revisar exige Expense com data/valor conhecidos e versão atual.",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 150,
+              "example": "id_ficticio",
+              "description": "Identificador opaco retornado pela API; não reconstruir ou presumir formato UUID."
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExpenseRecurrenceOperation"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Resultado confirmado (ou replay quando há chave).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExpenseRecurrencePreview"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Campos, formato ou confirmação inválidos.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ApiError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/NestError"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sessão ausente, expirada ou revogada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ApiError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/NestError"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Origem ausente/desconhecida ou formato rejeitado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso inexistente ou de outro proprietário.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ApiError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/NestError"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Versão/chave/estado/limites ou dependência em conflito; revalidar decisão.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ApiError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/NestError"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Corpo/arquivo excede limite.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ApiError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/NestError"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Falha interna; não repetir alteração com nova chave sem conferir o resultado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ApiError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/NestError"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/expense-recurrences/{id}/confirm": {
+      "post": {
+        "operationId": "ExpenseRecurrencesController_confirm",
+        "tags": [
+          "Despesas recorrentes"
+        ],
+        "summary": "Confirmar prévia com versões, idempotência e histórico atômicos",
+        "description": "Revalida hash, versões e dependências sob trava do proprietário. record cria uma Expense; link vincula uma existente exclusivamente; review confirma fatos corrigidos sem criar outra despesa. Ocorrência registrada não pode ser cancelada nem desvinculada nesta fatia. Cancelar série preserva ocorrências, pausar/retomar não preenche lacunas. Nenhuma ação cria cobrança, fatura, BankEntry ou pagamento. Replay retorna snapshot original.",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 150,
+              "example": "id_ficticio",
+              "description": "Identificador opaco retornado pela API; não reconstruir ou presumir formato UUID."
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{1,100}$",
+              "example": "decisao_ficticia_1"
+            },
+            "description": "Mesma chave e corpo recuperam resposta; outro comando gera 409. Preserve versões originais em retry."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExpenseRecurrenceConfirmation"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Resultado confirmado (ou replay quando há chave).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExpenseRecurrenceResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Campos, formato ou confirmação inválidos.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ApiError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/NestError"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sessão ausente, expirada ou revogada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ApiError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/NestError"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Origem ausente/desconhecida ou formato rejeitado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso inexistente ou de outro proprietário.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ApiError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/NestError"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Versão/chave/estado/limites ou dependência em conflito; revalidar decisão.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ApiError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/NestError"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Corpo/arquivo excede limite.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ApiError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/NestError"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Falha interna; não repetir alteração com nova chave sem conferir o resultado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ApiError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/NestError"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/auth/sign-in/social": {
       "post": {
         "tags": [
@@ -25458,6 +26372,1240 @@
           "rows"
         ],
         "additionalProperties": false
+      },
+      "ExpenseRecurrenceInput": {
+        "type": "object",
+        "properties": {
+          "description": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 1000
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "amount": {
+            "type": "object",
+            "properties": {
+              "currency": {
+                "type": "string",
+                "enum": [
+                  "BRL"
+                ]
+              },
+              "cents": {
+                "type": "string",
+                "pattern": "^(0|[1-9][0-9]*)$",
+                "example": "10000",
+                "description": "Inteiro decimal canônico em centavos, dentro de BIGINT signed 64 bits. Sem +, -0, separador, expoente ou ponto flutuante."
+              }
+            },
+            "required": [
+              "currency",
+              "cents"
+            ],
+            "additionalProperties": false
+          },
+          "anchorDay": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 31
+          },
+          "startsOn": {
+            "type": "string",
+            "format": "date",
+            "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+            "example": "2026-10-14",
+            "description": "Data civil gregoriana válida, anos 0001–9999; não é instante UTC."
+          },
+          "endsOn": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date",
+                "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+                "example": "2026-10-14",
+                "description": "Data civil gregoriana válida, anos 0001–9999; não é instante UTC."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "description",
+          "amount",
+          "anchorDay",
+          "startsOn",
+          "endsOn"
+        ],
+        "additionalProperties": false
+      },
+      "ExpenseRecurrence": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 150,
+            "example": "id_ficticio",
+            "description": "Identificador opaco retornado pela API; não reconstruir ou presumir formato UUID."
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 2147483647
+          },
+          "cadence": {
+            "type": "string",
+            "enum": [
+              "monthly"
+            ]
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 1000
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "amount": {
+            "type": "object",
+            "properties": {
+              "currency": {
+                "type": "string",
+                "enum": [
+                  "BRL"
+                ]
+              },
+              "cents": {
+                "type": "string",
+                "pattern": "^(0|[1-9][0-9]*)$",
+                "example": "10000",
+                "description": "Inteiro decimal canônico em centavos, dentro de BIGINT signed 64 bits. Sem +, -0, separador, expoente ou ponto flutuante."
+              }
+            },
+            "required": [
+              "currency",
+              "cents"
+            ],
+            "additionalProperties": false
+          },
+          "anchorDay": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 31
+          },
+          "startsOn": {
+            "type": "string",
+            "format": "date",
+            "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+            "example": "2026-10-14",
+            "description": "Data civil gregoriana válida, anos 0001–9999; não é instante UTC."
+          },
+          "endsOn": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date",
+                "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+                "example": "2026-10-14",
+                "description": "Data civil gregoriana válida, anos 0001–9999; não é instante UTC."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "evidence": {
+            "$ref": "#/components/schemas/Evidence"
+          },
+          "occurrenceCount": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "active",
+              "paused",
+              "cancelled"
+            ]
+          },
+          "schedules": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "description": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 500
+                },
+                "notes": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "maxLength": 1000
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "amount": {
+                  "type": "object",
+                  "properties": {
+                    "currency": {
+                      "type": "string",
+                      "enum": [
+                        "BRL"
+                      ]
+                    },
+                    "cents": {
+                      "type": "string",
+                      "pattern": "^(0|[1-9][0-9]*)$",
+                      "example": "10000",
+                      "description": "Inteiro decimal canônico em centavos, dentro de BIGINT signed 64 bits. Sem +, -0, separador, expoente ou ponto flutuante."
+                    }
+                  },
+                  "required": [
+                    "currency",
+                    "cents"
+                  ],
+                  "additionalProperties": false
+                },
+                "anchorDay": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 31
+                },
+                "startsOn": {
+                  "type": "string",
+                  "format": "date",
+                  "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+                  "example": "2026-10-14",
+                  "description": "Data civil gregoriana válida, anos 0001–9999; não é instante UTC."
+                },
+                "endsOn": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "format": "date",
+                      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+                      "example": "2026-10-14",
+                      "description": "Data civil gregoriana válida, anos 0001–9999; não é instante UTC."
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "effectiveFrom": {
+                  "type": "string",
+                  "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])$",
+                  "example": "2026-10"
+                },
+                "version": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 2147483647
+                },
+                "evidence": {
+                  "$ref": "#/components/schemas/Evidence"
+                }
+              },
+              "required": [
+                "description",
+                "notes",
+                "amount",
+                "anchorDay",
+                "startsOn",
+                "endsOn",
+                "effectiveFrom",
+                "version",
+                "evidence"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "id",
+          "version",
+          "cadence",
+          "description",
+          "notes",
+          "amount",
+          "anchorDay",
+          "startsOn",
+          "endsOn",
+          "evidence",
+          "occurrenceCount",
+          "state",
+          "schedules"
+        ],
+        "additionalProperties": false
+      },
+      "ExpenseOccurrence": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 150,
+            "example": "id_ficticio",
+            "description": "Identificador opaco retornado pela API; não reconstruir ou presumir formato UUID."
+          },
+          "period": {
+            "type": "string",
+            "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])$",
+            "example": "2026-10"
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 2147483647
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "planned",
+              "recorded",
+              "cancelled"
+            ]
+          },
+          "individual": {
+            "type": "boolean"
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 1000
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "expectedOn": {
+            "type": "string",
+            "format": "date",
+            "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+            "example": "2026-10-14",
+            "description": "Data civil gregoriana válida, anos 0001–9999; não é instante UTC."
+          },
+          "amount": {
+            "type": "object",
+            "properties": {
+              "currency": {
+                "type": "string",
+                "enum": [
+                  "BRL"
+                ]
+              },
+              "cents": {
+                "type": "string",
+                "pattern": "^(0|[1-9][0-9]*)$",
+                "example": "10000",
+                "description": "Inteiro decimal canônico em centavos, dentro de BIGINT signed 64 bits. Sem +, -0, separador, expoente ou ponto flutuante."
+              }
+            },
+            "required": [
+              "currency",
+              "cents"
+            ],
+            "additionalProperties": false
+          },
+          "original": {
+            "type": "object",
+            "properties": {
+              "expectedOn": {
+                "type": "string",
+                "format": "date",
+                "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+                "example": "2026-10-14",
+                "description": "Data civil gregoriana válida, anos 0001–9999; não é instante UTC."
+              },
+              "amount": {
+                "type": "object",
+                "properties": {
+                  "currency": {
+                    "type": "string",
+                    "enum": [
+                      "BRL"
+                    ]
+                  },
+                  "cents": {
+                    "type": "string",
+                    "pattern": "^(0|[1-9][0-9]*)$",
+                    "example": "10000",
+                    "description": "Inteiro decimal canônico em centavos, dentro de BIGINT signed 64 bits. Sem +, -0, separador, expoente ou ponto flutuante."
+                  }
+                },
+                "required": [
+                  "currency",
+                  "cents"
+                ],
+                "additionalProperties": false
+              },
+              "ruleVersion": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "evidence": {
+                "$ref": "#/components/schemas/Evidence"
+              }
+            },
+            "required": [
+              "expectedOn",
+              "amount",
+              "ruleVersion",
+              "evidence"
+            ],
+            "additionalProperties": false
+          },
+          "expense": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Expense"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "confirmation": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Expense"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "reviewRequired": {
+            "type": "boolean"
+          },
+          "difference": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "currency": {
+                    "type": "string",
+                    "enum": [
+                      "BRL"
+                    ]
+                  },
+                  "cents": {
+                    "type": "string",
+                    "pattern": "^(0|-?[1-9][0-9]*)$",
+                    "example": "10000",
+                    "description": "Inteiro decimal canônico em centavos, dentro de BIGINT signed 64 bits. Sem +, -0, separador, expoente ou ponto flutuante."
+                  }
+                },
+                "required": [
+                  "currency",
+                  "cents"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "settlement": {
+            "type": "string",
+            "enum": [
+              "not_supported"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "period",
+          "version",
+          "state",
+          "individual",
+          "description",
+          "notes",
+          "expectedOn",
+          "amount",
+          "original",
+          "expense",
+          "confirmation",
+          "reviewRequired",
+          "difference",
+          "settlement"
+        ],
+        "additionalProperties": false
+      },
+      "ExpenseOccurrences": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "total": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ExpenseOccurrence"
+            }
+          }
+        },
+        "required": [
+          "page",
+          "total",
+          "rows"
+        ],
+        "additionalProperties": false
+      },
+      "ExpenseRecurrenceOperation": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "action": {
+                "type": "string",
+                "enum": [
+                  "generate"
+                ]
+              },
+              "fromPeriod": {
+                "type": "string",
+                "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])$",
+                "example": "2026-10"
+              },
+              "toPeriod": {
+                "type": "string",
+                "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])$",
+                "example": "2026-10"
+              }
+            },
+            "required": [
+              "action",
+              "fromPeriod",
+              "toPeriod"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "action": {
+                "type": "string",
+                "enum": [
+                  "edit_series"
+                ]
+              },
+              "fromPeriod": {
+                "type": "string",
+                "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])$",
+                "example": "2026-10"
+              },
+              "input": {
+                "type": "object",
+                "properties": {
+                  "description": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 500
+                  },
+                  "notes": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 1000
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "amount": {
+                    "type": "object",
+                    "properties": {
+                      "currency": {
+                        "type": "string",
+                        "enum": [
+                          "BRL"
+                        ]
+                      },
+                      "cents": {
+                        "type": "string",
+                        "pattern": "^(0|[1-9][0-9]*)$",
+                        "example": "10000",
+                        "description": "Inteiro decimal canônico em centavos, dentro de BIGINT signed 64 bits. Sem +, -0, separador, expoente ou ponto flutuante."
+                      }
+                    },
+                    "required": [
+                      "currency",
+                      "cents"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "anchorDay": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 31
+                  },
+                  "endsOn": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "format": "date",
+                        "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+                        "example": "2026-10-14",
+                        "description": "Data civil gregoriana válida, anos 0001–9999; não é instante UTC."
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "description",
+                  "amount",
+                  "anchorDay",
+                  "endsOn"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "action",
+              "fromPeriod",
+              "input"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "action": {
+                "type": "string",
+                "enum": [
+                  "pause",
+                  "resume",
+                  "cancel_series"
+                ]
+              }
+            },
+            "required": [
+              "action"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "action": {
+                "type": "string",
+                "enum": [
+                  "edit_occurrence"
+                ]
+              },
+              "occurrenceId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100,
+                "example": "id_ficticio",
+                "description": "Identificador opaco retornado pela API; não reconstruir ou presumir formato UUID.",
+                "pattern": "^[A-Za-z0-9_-]{1,100}$"
+              },
+              "input": {
+                "type": "object",
+                "properties": {
+                  "description": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 500
+                  },
+                  "notes": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 1000
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "expectedOn": {
+                    "type": "string",
+                    "format": "date",
+                    "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+                    "example": "2026-10-14",
+                    "description": "Data civil gregoriana válida, anos 0001–9999; não é instante UTC."
+                  },
+                  "amount": {
+                    "type": "object",
+                    "properties": {
+                      "currency": {
+                        "type": "string",
+                        "enum": [
+                          "BRL"
+                        ]
+                      },
+                      "cents": {
+                        "type": "string",
+                        "pattern": "^(0|[1-9][0-9]*)$",
+                        "example": "10000",
+                        "description": "Inteiro decimal canônico em centavos, dentro de BIGINT signed 64 bits. Sem +, -0, separador, expoente ou ponto flutuante."
+                      }
+                    },
+                    "required": [
+                      "currency",
+                      "cents"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "description",
+                  "expectedOn",
+                  "amount"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "action",
+              "occurrenceId",
+              "input"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "action": {
+                "type": "string",
+                "enum": [
+                  "cancel_occurrence"
+                ]
+              },
+              "occurrenceId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100,
+                "example": "id_ficticio",
+                "description": "Identificador opaco retornado pela API; não reconstruir ou presumir formato UUID.",
+                "pattern": "^[A-Za-z0-9_-]{1,100}$"
+              }
+            },
+            "required": [
+              "action",
+              "occurrenceId"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "action": {
+                "type": "string",
+                "enum": [
+                  "record"
+                ]
+              },
+              "occurrenceId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100,
+                "example": "id_ficticio",
+                "description": "Identificador opaco retornado pela API; não reconstruir ou presumir formato UUID.",
+                "pattern": "^[A-Za-z0-9_-]{1,100}$"
+              },
+              "expense": {
+                "type": "object",
+                "properties": {
+                  "description": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 500
+                  },
+                  "notes": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 1000
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "facts": {
+                    "type": "object",
+                    "properties": {
+                      "purchasedOn": {
+                        "type": "string",
+                        "format": "date",
+                        "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+                        "example": "2026-10-14",
+                        "description": "Data civil gregoriana válida, anos 0001–9999; não é instante UTC."
+                      },
+                      "total": {
+                        "type": "object",
+                        "properties": {
+                          "currency": {
+                            "type": "string",
+                            "enum": [
+                              "BRL"
+                            ]
+                          },
+                          "cents": {
+                            "type": "string",
+                            "pattern": "^(0|[1-9][0-9]*)$",
+                            "example": "10000",
+                            "description": "Inteiro decimal canônico em centavos, dentro de BIGINT signed 64 bits. Sem +, -0, separador, expoente ou ponto flutuante."
+                          }
+                        },
+                        "required": [
+                          "currency",
+                          "cents"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "purchasedOn",
+                      "total"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "description",
+                  "facts"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "action",
+              "occurrenceId",
+              "expense"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "action": {
+                "type": "string",
+                "enum": [
+                  "link"
+                ]
+              },
+              "occurrenceId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100,
+                "example": "id_ficticio",
+                "description": "Identificador opaco retornado pela API; não reconstruir ou presumir formato UUID.",
+                "pattern": "^[A-Za-z0-9_-]{1,100}$"
+              },
+              "expenseId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100,
+                "example": "id_ficticio",
+                "description": "Identificador opaco retornado pela API; não reconstruir ou presumir formato UUID.",
+                "pattern": "^[A-Za-z0-9_-]{1,100}$"
+              },
+              "expectedExpenseVersion": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 2147483646
+              }
+            },
+            "required": [
+              "action",
+              "occurrenceId",
+              "expenseId",
+              "expectedExpenseVersion"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "action": {
+                "type": "string",
+                "enum": [
+                  "review"
+                ]
+              },
+              "occurrenceId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100,
+                "example": "id_ficticio",
+                "description": "Identificador opaco retornado pela API; não reconstruir ou presumir formato UUID.",
+                "pattern": "^[A-Za-z0-9_-]{1,100}$"
+              },
+              "expectedExpenseVersion": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 2147483646
+              }
+            },
+            "required": [
+              "action",
+              "occurrenceId",
+              "expectedExpenseVersion"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      },
+      "ExpenseRecurrenceConfirmation": {
+        "type": "object",
+        "properties": {
+          "operation": {
+            "$ref": "#/components/schemas/ExpenseRecurrenceOperation"
+          },
+          "expectedVersion": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 2147483646
+          },
+          "expectedOccurrenceVersion": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 2147483646
+          },
+          "previewHash": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "confirmed": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          }
+        },
+        "required": [
+          "operation",
+          "expectedVersion",
+          "previewHash",
+          "confirmed"
+        ],
+        "additionalProperties": false,
+        "description": "Ações individuais exigem também expectedOccurrenceVersion; ações de série recusam esse campo. A competência é de planejamento, não de caixa/fatura."
+      },
+      "ExpenseRecurrencePreview": {
+        "type": "object",
+        "properties": {
+          "rule": {
+            "$ref": "#/components/schemas/ExpenseRecurrence"
+          },
+          "operation": {
+            "$ref": "#/components/schemas/ExpenseRecurrenceOperation"
+          },
+          "asOf": {
+            "type": "string",
+            "format": "date",
+            "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+            "example": "2026-10-14",
+            "description": "Data civil gregoriana válida, anos 0001–9999; não é instante UTC."
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "period": {
+                  "type": "string",
+                  "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])$",
+                  "example": "2026-10"
+                },
+                "expectedOn": {
+                  "type": "string",
+                  "format": "date",
+                  "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+                  "example": "2026-10-14",
+                  "description": "Data civil gregoriana válida, anos 0001–9999; não é instante UTC."
+                },
+                "amount": {
+                  "type": "object",
+                  "properties": {
+                    "currency": {
+                      "type": "string",
+                      "enum": [
+                        "BRL"
+                      ]
+                    },
+                    "cents": {
+                      "type": "string",
+                      "pattern": "^(0|[1-9][0-9]*)$",
+                      "example": "10000",
+                      "description": "Inteiro decimal canônico em centavos, dentro de BIGINT signed 64 bits. Sem +, -0, separador, expoente ou ponto flutuante."
+                    }
+                  },
+                  "required": [
+                    "currency",
+                    "cents"
+                  ],
+                  "additionalProperties": false
+                },
+                "disposition": {
+                  "type": "string",
+                  "enum": [
+                    "create",
+                    "existing",
+                    "outside_rule",
+                    "blocked",
+                    "update",
+                    "past",
+                    "individual",
+                    "cancelled",
+                    "recorded",
+                    "later_schedule"
+                  ]
+                },
+                "occurrence": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ExpenseOccurrence"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "period",
+                "expectedOn",
+                "amount",
+                "disposition",
+                "occurrence"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "occurrence": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ExpenseOccurrence"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "expense": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Expense"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "counts": {
+            "type": "object",
+            "properties": {
+              "create": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "update": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "preserve": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              }
+            },
+            "required": [
+              "create",
+              "update",
+              "preserve"
+            ],
+            "additionalProperties": false
+          },
+          "difference": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "currency": {
+                    "type": "string",
+                    "enum": [
+                      "BRL"
+                    ]
+                  },
+                  "cents": {
+                    "type": "string",
+                    "pattern": "^(0|-?[1-9][0-9]*)$",
+                    "example": "10000",
+                    "description": "Inteiro decimal canônico em centavos, dentro de BIGINT signed 64 bits. Sem +, -0, separador, expoente ou ponto flutuante."
+                  }
+                },
+                "required": [
+                  "currency",
+                  "cents"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "previewHash": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          }
+        },
+        "required": [
+          "rule",
+          "operation",
+          "asOf",
+          "rows",
+          "occurrence",
+          "expense",
+          "counts",
+          "difference",
+          "previewHash"
+        ],
+        "additionalProperties": false
+      },
+      "ExpenseRecurrenceResult": {
+        "type": "object",
+        "properties": {
+          "rule": {
+            "$ref": "#/components/schemas/ExpenseRecurrence"
+          },
+          "occurrence": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ExpenseOccurrence"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "counts": {
+            "type": "object",
+            "properties": {
+              "create": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "update": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "preserve": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              }
+            },
+            "required": [
+              "create",
+              "update",
+              "preserve"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "rule",
+          "occurrence",
+          "counts"
+        ],
+        "additionalProperties": false
+      },
+      "ExpenseRecurrenceHistory": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 150,
+              "example": "id_ficticio",
+              "description": "Identificador opaco retornado pela API; não reconstruir ou presumir formato UUID."
+            },
+            "version": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 2147483646
+            },
+            "changes": {
+              "type": "object",
+              "additionalProperties": true,
+              "description": "JSON preservado da origem ou do journal; campos dependem do formato/operação."
+            },
+            "createdAt": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          "required": [
+            "id",
+            "version",
+            "changes",
+            "createdAt"
+          ],
+          "additionalProperties": false
+        },
+        "maxItems": 20,
+        "description": "Até 20 comandos mais recentes; versões/snapshots históricos não são a versão atual."
       },
       "CivilDate": {
         "type": "string",

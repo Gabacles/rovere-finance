@@ -5,6 +5,7 @@ import { openAPI } from 'better-auth/plugins';
 import type { Identity } from '../identity/auth.js';
 import { operations } from './operations.js';
 import { importSchemas } from './import-schemas.js';
+import { expenseRecurrenceSchemas } from './expense-recurrence-schemas.js';
 import { date, id, nullable, ref, schemas, str } from './schemas.js';
 import type { Schema } from './schemas.js';
 
@@ -74,7 +75,7 @@ export function nestDocument(controllers: readonly Function[]): Document {
     }
   }
   for (const key of Object.keys(operations)) if (!seen.has(key)) throw new Error(`OpenAPI obsolete operation: ${key}`);
-  return { openapi: '3.1.1', info: { title: 'Rovere Finance — API', version: '0.1.0', description }, servers: [{ url: '/' }], tags: [...new Set(Object.values(operations).map(op => op.tag))].map(name => ({ name })), paths, components: { schemas: { ...schemas, ...importSchemas, CivilDate: date, Magnitude: { ...schemas.Money, properties: { currency: { type: 'string', enum: ['BRL'] }, cents: str({ pattern: '^(0|[1-9][0-9]*)$' }) } } }, securitySchemes: { sessionCookie: { type: 'apiKey', in: 'cookie', name: 'better-auth.session_token', description: 'Sessão HttpOnly enviada pelo navegador na mesma origem; em HTTPS nome __Secure-better-auth.session_token. Faça login pela aplicação.' } } } };
+  return { openapi: '3.1.1', info: { title: 'Rovere Finance — API', version: '0.1.0', description }, servers: [{ url: '/' }], tags: [...new Set(Object.values(operations).map(op => op.tag))].map(name => ({ name })), paths, components: { schemas: { ...schemas, ...importSchemas, ...expenseRecurrenceSchemas, CivilDate: date, Magnitude: { ...schemas.Money, properties: { currency: { type: 'string', enum: ['BRL'] }, cents: str({ pattern: '^(0|[1-9][0-9]*)$' }) } } }, securitySchemes: { sessionCookie: { type: 'apiKey', in: 'cookie', name: 'better-auth.session_token', description: 'Sessão HttpOnly enviada pelo navegador na mesma origem; em HTTPS nome __Secure-better-auth.session_token. Faça login pela aplicação.' } } } };
 }
 
 export async function completeDocument(controllers: readonly Function[], identity: Identity): Promise<Document> {
