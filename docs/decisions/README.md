@@ -16,6 +16,7 @@
 | [ADR-0012](0012-explicit-statement-payment-allocations.md) | Aceita | Base confirmada e alocações bancárias de fatura com reservas revalidadas |
 | [ADR-0013](0013-traceable-card-adjustments-and-refunds.md) | Aceita | Ajustes/estornos rastreáveis e excedentes preservando pagamentos reais |
 | [ADR-0017](0017-explicit-recurrence-lifecycle.md) | Aceita | Alterações futuras, exceções individuais e estados de recorrência |
+| [ADR-0018](0018-explicit-recurring-expenses.md) | Aceita | Confirmação explícita de despesa recorrente, sem duplicação de consumo/caixa |
 | [Pendências](pending.md) | Por decisão | Questões que exigem definição antes do comportamento dependente |
 | [ADR-0014](0014-manual-planned-incomes.md) | Aceita | Receitas previstas manuais sem efeito de caixa |
 | [ADR-0015](0015-explicit-income-settlements.md) | Aceita | Liquidações explícitas de receitas e disponibilidade bancária conjunta |

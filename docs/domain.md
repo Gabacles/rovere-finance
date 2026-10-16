@@ -100,6 +100,8 @@ Para faturas, a identificação inicial seguirá a prioridade solicitada: inform
 
 ## Políticas confirmadas pelo usuário
 
+P3-04 aprovada em 15/10/2026: [despesas recorrentes](recurring-expenses.md) usam competência explícita de planejamento e confirmação de uma única Expense com data/valor conhecidos, preservando previsto, efetivo, diferenças e revisões. Assinatura sem cartão continua sem cartão; previsão não cria caixa ou pagamento. [ADR-0018](decisions/0018-explicit-recurring-expenses.md).
+
 Em 08/10/2026 foram aprovados: orçamento consumido pelo valor bruto, com reembolsos separados; recorrências em dias inexistentes ajustadas ao último dia do mês, sem deslocamento automático por dia útil na V1; contabilização em BRL; planejamento por competência da fatura e visão de caixa separada. Recebimentos de reembolso alteram caixa e custo pessoal líquido, sem recompor o orçamento bruto. Fundamentação: [ADR-0002](decisions/0002-financial-policies.md).
 
 Os contratos, invariantes, estados e limites de conhecimento estão em [contracts.md](contracts.md). Questões ainda abertas estão em [decisions/pending.md](decisions/pending.md).

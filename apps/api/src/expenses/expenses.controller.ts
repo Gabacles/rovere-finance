@@ -8,7 +8,7 @@ import { ExpensesService } from './expenses.service.js';
 import { InstallmentsService } from './installments.service.js';
 
 @Catch()
-class ExpenseErrors implements ExceptionFilter {
+export class ExpenseErrors implements ExceptionFilter {
   catch(error: unknown, host: ArgumentsHost) {
     const status = error instanceof HttpException ? error.getStatus() : 500;
     const payload = error instanceof HttpException ? error.getResponse() : {};

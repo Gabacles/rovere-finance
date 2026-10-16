@@ -58,6 +58,8 @@ Esta lista é contrato de aceite, não declaração de cobertura já existente. 
 
 ## Estados independentes
 
+[Despesas recorrentes RF-031](recurring-expenses.md): ocorrências previstas/registradas/canceladas mantêm competência de planejamento própria e relação tipada única à Expense. Confirmação e revisão explícitas preservam evidência original, versões e diferenças, sem assumir liquidação individual a partir de uma fatura paga.
+
 - Registro: `planned`, `recorded`, `cancelled`, `reversed`.
 - Liquidação: `unpaid`, `partial`, `paid`, calculada por alocações efetivas.
 - Conciliação: `unmatched`, `suggested`, `linked`, `distinct`.

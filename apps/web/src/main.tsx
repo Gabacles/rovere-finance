@@ -7,6 +7,7 @@ import { Imports } from './imports';
 import { Expenses } from './expenses';
 import { Incomes } from './incomes';
 import { IncomeRecurrences } from './income-recurrences';
+import { ExpenseRecurrences } from './expense-recurrences';
 
 function App() {
   const [user, setUser] = useState<{ name: string; email: string } | null>(null);
@@ -29,6 +30,14 @@ function App() {
     if (!response.ok) {
       if (response.status === 401 && !path.startsWith('/auth/')) { setUser(null); setAccounts([]); }
       const errors: Record<string, string> = {
+        INVALID_EXPENSE_RECURRENCE: 'Confira descrição, valor mensal, âncora e vigência da assinatura.',
+        INVALID_EXPENSE_RECURRENCE_OPERATION: 'Confira ação, competência, datas e valores confirmados em BRL.',
+        EXPENSE_RECURRENCE_NOT_FOUND: 'Assinatura não encontrada.',
+        EXPENSE_OCCURRENCE_NOT_FOUND: 'Ocorrência não encontrada nesta assinatura.',
+        EXPENSE_OCCURRENCE_DEPENDENCY: 'Ocorrência cancelada é definitiva; despesa registrada permanece vinculada e só admite revisão explícita.',
+        EXPENSE_FACTS_REQUIRED: 'Confirme data original e total no módulo Compras antes de vincular ou revisar.',
+        EXPENSE_ALREADY_RECORDED: 'Esta despesa já confirma outra ocorrência.',
+        RECURRENCE_CONFIRMATION_REQUIRED: 'Revise a prévia e confirme explicitamente a decisão.',
         RECURRENCE_VERSION_CONFLICT: 'A regra mudou. Consulte e revise uma nova prévia.',
         RECURRENCE_PREVIEW_CHANGED: 'As ocorrências mudaram. Consulte e revise uma nova prévia.',
         INVALID_GENERATION_RANGE: 'Informe intervalo mensal ordenado de até 120 meses.',
@@ -112,7 +121,7 @@ function App() {
       };
       throw Object.assign(new Error(response.status === 429 ? 'Muitas tentativas. Aguarde um minuto.' : errors[data.code as string] ?? 'Não foi possível concluir. Confira os dados e tente novamente.'), { status: response.status, code: data.code });
     }
-    if (method !== 'GET' && ((path.startsWith('/income-recurrences') && !path.endsWith('preview')) || path.includes('/adjustments') || path.includes('/refunds') || path.includes('/settlements') || path.includes('/payments'))) setFinancialVersion(value => value + 1);
+    if (method !== 'GET' && (((path.startsWith('/income-recurrences') || path.startsWith('/expense-recurrences')) && !path.endsWith('preview')) || path.startsWith('/expenses') || path.includes('/adjustments') || path.includes('/refunds') || path.includes('/settlements') || path.includes('/payments'))) setFinancialVersion(value => value + 1);
     return data;
   }
   useEffect(() => {
@@ -192,6 +201,7 @@ function App() {
       {user && <Destinations key={`destinations:${user.email}`} accounts={accounts} api={api} onChanged={() => setCatalogVersion(value => value + 1)} financialVersion={financialVersion} />}
       {user && <Imports key={`imports:${user.email}`} accounts={accounts} catalogVersion={catalogVersion} onFinancialChanged={() => setFinancialVersion(value => value + 1)} onExpired={() => { setUser(null); setAccounts([]); }} />}
       {user && <Expenses key={`expenses:${user.email}`} api={api} catalogVersion={catalogVersion} financialVersion={financialVersion} />}
+      {user && <ExpenseRecurrences key={`expense-recurrences:${user.email}`} api={api} financialVersion={financialVersion} />}
       {user && <IncomeRecurrences key={`recurrences:${user.email}`} api={api} />}
       {user && <Incomes key={`incomes:${user.email}`} api={api} financialVersion={financialVersion} />}
       <footer>Organização hoje. Tranquilidade amanhã.</footer>

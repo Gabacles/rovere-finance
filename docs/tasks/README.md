@@ -7,7 +7,7 @@ Estado individual, critérios, implementação e evidências são mantidos nos a
 - [Fase 2 — compras e ciclo de cartão](phase-2.md)
 - [Fase 3 — planejamento e terceiros](phase-3.md)
 
-Fase 3: RF-027 a RF-029 integradas; PR #16 conferido na main `9fb9de3`, com CI aprovada. RF-030 concluída/validada no PR #17, aguardando revisão; RF-031 a RF-036 permanecem pendentes. P3-01/P3-02/P3-03 aprovadas explicitamente; demais recomendações abertas estão na própria fase, com indicação das tasks dependentes. Fases 4/5 permanecem macro. [Roadmap](../roadmap.md), [revisão da V1](../v1-review.md) e [ponto de retomada](../progress.md). Após avaliação do produto, o usuário autorizou continuar as tasks funcionais; reformulação visual/navegação é obrigatória para fechar a V1 conforme UX.
+Fase 3: RF-027 a RF-030 integradas; PR #17 conferido na main `30db902`, com CI do head e do merge aprovadas. RF-031 concluída/validada na branch própria para revisão, com P3-04 aprovada; RF-032 a RF-036 permanecem pendentes. P3-01/P3-02/P3-03/P3-04 aprovadas explicitamente; demais recomendações abertas estão na própria fase, com indicação das tasks dependentes. Fases 4/5 permanecem macro. [Roadmap](../roadmap.md), [revisão da V1](../v1-review.md) e [ponto de retomada](../progress.md). Após avaliação do produto, o usuário autorizou continuar as tasks funcionais; reformulação visual/navegação é obrigatória para fechar a V1 conforme UX.
 
 ## Convenção
 

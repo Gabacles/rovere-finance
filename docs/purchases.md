@@ -12,6 +12,8 @@ RF-025 acrescenta [estornos associados](card-adjustments.md): soma e custo eleg�
 
 ## HTTP executável
 
+RF-031 acrescenta [confirmação de despesas recorrentes](recurring-expenses.md): uma ocorrência pode criar/vincular explicitamente esta Expense, sem criar outro fato de consumo. Correções de data/total preservam vínculo e confirmação anterior, sinalizando revisão na ocorrência; não bloqueiam correções legítimas nem inventam pagamento.
+
 Todas as rotas exigem sessão própria. Escritas exigem JSON, origem confiável e `Idempotency-Key` (1–100 caracteres alfanuméricos, `_`/`-`). Mesmo proprietário/chave/payload normalizado recupera a resposta original, inclusive após edição posterior; dados diferentes retornam 409. Chave abrange todos os comandos de compra do usuário.
 
 | Rota | Contrato |
